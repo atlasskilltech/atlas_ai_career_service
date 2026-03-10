@@ -36,7 +36,8 @@ class ResumeService {
   }
 
   async generateBulletPoints(experience) {
-    const prompt = `Generate 3-4 impactful resume bullet points for the following work experience. Use strong action verbs, quantify achievements where possible, and follow the XYZ formula (Accomplished X, as measured by Y, by doing Z).
+    try {
+      const prompt = `Generate 3-4 impactful resume bullet points for the following work experience. Use strong action verbs, quantify achievements where possible, and follow the XYZ formula (Accomplished X, as measured by Y, by doing Z).
 
 Role: ${experience.title}
 Company: ${experience.company}
@@ -44,14 +45,18 @@ Description: ${experience.description || 'N/A'}
 
 Return ONLY the bullet points, one per line, starting with •`;
 
-    return chatCompletion(
-      'You are an expert resume writer. Generate concise, impactful bullet points that highlight achievements and use metrics.',
-      prompt
-    );
+      return await chatCompletion(
+        'You are an expert resume writer. Generate concise, impactful bullet points that highlight achievements and use metrics.',
+        prompt
+      );
+    } catch {
+      return 'AI generation unavailable. Please configure OPENAI_API_KEY.';
+    }
   }
 
   async generateSummary(resumeData) {
-    const prompt = `Generate a professional resume summary (2-3 sentences) based on:
+    try {
+      const prompt = `Generate a professional resume summary (2-3 sentences) based on:
 Name: ${resumeData.name || 'N/A'}
 Skills: ${resumeData.skills || 'N/A'}
 Experience: ${resumeData.experience || 'N/A'}
@@ -59,23 +64,30 @@ Education: ${resumeData.education || 'N/A'}
 
 Return ONLY the summary text, no labels or prefixes.`;
 
-    return chatCompletion(
-      'You are an expert resume writer. Create compelling professional summaries that highlight key strengths and career objectives.',
-      prompt
-    );
+      return await chatCompletion(
+        'You are an expert resume writer. Create compelling professional summaries that highlight key strengths and career objectives.',
+        prompt
+      );
+    } catch {
+      return 'AI generation unavailable. Please configure OPENAI_API_KEY.';
+    }
   }
 
   async rewriteAchievement(achievement) {
-    const prompt = `Rewrite this achievement to be more impactful for a resume. Use strong action verbs, add metrics if possible, and make it concise:
+    try {
+      const prompt = `Rewrite this achievement to be more impactful for a resume. Use strong action verbs, add metrics if possible, and make it concise:
 
 "${achievement}"
 
 Return ONLY the rewritten achievement, nothing else.`;
 
-    return chatCompletion(
-      'You are an expert resume writer specializing in achievement-focused bullet points.',
-      prompt
-    );
+      return await chatCompletion(
+        'You are an expert resume writer specializing in achievement-focused bullet points.',
+        prompt
+      );
+    } catch {
+      return 'AI generation unavailable. Please configure OPENAI_API_KEY.';
+    }
   }
 }
 

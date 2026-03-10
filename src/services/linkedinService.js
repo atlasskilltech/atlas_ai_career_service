@@ -27,14 +27,13 @@ Industry/Role: ${data.targetRole || 'Not specified'}
 
 Return ONLY valid JSON.`;
 
-    const response = await chatCompletion(
-      'You are a LinkedIn optimization expert. Analyze profiles and provide actionable improvements to increase visibility and engagement.',
-      prompt,
-      { temperature: 0.5 }
-    );
-
     let analysis;
     try {
+      const response = await chatCompletion(
+        'You are a LinkedIn optimization expert. Analyze profiles and provide actionable improvements to increase visibility and engagement.',
+        prompt,
+        { temperature: 0.5 }
+      );
       analysis = JSON.parse(response.replace(/```json?\n?/g, '').replace(/```/g, '').trim());
     } catch {
       analysis = {
@@ -43,7 +42,7 @@ Return ONLY valid JSON.`;
         skillRecommendations: [],
         keywordSuggestions: [],
         overallScore: 50,
-        tips: ['Could not parse analysis. Please try again.'],
+        tips: ['AI analysis unavailable. Please configure OPENAI_API_KEY.'],
       };
     }
 

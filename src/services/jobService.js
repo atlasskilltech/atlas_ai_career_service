@@ -63,16 +63,15 @@ ${jobDescription}
 
 Return ONLY valid JSON.`;
 
-    const response = await chatCompletion(
-      'You are an expert job match analyst. Evaluate candidate-job fit and provide actionable recommendations.',
-      prompt,
-      { temperature: 0.3 }
-    );
-
     try {
+      const response = await chatCompletion(
+        'You are an expert job match analyst. Evaluate candidate-job fit and provide actionable recommendations.',
+        prompt,
+        { temperature: 0.3 }
+      );
       return JSON.parse(response.replace(/```json?\n?/g, '').replace(/```/g, '').trim());
     } catch {
-      return { matchPercentage: 0, matchingSkills: [], missingSkills: [], gapAnalysis: 'Analysis failed', suggestions: [] };
+      return { matchPercentage: 0, matchingSkills: [], missingSkills: [], gapAnalysis: 'AI analysis unavailable. Please configure OPENAI_API_KEY.', suggestions: [] };
     }
   }
 }

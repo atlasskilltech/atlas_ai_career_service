@@ -20,22 +20,21 @@ ${jobDescription}
 
 Return ONLY valid JSON, no markdown or explanation.`;
 
-    const response = await chatCompletion(
-      'You are an expert ATS (Applicant Tracking System) analyzer. Analyze resumes against job descriptions and provide detailed scoring and recommendations. Always return valid JSON.',
-      prompt,
-      { temperature: 0.3 }
-    );
-
     let analysis;
     try {
+      const response = await chatCompletion(
+        'You are an expert ATS (Applicant Tracking System) analyzer. Analyze resumes against job descriptions and provide detailed scoring and recommendations. Always return valid JSON.',
+        prompt,
+        { temperature: 0.3 }
+      );
       analysis = JSON.parse(response.replace(/```json?\n?/g, '').replace(/```/g, '').trim());
     } catch {
       analysis = {
         atsScore: 50,
         keywordMatches: [],
         missingKeywords: [],
-        formattingIssues: ['Could not parse analysis'],
-        suggestions: ['Please try again'],
+        formattingIssues: ['AI analysis unavailable'],
+        suggestions: ['Please configure OPENAI_API_KEY in .env'],
       };
     }
 
