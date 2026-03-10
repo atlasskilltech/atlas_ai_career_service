@@ -29,11 +29,16 @@ Requirements:
 
 Return ONLY the cover letter text.`;
 
-    const content = await chatCompletion(
-      'You are an expert cover letter writer who creates compelling, personalized cover letters that help candidates stand out.',
-      prompt,
-      { maxTokens: 1500 }
-    );
+    let content;
+    try {
+      content = await chatCompletion(
+        'You are an expert cover letter writer who creates compelling, personalized cover letters that help candidates stand out.',
+        prompt,
+        { maxTokens: 1500 }
+      );
+    } catch {
+      content = 'AI generation is currently unavailable. Please configure your OPENAI_API_KEY in the .env file to enable AI-powered cover letter generation.';
+    }
 
     return coverLetterRepository.create({
       userId,

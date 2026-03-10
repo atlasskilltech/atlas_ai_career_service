@@ -27,14 +27,13 @@ TARGET ROLE: ${data.targetRole}
 
 Return ONLY valid JSON.`;
 
-    const response = await chatCompletion(
-      'You are a career development expert specializing in skill gap analysis and learning roadmap creation.',
-      prompt,
-      { temperature: 0.4, maxTokens: 2500 }
-    );
-
     let analysis;
     try {
+      const response = await chatCompletion(
+        'You are a career development expert specializing in skill gap analysis and learning roadmap creation.',
+        prompt,
+        { temperature: 0.4, maxTokens: 2500 }
+      );
       analysis = JSON.parse(response.replace(/```json?\n?/g, '').replace(/```/g, '').trim());
     } catch {
       analysis = {
