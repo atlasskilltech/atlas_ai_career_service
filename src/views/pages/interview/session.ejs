@@ -1,139 +1,142 @@
-<div class="space-y-3" id="interview-app">
+<div class="space-y-2" id="interview-app">
   <!-- Header -->
   <div class="flex items-center justify-between">
     <div>
-      <h1 class="text-xl font-bold capitalize"><%= interview.interview_type.replace('_', ' ') %> Interview</h1>
-      <p class="text-sm text-gray-500"><%= interview.job_role %><%= interview.company ? ' at ' + interview.company : '' %> | <%= interview.difficulty %></p>
+      <h1 class="text-lg font-bold capitalize"><%= interview.interview_type.replace('_', ' ') %> Interview</h1>
+      <p class="text-xs text-gray-500"><%= interview.job_role %><%= interview.company ? ' at ' + interview.company : '' %> | <%= interview.difficulty %></p>
     </div>
-    <div class="flex items-center gap-3">
-      <span class="text-sm font-mono bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-lg" id="timer">00:00</span>
-      <div class="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium" id="connection-badge">
-        <span class="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" id="conn-dot"></span>
-        <span id="conn-text">Connecting...</span>
+    <div class="flex items-center gap-2">
+      <span class="text-xs font-mono bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded" id="timer">00:00</span>
+      <div class="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium" id="connection-badge">
+        <span class="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse" id="conn-dot"></span>
+        <span id="conn-text">Connecting</span>
       </div>
     </div>
   </div>
 
-  <!-- Progress Bar -->
-  <div class="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-    <div class="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-500 rounded-full" id="progress-bar" style="width: <%= progress.total > 0 ? Math.round((progress.answered / progress.total) * 100) : 0 %>%"></div>
+  <!-- Progress -->
+  <div class="flex items-center gap-2">
+    <div class="flex-1 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+      <div class="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-500 rounded-full" id="progress-bar" style="width: <%= progress.total > 0 ? Math.round((progress.answered / progress.total) * 100) : 0 %>%"></div>
+    </div>
+    <span class="text-xs text-gray-500 whitespace-nowrap" id="progress-text"><%= progress.answered %>/<%= progress.total %></span>
   </div>
-  <p class="text-xs text-gray-500 text-right" id="progress-text"><%= progress.answered %> / <%= progress.total %> questions</p>
 
-  <!-- Main Interview Area: Split Screen -->
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4" style="min-height: 520px;">
+  <!-- Main: 2 columns -->
+  <div class="grid grid-cols-1 lg:grid-cols-5 gap-3">
 
-    <!-- LEFT: AI Avatar + Camera -->
-    <div class="space-y-3">
-      <!-- AI Avatar Card -->
-      <div class="card p-0 overflow-hidden" style="min-height: 340px;">
-        <div class="relative bg-gradient-to-br from-slate-800 via-slate-900 to-gray-900" style="height: 340px;">
-          <canvas id="avatar-canvas" width="560" height="340" class="w-full h-full"></canvas>
-          <!-- Avatar Name Tag -->
-          <div class="absolute bottom-3 left-3 flex items-center gap-2 bg-black/50 backdrop-blur px-3 py-1.5 rounded-full">
-            <div class="w-2 h-2 rounded-full" id="avatar-pulse"></div>
-            <span class="text-white text-xs font-medium" id="avatar-label">AI Interviewer</span>
+    <!-- LEFT COL: Avatar + Camera (2/5) -->
+    <div class="lg:col-span-2 space-y-2">
+      <!-- AI Avatar -->
+      <div class="card p-0 overflow-hidden">
+        <div class="relative bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900" style="height: 280px;">
+          <canvas id="avatar-canvas" width="460" height="280" class="w-full h-full"></canvas>
+          <div class="absolute bottom-2 left-2 flex items-center gap-1.5 bg-black/50 backdrop-blur px-2 py-1 rounded-full">
+            <div class="w-1.5 h-1.5 rounded-full" id="avatar-pulse"></div>
+            <span class="text-white text-[10px] font-medium" id="avatar-label">AI Interviewer</span>
           </div>
-          <!-- Avatar State Badge -->
-          <div class="absolute top-3 right-3 px-3 py-1 rounded-full text-xs font-medium bg-black/40 backdrop-blur text-white" id="avatar-state-badge">
-            <i class="fas fa-circle-notch fa-spin mr-1"></i>Initializing
+          <div class="absolute top-2 right-2 px-2 py-0.5 rounded-full text-[10px] font-medium bg-black/40 backdrop-blur text-white" id="avatar-state-badge">
+            <i class="fas fa-circle-notch fa-spin mr-1"></i>Init
           </div>
         </div>
       </div>
 
-      <!-- Your Camera (smaller) -->
-      <div class="card p-2">
-        <div class="relative rounded-lg overflow-hidden bg-gray-900" style="height: 140px;">
+      <!-- Camera -->
+      <div class="card p-1.5">
+        <div class="relative rounded overflow-hidden bg-gray-900" style="height: 120px;">
           <video id="camera-feed" autoplay muted playsinline class="w-full h-full object-cover"></video>
-          <div class="absolute top-2 left-2 flex items-center gap-1.5 bg-black/60 text-white text-xs px-2 py-1 rounded-full">
-            <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
-            <span>YOU</span>
+          <div class="absolute top-1 left-1 flex items-center gap-1 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded-full">
+            <span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span> YOU
           </div>
-          <!-- Mic level indicator -->
-          <div class="absolute bottom-2 right-2 flex items-end gap-0.5 h-4" id="mic-levels">
-            <span class="w-1 bg-green-400 rounded-full transition-all" style="height: 2px;"></span>
-            <span class="w-1 bg-green-400 rounded-full transition-all" style="height: 2px;"></span>
-            <span class="w-1 bg-green-400 rounded-full transition-all" style="height: 2px;"></span>
-            <span class="w-1 bg-green-400 rounded-full transition-all" style="height: 2px;"></span>
-            <span class="w-1 bg-green-400 rounded-full transition-all" style="height: 2px;"></span>
+          <div class="absolute bottom-1 right-1 flex items-end gap-0.5 h-3" id="mic-levels">
+            <span class="w-0.5 bg-green-400 rounded-full transition-all" style="height:2px"></span>
+            <span class="w-0.5 bg-green-400 rounded-full transition-all" style="height:2px"></span>
+            <span class="w-0.5 bg-green-400 rounded-full transition-all" style="height:2px"></span>
+            <span class="w-0.5 bg-green-400 rounded-full transition-all" style="height:2px"></span>
+            <span class="w-0.5 bg-green-400 rounded-full transition-all" style="height:2px"></span>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- RIGHT: Question, Transcript, Controls -->
-    <div class="space-y-3 flex flex-col">
-      <!-- Current Question -->
-      <div class="card flex-shrink-0" id="question-card">
-        <div class="flex items-center justify-between mb-2">
+    <!-- RIGHT COL: Q + Answer + Controls (3/5) -->
+    <div class="lg:col-span-3 flex flex-col gap-2">
+      <!-- Question -->
+      <div class="card py-3 px-4" id="question-card">
+        <div class="flex items-center justify-between mb-1">
           <div class="flex items-center gap-2">
-            <span class="w-7 h-7 bg-gradient-to-br from-blue-500 to-purple-500 text-white rounded-full flex items-center justify-center text-xs font-bold" id="q-number"><%= currentQuestion ? currentQuestion.question_order : '-' %></span>
-            <span class="text-xs text-gray-500" id="q-type"><%= currentQuestion && currentQuestion.is_follow_up ? 'Follow-up' : 'Question' %></span>
+            <span class="w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-500 text-white rounded-full flex items-center justify-center text-[10px] font-bold" id="q-number"><%= currentQuestion ? currentQuestion.question_order : '-' %></span>
+            <span class="text-[10px] text-gray-500" id="q-type"><%= currentQuestion && currentQuestion.is_follow_up ? 'Follow-up' : 'Question' %></span>
           </div>
-          <button onclick="replayQuestion()" id="replay-btn" class="text-xs text-gray-400 hover:text-blue-500 transition" title="Replay">
-            <i class="fas fa-volume-high mr-1"></i>Replay
-          </button>
+          <button onclick="replayQuestion()" class="text-[10px] text-gray-400 hover:text-blue-500"><i class="fas fa-volume-high mr-1"></i>Replay</button>
         </div>
-        <p class="text-base font-medium leading-relaxed" id="q-text"><%= currentQuestion ? currentQuestion.question : 'Interview complete!' %></p>
+        <p class="text-sm font-medium leading-relaxed" id="q-text"><%= currentQuestion ? currentQuestion.question : 'Interview complete!' %></p>
       </div>
 
-      <!-- Live Transcript / Conversation -->
-      <div class="card flex-1 flex flex-col" style="min-height: 180px;">
-        <div class="flex items-center justify-between mb-2">
-          <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Live Transcript</span>
-          <span class="text-xs text-gray-400" id="transcribe-status"></span>
+      <!-- Transcript -->
+      <div class="card py-2 px-4 flex-1" style="min-height:100px; max-height:160px;">
+        <div class="flex items-center justify-between mb-1">
+          <span class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Transcript</span>
+          <span class="text-[10px] text-gray-400" id="transcribe-status"></span>
         </div>
-        <div class="flex-1 overflow-y-auto space-y-2 mb-3 pr-1" id="transcript-area" style="max-height: 200px;">
-          <div class="text-xs text-gray-400 italic text-center py-4" id="transcript-placeholder">
-            Conversation will appear here as you speak...
-          </div>
-        </div>
-
-        <!-- Answer Text -->
-        <textarea id="answer-text" class="input-field text-sm" rows="3" placeholder="Your answer will be transcribed here automatically, or type manually..."></textarea>
-        <div class="flex items-center justify-between mt-2 text-xs text-gray-500">
-          <span><i class="fas fa-font mr-1"></i><span id="word-count">0</span> words</span>
-          <span><i class="fas fa-clock mr-1"></i><span id="answer-time">0</span>s</span>
+        <div class="overflow-y-auto space-y-1.5 pr-1" id="transcript-area" style="max-height:120px;">
+          <div class="text-[10px] text-gray-400 italic text-center py-2" id="transcript-placeholder">Conversation appears here...</div>
         </div>
       </div>
 
-      <!-- Controls -->
-      <div class="flex items-center gap-2 flex-shrink-0" id="controls-bar">
-        <!-- Record Button -->
-        <button onclick="toggleRecording()" id="rec-btn" class="flex-1 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 text-sm font-medium flex items-center justify-center gap-2 hover:border-red-400 transition">
-          <span class="w-4 h-4 rounded-full bg-gray-400" id="rec-dot"></span>
-          <span id="rec-label">Record Answer</span>
-          <span class="text-xs text-gray-400 font-mono" id="rec-time"></span>
+      <!-- Answer -->
+      <div class="card py-2 px-4">
+        <textarea id="answer-text" class="input-field text-sm" rows="2" placeholder="Your answer (auto-transcribed or type here)..."></textarea>
+        <div class="flex items-center justify-between mt-1 text-[10px] text-gray-500">
+          <span><i class="fas fa-font mr-0.5"></i><span id="word-count">0</span> words</span>
+          <span><i class="fas fa-clock mr-0.5"></i><span id="answer-time">0</span>s</span>
+        </div>
+      </div>
+
+      <!-- ACTION BUTTONS - Always visible -->
+      <div class="flex items-center gap-2" id="controls-bar">
+        <button onclick="toggleRecording()" id="rec-btn" class="py-2.5 px-4 rounded-lg border-2 border-gray-300 dark:border-gray-600 text-xs font-medium flex items-center gap-1.5 hover:border-red-400 transition">
+          <span class="w-3 h-3 rounded-full bg-gray-400" id="rec-dot"></span>
+          <span id="rec-label">Record</span>
+          <span class="text-[10px] text-gray-400 font-mono" id="rec-time"></span>
         </button>
 
-        <!-- Submit Button -->
-        <button onclick="submitCurrentAnswer()" id="submit-btn" class="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl font-medium text-sm hover:shadow-lg transition flex items-center gap-2">
-          <i class="fas fa-paper-plane"></i>
-          <span>Submit</span>
+        <button onclick="submitCurrentAnswer()" id="submit-btn" class="flex-1 py-2.5 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg font-medium text-sm hover:shadow-lg transition flex items-center justify-center gap-1.5">
+          <i class="fas fa-paper-plane text-xs"></i> Submit & Next
         </button>
+
+        <button onclick="skipQuestion()" id="skip-btn" class="py-2.5 px-4 rounded-lg border-2 border-gray-300 dark:border-gray-600 text-xs font-medium text-gray-500 hover:border-orange-400 hover:text-orange-500 transition flex items-center gap-1.5">
+          <i class="fas fa-forward"></i> Skip
+        </button>
+      </div>
+
+      <!-- Save & Exit -->
+      <div class="flex items-center justify-between" id="save-bar">
+        <button onclick="endInterview()" id="save-exit-btn" class="text-xs text-gray-400 hover:text-red-500 transition flex items-center gap-1">
+          <i class="fas fa-save"></i> Save & End Interview
+        </button>
+        <span class="text-[10px] text-gray-400"><span id="answered-count"><%= progress.answered %></span> answered</span>
       </div>
 
       <!-- Complete Section -->
       <div id="complete-section" class="hidden">
-        <div class="card text-center py-6 bg-gradient-to-br from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20">
-          <i class="fas fa-check-circle text-4xl text-green-500 mb-3"></i>
-          <h3 class="text-lg font-bold">Interview Complete!</h3>
-          <p class="text-sm text-gray-500 mb-4">Your AI feedback report is being generated...</p>
-          <button onclick="endInterview()" id="end-btn" class="px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl font-medium hover:shadow-lg transition">
-            <i class="fas fa-chart-bar mr-2"></i>View Report
+        <div class="card text-center py-4 bg-gradient-to-br from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20">
+          <i class="fas fa-check-circle text-3xl text-green-500 mb-2"></i>
+          <h3 class="text-base font-bold">Interview Complete!</h3>
+          <p class="text-xs text-gray-500 mb-3">Generating your AI feedback report...</p>
+          <button onclick="endInterview()" id="end-btn" class="px-6 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg text-sm font-medium hover:shadow-lg transition">
+            <i class="fas fa-chart-bar mr-1"></i>View Report
           </button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Hidden audio element for TTS -->
   <audio id="ai-audio" class="hidden"></audio>
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
-// ===================== CONFIG =====================
 const interviewId = '<%= interview.id %>';
 const userId = '<%= typeof user !== "undefined" && user ? user.id : "" %>';
 let currentQuestionId = <%= currentQuestion ? currentQuestion.id : 'null' %>;
@@ -152,30 +155,13 @@ let analyser = null;
 // ===================== SOCKET.IO =====================
 const socket = io('/interview', { transports: ['websocket', 'polling'] });
 
-socket.on('connect', () => {
-  socket.emit('join', { interviewId });
-  setConnectionStatus('connected');
-});
-
+socket.on('connect', () => { socket.emit('join', { interviewId }); setConnectionStatus('connected'); });
 socket.on('disconnect', () => setConnectionStatus('disconnected'));
 socket.on('connect_error', () => setConnectionStatus('error'));
-
-socket.on('joined', () => {
-  if (currentQuestionId) speakQuestion(currentQuestionId);
-});
-
-socket.on('avatar-state', (data) => {
-  setAvatarState(data.state);
-});
-
-socket.on('question-audio-ready', (data) => {
-  playQuestionAudio(data.audioUrl);
-});
-
-socket.on('speak-error', () => {
-  setAvatarState('idle');
-  setAvatarBadge('Ready', 'fa-circle-check');
-});
+socket.on('joined', () => { if (currentQuestionId) speakQuestion(currentQuestionId); });
+socket.on('avatar-state', (d) => setAvatarState(d.state));
+socket.on('question-audio-ready', (d) => playQuestionAudio(d.audioUrl));
+socket.on('speak-error', () => { setAvatarState('idle'); });
 
 socket.on('transcribe-result', (data) => {
   if (data.success && data.text) {
@@ -185,548 +171,471 @@ socket.on('transcribe-result', (data) => {
     ta.dispatchEvent(new Event('input'));
     addTranscriptBubble('you', data.text);
     document.getElementById('transcribe-status').textContent = '';
-    showToast('Voice transcribed', 'success');
   } else {
-    document.getElementById('transcribe-status').textContent = 'Transcription failed';
+    document.getElementById('transcribe-status').textContent = 'Failed';
     showToast(data.error || 'Transcription failed', 'error');
   }
 });
 
-socket.on('next-question', (data) => {
-  loadQuestion(data.question, data.progress);
-});
-
-socket.on('interview-complete', (data) => {
-  showComplete();
-});
-
-socket.on('answer-error', (data) => {
-  showToast(data.error || 'Failed to save answer', 'error');
+socket.on('next-question', (d) => loadQuestion(d.question, d.progress));
+socket.on('interview-complete', () => showComplete());
+socket.on('answer-error', (d) => {
+  showToast(d.error || 'Failed to save', 'error');
   document.getElementById('submit-btn').disabled = false;
+  document.getElementById('submit-btn').innerHTML = '<i class="fas fa-paper-plane text-xs"></i> Submit & Next';
+});
+socket.on('interview-ended', (d) => {
+  if (d.success) window.location.href = '/interview/' + interviewId + '/report';
+  else { showToast(d.error || 'Failed', 'error'); document.getElementById('end-btn').disabled = false; }
 });
 
-socket.on('interview-ended', (data) => {
-  if (data.success) {
-    window.location.href = '/interview/' + interviewId + '/report';
-  } else {
-    showToast(data.error || 'Failed to end interview', 'error');
-    document.getElementById('end-btn').disabled = false;
-  }
-});
-
-// ===================== CONNECTION STATUS =====================
-function setConnectionStatus(status) {
-  const dot = document.getElementById('conn-dot');
-  const text = document.getElementById('conn-text');
-  const badge = document.getElementById('connection-badge');
-  if (status === 'connected') {
-    dot.className = 'w-2 h-2 rounded-full bg-green-400';
-    text.textContent = 'Live';
-    badge.className = 'flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400';
-  } else if (status === 'disconnected' || status === 'error') {
-    dot.className = 'w-2 h-2 rounded-full bg-red-400 animate-pulse';
-    text.textContent = 'Reconnecting...';
-    badge.className = 'flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400';
-  }
+// ===================== CONNECTION =====================
+function setConnectionStatus(s) {
+  const dot = document.getElementById('conn-dot'), text = document.getElementById('conn-text'), badge = document.getElementById('connection-badge');
+  if (s === 'connected') { dot.className='w-1.5 h-1.5 rounded-full bg-green-400'; text.textContent='Live'; badge.className='flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400'; }
+  else { dot.className='w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse'; text.textContent='Reconnecting'; badge.className='flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-red-50 dark:bg-red-900/30 text-red-600'; }
 }
 
-// ===================== AVATAR CANVAS =====================
+// ===================== AVATAR (Realistic Human) =====================
 const canvas = document.getElementById('avatar-canvas');
 const ctx = canvas.getContext('2d');
-let avatarState = 'idle'; // idle, thinking, speaking, listening
-let blinkTimer = 0;
-let isBlinking = false;
-let headOffsetX = 0;
-let headOffsetY = 0;
-let headTargetX = 0;
-let headTargetY = 0;
-let mouthOpen = 0;
-let mouthTarget = 0;
-let eyebrowOffset = 0;
-let frameCount = 0;
+let avatarState = 'idle';
+let blinkTimer = 0, isBlinking = false;
+let headOffsetX = 0, headOffsetY = 0, headTargetX = 0, headTargetY = 0;
+let mouthOpen = 0, mouthTarget = 0, eyebrowOffset = 0, frameCount = 0;
 
 function setAvatarState(state) {
   avatarState = state;
-  const badges = {
-    idle: ['Ready', 'fa-circle-check'],
-    thinking: ['Thinking...', 'fa-brain'],
-    speaking: ['Speaking', 'fa-volume-high'],
-    listening: ['Listening', 'fa-ear-listen'],
-  };
-  const [label, icon] = badges[state] || badges.idle;
-  setAvatarBadge(label, icon);
-
-  const pulse = document.getElementById('avatar-pulse');
-  if (state === 'speaking') pulse.className = 'w-2 h-2 rounded-full bg-green-400 animate-pulse';
-  else if (state === 'listening') pulse.className = 'w-2 h-2 rounded-full bg-blue-400 animate-pulse';
-  else if (state === 'thinking') pulse.className = 'w-2 h-2 rounded-full bg-yellow-400 animate-pulse';
-  else pulse.className = 'w-2 h-2 rounded-full bg-gray-400';
-}
-
-function setAvatarBadge(label, icon) {
-  document.getElementById('avatar-state-badge').innerHTML = '<i class="fas ' + icon + ' mr-1"></i>' + label;
+  const b = { idle:['Ready','fa-circle-check'], thinking:['Thinking...','fa-brain'], speaking:['Speaking','fa-volume-high'], listening:['Listening','fa-ear-listen'] };
+  const [l,i] = b[state]||b.idle;
+  document.getElementById('avatar-state-badge').innerHTML = '<i class="fas '+i+' mr-1"></i>'+l;
+  const p = document.getElementById('avatar-pulse');
+  if(state==='speaking') p.className='w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse';
+  else if(state==='listening') p.className='w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse';
+  else if(state==='thinking') p.className='w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse';
+  else p.className='w-1.5 h-1.5 rounded-full bg-gray-400';
 }
 
 function drawAvatar() {
-  const w = canvas.width;
-  const h = canvas.height;
+  const w = canvas.width, h = canvas.height;
   ctx.clearRect(0, 0, w, h);
 
-  // Background gradient
-  const grad = ctx.createRadialGradient(w/2, h/2, 50, w/2, h/2, 300);
-  grad.addColorStop(0, '#1e293b');
-  grad.addColorStop(1, '#0f172a');
-  ctx.fillStyle = grad;
+  // Office background
+  const bgGrad = ctx.createLinearGradient(0, 0, 0, h);
+  bgGrad.addColorStop(0, '#2d3748');
+  bgGrad.addColorStop(0.6, '#1a202c');
+  bgGrad.addColorStop(1, '#171923');
+  ctx.fillStyle = bgGrad;
   ctx.fillRect(0, 0, w, h);
+
+  // Subtle wall pattern
+  ctx.fillStyle = 'rgba(255,255,255,0.02)';
+  for (let i = 0; i < w; i += 40) { ctx.fillRect(i, 0, 1, h * 0.6); }
+
+  // Desk
+  ctx.fillStyle = '#4a3728';
+  ctx.fillRect(0, h - 30, w, 30);
+  ctx.fillStyle = '#5a4535';
+  ctx.fillRect(0, h - 32, w, 4);
 
   frameCount++;
 
-  // Head movement
-  if (frameCount % 60 === 0) {
-    headTargetX = (Math.random() - 0.5) * 8;
-    headTargetY = (Math.random() - 0.5) * 4;
-  }
-  headOffsetX += (headTargetX - headOffsetX) * 0.05;
-  headOffsetY += (headTargetY - headOffsetY) * 0.05;
+  // Subtle head movement
+  if (frameCount % 90 === 0) { headTargetX = (Math.random() - 0.5) * 5; headTargetY = (Math.random() - 0.5) * 3; }
+  headOffsetX += (headTargetX - headOffsetX) * 0.03;
+  headOffsetY += (headTargetY - headOffsetY) * 0.03;
 
   // Blink
   blinkTimer++;
-  if (!isBlinking && blinkTimer > 120 + Math.random() * 180) {
-    isBlinking = true;
-    blinkTimer = 0;
-  }
-  if (isBlinking && blinkTimer > 8) {
-    isBlinking = false;
-    blinkTimer = 0;
-  }
-
-  // Mouth animation
-  if (avatarState === 'speaking') {
-    mouthTarget = 0.3 + Math.sin(frameCount * 0.3) * 0.3 + Math.sin(frameCount * 0.7) * 0.2;
-  } else {
-    mouthTarget = 0;
-  }
-  mouthOpen += (mouthTarget - mouthOpen) * 0.3;
-
-  // Eyebrow
-  if (avatarState === 'thinking') {
-    eyebrowOffset = Math.sin(frameCount * 0.05) * 3;
-  } else if (avatarState === 'listening') {
-    eyebrowOffset = -2;
-  } else {
-    eyebrowOffset += (0 - eyebrowOffset) * 0.1;
-  }
-
-  const cx = w / 2 + headOffsetX;
-  const cy = h / 2 + headOffsetY + 15;
-
-  // Neck
-  ctx.fillStyle = '#d4a574';
-  ctx.fillRect(cx - 18, cy + 55, 36, 40);
-
-  // Shoulders / body
-  ctx.fillStyle = '#3b82f6';
-  ctx.beginPath();
-  ctx.ellipse(cx, cy + 120, 90, 50, 0, Math.PI, 0, true);
-  ctx.fill();
-
-  // Collar
-  ctx.fillStyle = '#2563eb';
-  ctx.beginPath();
-  ctx.moveTo(cx - 20, cy + 72);
-  ctx.lineTo(cx, cy + 90);
-  ctx.lineTo(cx + 20, cy + 72);
-  ctx.closePath();
-  ctx.fill();
-
-  // Head (oval)
-  ctx.fillStyle = '#e8b88a';
-  ctx.beginPath();
-  ctx.ellipse(cx, cy, 55, 65, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Hair
-  ctx.fillStyle = '#1a1a2e';
-  ctx.beginPath();
-  ctx.ellipse(cx, cy - 35, 58, 38, 0, Math.PI, 0, true);
-  ctx.fill();
-  // Side hair
-  ctx.fillRect(cx - 58, cy - 35, 12, 40);
-  ctx.fillRect(cx + 46, cy - 35, 12, 40);
-
-  // Ears
-  ctx.fillStyle = '#d4a574';
-  ctx.beginPath();
-  ctx.ellipse(cx - 55, cy - 5, 10, 15, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.ellipse(cx + 55, cy - 5, 10, 15, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Eyebrows
-  ctx.strokeStyle = '#1a1a2e';
-  ctx.lineWidth = 3;
-  ctx.lineCap = 'round';
-  // Left eyebrow
-  ctx.beginPath();
-  ctx.moveTo(cx - 30, cy - 22 + eyebrowOffset);
-  ctx.quadraticCurveTo(cx - 20, cy - 28 + eyebrowOffset, cx - 10, cy - 22 + eyebrowOffset);
-  ctx.stroke();
-  // Right eyebrow
-  ctx.beginPath();
-  ctx.moveTo(cx + 10, cy - 22 + eyebrowOffset);
-  ctx.quadraticCurveTo(cx + 20, cy - 28 + eyebrowOffset, cx + 30, cy - 22 + eyebrowOffset);
-  ctx.stroke();
-
-  // Eyes
-  const eyeY = cy - 10;
-  const eyeOpenAmount = isBlinking ? 0.1 : 1;
-
-  // Left eye white
-  ctx.fillStyle = '#fff';
-  ctx.beginPath();
-  ctx.ellipse(cx - 20, eyeY, 12, 8 * eyeOpenAmount, 0, 0, Math.PI * 2);
-  ctx.fill();
-  // Right eye white
-  ctx.beginPath();
-  ctx.ellipse(cx + 20, eyeY, 12, 8 * eyeOpenAmount, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  if (!isBlinking) {
-    // Pupils
-    ctx.fillStyle = '#2d3748';
-    ctx.beginPath();
-    ctx.ellipse(cx - 19 + headOffsetX * 0.3, eyeY, 5, 6, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.ellipse(cx + 21 + headOffsetX * 0.3, eyeY, 5, 6, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Eye highlights
-    ctx.fillStyle = '#fff';
-    ctx.beginPath();
-    ctx.arc(cx - 17 + headOffsetX * 0.3, eyeY - 2, 2, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(cx + 23 + headOffsetX * 0.3, eyeY - 2, 2, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  // Nose
-  ctx.strokeStyle = '#c89b73';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(cx, cy + 2);
-  ctx.lineTo(cx - 5, cy + 15);
-  ctx.lineTo(cx + 2, cy + 15);
-  ctx.stroke();
+  if (!isBlinking && blinkTimer > 150 + Math.random() * 200) { isBlinking = true; blinkTimer = 0; }
+  if (isBlinking && blinkTimer > 6) { isBlinking = false; blinkTimer = 0; }
 
   // Mouth
-  const mouthY = cy + 28;
-  if (mouthOpen > 0.05) {
-    // Open mouth
-    ctx.fillStyle = '#8b4513';
-    ctx.beginPath();
-    ctx.ellipse(cx, mouthY, 15, 6 + mouthOpen * 14, 0, 0, Math.PI * 2);
-    ctx.fill();
-    // Teeth
+  if (avatarState === 'speaking') { mouthTarget = 0.2 + Math.sin(frameCount*0.25)*0.25 + Math.sin(frameCount*0.6)*0.15; }
+  else { mouthTarget = 0; }
+  mouthOpen += (mouthTarget - mouthOpen) * 0.25;
+
+  // Eyebrow
+  if (avatarState==='thinking') eyebrowOffset = Math.sin(frameCount*0.04)*2;
+  else if (avatarState==='listening') eyebrowOffset = -1.5;
+  else eyebrowOffset += (0 - eyebrowOffset)*0.08;
+
+  const cx = w/2 + headOffsetX;
+  const cy = h/2 + headOffsetY + 10;
+
+  // === BODY (Professional suit) ===
+  // Shoulders
+  ctx.fillStyle = '#1e293b';
+  ctx.beginPath();
+  ctx.moveTo(cx - 85, h - 28);
+  ctx.quadraticCurveTo(cx - 70, cy + 60, cx - 25, cy + 55);
+  ctx.lineTo(cx + 25, cy + 55);
+  ctx.quadraticCurveTo(cx + 70, cy + 60, cx + 85, h - 28);
+  ctx.lineTo(cx - 85, h - 28);
+  ctx.fill();
+
+  // Suit lapels
+  ctx.fillStyle = '#2d3748';
+  ctx.beginPath();
+  ctx.moveTo(cx - 20, cy + 55);
+  ctx.lineTo(cx - 8, h - 28);
+  ctx.lineTo(cx - 35, h - 28);
+  ctx.lineTo(cx - 30, cy + 58);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(cx + 20, cy + 55);
+  ctx.lineTo(cx + 8, h - 28);
+  ctx.lineTo(cx + 35, h - 28);
+  ctx.lineTo(cx + 30, cy + 58);
+  ctx.fill();
+
+  // White shirt / collar
+  ctx.fillStyle = '#e2e8f0';
+  ctx.beginPath();
+  ctx.moveTo(cx - 18, cy + 55);
+  ctx.lineTo(cx, cy + 70);
+  ctx.lineTo(cx + 18, cy + 55);
+  ctx.fill();
+
+  // Tie
+  ctx.fillStyle = '#3b82f6';
+  ctx.beginPath();
+  ctx.moveTo(cx - 5, cy + 58);
+  ctx.lineTo(cx, cy + 65);
+  ctx.lineTo(cx + 5, cy + 58);
+  ctx.lineTo(cx + 3, h - 28);
+  ctx.lineTo(cx, h - 22);
+  ctx.lineTo(cx - 3, h - 28);
+  ctx.fill();
+
+  // === NECK ===
+  const skinBase = '#d4a574';
+  const skinShadow = '#c49464';
+  ctx.fillStyle = skinShadow;
+  ctx.beginPath();
+  ctx.ellipse(cx, cy + 50, 16, 12, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = skinBase;
+  ctx.fillRect(cx - 14, cy + 40, 28, 18);
+
+  // === HEAD (realistic oval) ===
+  // Shadow under chin
+  ctx.fillStyle = 'rgba(0,0,0,0.1)';
+  ctx.beginPath();
+  ctx.ellipse(cx, cy + 42, 42, 8, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Face shape - more realistic jaw
+  ctx.fillStyle = skinBase;
+  ctx.beginPath();
+  ctx.moveTo(cx - 42, cy - 10);
+  ctx.quadraticCurveTo(cx - 44, cy - 45, cx - 20, cy - 55);
+  ctx.quadraticCurveTo(cx, cy - 62, cx + 20, cy - 55);
+  ctx.quadraticCurveTo(cx + 44, cy - 45, cx + 42, cy - 10);
+  ctx.quadraticCurveTo(cx + 40, cy + 25, cx + 18, cy + 40);
+  ctx.quadraticCurveTo(cx, cy + 46, cx - 18, cy + 40);
+  ctx.quadraticCurveTo(cx - 40, cy + 25, cx - 42, cy - 10);
+  ctx.fill();
+
+  // Ears
+  ctx.fillStyle = skinShadow;
+  ctx.beginPath(); ctx.ellipse(cx - 43, cy - 8, 7, 12, -0.1, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(cx + 43, cy - 8, 7, 12, 0.1, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = skinBase;
+  ctx.beginPath(); ctx.ellipse(cx - 44, cy - 8, 5, 10, -0.1, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(cx + 44, cy - 8, 5, 10, 0.1, 0, Math.PI * 2); ctx.fill();
+
+  // === HAIR (professional short) ===
+  ctx.fillStyle = '#1a1a2e';
+  ctx.beginPath();
+  ctx.moveTo(cx - 44, cy - 15);
+  ctx.quadraticCurveTo(cx - 46, cy - 50, cx - 22, cy - 58);
+  ctx.quadraticCurveTo(cx, cy - 66, cx + 22, cy - 58);
+  ctx.quadraticCurveTo(cx + 46, cy - 50, cx + 44, cy - 15);
+  ctx.quadraticCurveTo(cx + 46, cy - 45, cx + 22, cy - 56);
+  ctx.quadraticCurveTo(cx, cy - 60, cx - 22, cy - 56);
+  ctx.quadraticCurveTo(cx - 46, cy - 45, cx - 44, cy - 15);
+  ctx.fill();
+  // Hair top fill
+  ctx.beginPath();
+  ctx.ellipse(cx, cy - 50, 38, 18, 0, Math.PI, 0, true);
+  ctx.fill();
+
+  // === EYEBROWS (natural) ===
+  ctx.lineWidth = 2.5;
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = '#2d2d3e';
+  ctx.beginPath();
+  ctx.moveTo(cx - 28, cy - 22 + eyebrowOffset);
+  ctx.bezierCurveTo(cx - 22, cy - 28 + eyebrowOffset, cx - 14, cy - 27 + eyebrowOffset, cx - 10, cy - 23 + eyebrowOffset);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(cx + 10, cy - 23 + eyebrowOffset);
+  ctx.bezierCurveTo(cx + 14, cy - 27 + eyebrowOffset, cx + 22, cy - 28 + eyebrowOffset, cx + 28, cy - 22 + eyebrowOffset);
+  ctx.stroke();
+
+  // === EYES (realistic almond shape) ===
+  const eyeY = cy - 12;
+  const eyeOpen = isBlinking ? 0.08 : 1;
+
+  // Eye socket shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.06)';
+  ctx.beginPath(); ctx.ellipse(cx - 18, eyeY, 14, 10, 0, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(cx + 18, eyeY, 14, 10, 0, 0, Math.PI*2); ctx.fill();
+
+  // Eye whites
+  ctx.fillStyle = '#fafafa';
+  ctx.beginPath(); ctx.ellipse(cx - 18, eyeY, 11, 7 * eyeOpen, 0, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(cx + 18, eyeY, 11, 7 * eyeOpen, 0, 0, Math.PI*2); ctx.fill();
+
+  if (!isBlinking) {
+    // Iris
+    const irisX = headOffsetX * 0.2;
+    ctx.fillStyle = '#4a3520';
+    ctx.beginPath(); ctx.ellipse(cx - 17 + irisX, eyeY, 5.5, 6, 0, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(cx + 19 + irisX, eyeY, 5.5, 6, 0, 0, Math.PI*2); ctx.fill();
+    // Pupil
+    ctx.fillStyle = '#111';
+    ctx.beginPath(); ctx.arc(cx - 17 + irisX, eyeY, 2.8, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(cx + 19 + irisX, eyeY, 2.8, 0, Math.PI*2); ctx.fill();
+    // Highlight
     ctx.fillStyle = '#fff';
-    ctx.fillRect(cx - 10, mouthY - 3, 20, 4);
-    // Tongue hint
-    ctx.fillStyle = '#d4685a';
-    ctx.beginPath();
-    ctx.ellipse(cx, mouthY + 4 + mouthOpen * 4, 8, 4 + mouthOpen * 4, 0, 0, Math.PI);
-    ctx.fill();
-  } else {
-    // Closed mouth - slight smile
-    ctx.strokeStyle = '#a0522d';
-    ctx.lineWidth = 2.5;
-    ctx.beginPath();
-    ctx.moveTo(cx - 14, mouthY);
-    ctx.quadraticCurveTo(cx, mouthY + 8, cx + 14, mouthY);
-    ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx - 15 + irisX, eyeY - 2, 1.5, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(cx + 21 + irisX, eyeY - 2, 1.5, 0, Math.PI*2); ctx.fill();
   }
 
-  // Thinking indicator (dots)
+  // Eyelids (upper line)
+  ctx.strokeStyle = '#8b7355';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.ellipse(cx - 18, eyeY, 11, 7, 0, Math.PI + 0.3, -0.3); ctx.stroke();
+  ctx.beginPath(); ctx.ellipse(cx + 18, eyeY, 11, 7, 0, Math.PI + 0.3, -0.3); ctx.stroke();
+
+  // === NOSE (subtle shadow) ===
+  ctx.strokeStyle = 'rgba(160,120,80,0.4)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(cx - 1, cy + 2);
+  ctx.quadraticCurveTo(cx - 6, cy + 14, cx - 5, cy + 16);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(cx + 1, cy + 2);
+  ctx.quadraticCurveTo(cx + 6, cy + 14, cx + 5, cy + 16);
+  ctx.stroke();
+  // Nose tip
+  ctx.fillStyle = 'rgba(180,140,100,0.3)';
+  ctx.beginPath(); ctx.ellipse(cx, cy + 16, 6, 3, 0, 0, Math.PI); ctx.fill();
+
+  // === MOUTH ===
+  const mouthY = cy + 28;
+  if (mouthOpen > 0.04) {
+    // Open mouth
+    ctx.fillStyle = '#5c2a14';
+    ctx.beginPath();
+    ctx.ellipse(cx, mouthY + mouthOpen * 3, 12, 3 + mouthOpen * 10, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Upper teeth
+    ctx.fillStyle = '#f5f0eb';
+    ctx.fillRect(cx - 8, mouthY - 1, 16, 3);
+    // Lips
+    ctx.fillStyle = '#c27a6a';
+    ctx.beginPath();
+    ctx.moveTo(cx - 14, mouthY);
+    ctx.quadraticCurveTo(cx, mouthY - 3, cx + 14, mouthY);
+    ctx.lineWidth = 2; ctx.strokeStyle = '#c27a6a'; ctx.stroke();
+  } else {
+    // Closed - natural lips
+    ctx.fillStyle = '#c8887a';
+    // Upper lip
+    ctx.beginPath();
+    ctx.moveTo(cx - 13, mouthY);
+    ctx.quadraticCurveTo(cx - 6, mouthY - 3, cx, mouthY - 1);
+    ctx.quadraticCurveTo(cx + 6, mouthY - 3, cx + 13, mouthY);
+    ctx.quadraticCurveTo(cx, mouthY + 2, cx - 13, mouthY);
+    ctx.fill();
+    // Lower lip
+    ctx.fillStyle = '#d09888';
+    ctx.beginPath();
+    ctx.moveTo(cx - 12, mouthY + 1);
+    ctx.quadraticCurveTo(cx, mouthY + 7, cx + 12, mouthY + 1);
+    ctx.quadraticCurveTo(cx, mouthY + 3, cx - 12, mouthY + 1);
+    ctx.fill();
+  }
+
+  // Thinking dots
   if (avatarState === 'thinking') {
-    const dotY = cy - 85;
     for (let i = 0; i < 3; i++) {
-      const alpha = 0.3 + 0.7 * Math.abs(Math.sin(frameCount * 0.08 + i * 1.2));
-      ctx.fillStyle = 'rgba(99, 102, 241, ' + alpha + ')';
-      ctx.beginPath();
-      ctx.arc(cx - 15 + i * 15, dotY + Math.sin(frameCount * 0.1 + i) * 3, 4, 0, Math.PI * 2);
-      ctx.fill();
+      const a = 0.3 + 0.7 * Math.abs(Math.sin(frameCount * 0.06 + i * 1.2));
+      ctx.fillStyle = 'rgba(99,102,241,' + a + ')';
+      ctx.beginPath(); ctx.arc(cx - 12 + i * 12, cy - 72 + Math.sin(frameCount*0.08+i)*2, 3, 0, Math.PI*2); ctx.fill();
     }
   }
 
-  // Listening indicator (sound waves)
+  // Listening waves
   if (avatarState === 'listening') {
-    ctx.strokeStyle = 'rgba(59, 130, 246, 0.5)';
-    ctx.lineWidth = 2;
     for (let i = 1; i <= 3; i++) {
-      const alpha = Math.max(0, 1 - (frameCount % 60) / 60) * (i === ((Math.floor(frameCount / 20) % 3) + 1) ? 1 : 0.2);
-      ctx.strokeStyle = 'rgba(59, 130, 246, ' + alpha + ')';
-      ctx.beginPath();
-      ctx.arc(cx, cy, 80 + i * 20, -0.5, 0.5);
-      ctx.stroke();
+      const a = Math.max(0, 1-(frameCount%60)/60) * (i===((Math.floor(frameCount/20)%3)+1)?0.6:0.1);
+      ctx.strokeStyle = 'rgba(59,130,246,'+a+')'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(cx, cy, 60+i*15, -0.4, 0.4); ctx.stroke();
     }
   }
 
   requestAnimationFrame(drawAvatar);
 }
 
-// ===================== TTS PLAYBACK =====================
+// ===================== TTS =====================
 function playQuestionAudio(url) {
   const audio = document.getElementById('ai-audio');
   audio.src = url;
-  audio.onended = () => {
-    setAvatarState('listening');
-    socket.emit('speak-done');
-  };
-  audio.onerror = () => {
-    setAvatarState('idle');
-  };
-  audio.play().catch(() => {
-    setAvatarState('idle');
-  });
+  audio.onended = () => { setAvatarState('listening'); socket.emit('speak-done'); };
+  audio.onerror = () => setAvatarState('idle');
+  audio.play().catch(() => setAvatarState('idle'));
 }
+function speakQuestion(qId) { socket.emit('speak-question', { questionId: qId }); }
+function replayQuestion() { if (currentQuestionId) speakQuestion(currentQuestionId); }
 
-function speakQuestion(qId) {
-  socket.emit('speak-question', { questionId: qId });
-}
-
-function replayQuestion() {
-  if (currentQuestionId) speakQuestion(currentQuestionId);
-}
-
-// ===================== CAMERA + MIC =====================
+// ===================== CAMERA =====================
 async function initMedia() {
   try {
     mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
     document.getElementById('camera-feed').srcObject = mediaStream;
-    initMicLevels();
-  } catch (err) {
-    showToast('Camera/mic access failed: ' + err.message, 'error');
-  }
+    try {
+      audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const src = audioContext.createMediaStreamSource(mediaStream);
+      analyser = audioContext.createAnalyser(); analyser.fftSize = 32;
+      src.connect(analyser); updateMicLevels();
+    } catch{}
+  } catch(e) { showToast('Camera/mic failed: '+e.message,'error'); }
 }
-
-function initMicLevels() {
-  try {
-    audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    const source = audioContext.createMediaStreamSource(mediaStream);
-    analyser = audioContext.createAnalyser();
-    analyser.fftSize = 32;
-    source.connect(analyser);
-    updateMicLevels();
-  } catch {}
-}
-
 function updateMicLevels() {
-  if (!analyser) return;
-  const data = new Uint8Array(analyser.frequencyBinCount);
-  analyser.getByteFrequencyData(data);
+  if(!analyser) return;
+  const d = new Uint8Array(analyser.frequencyBinCount); analyser.getByteFrequencyData(d);
   const bars = document.getElementById('mic-levels').children;
-  for (let i = 0; i < bars.length; i++) {
-    const val = data[i * 2] || 0;
-    bars[i].style.height = Math.max(2, val / 8) + 'px';
-  }
+  for(let i=0;i<bars.length;i++) bars[i].style.height = Math.max(2,(d[i*2]||0)/8)+'px';
   requestAnimationFrame(updateMicLevels);
 }
 
 // ===================== RECORDING =====================
-function toggleRecording() {
-  if (isRecording) stopRecording();
-  else startRecording();
-}
+function toggleRecording() { isRecording ? stopRecording() : startRecording(); }
 
 function startRecording() {
-  if (!mediaStream) { showToast('Microphone not available', 'error'); return; }
-  audioChunks = [];
-  recordedBlob = null;
-
-  const audioStream = new MediaStream(mediaStream.getAudioTracks());
-  mediaRecorder = new MediaRecorder(audioStream, { mimeType: 'audio/webm;codecs=opus' });
-  mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunks.push(e.data); };
-  mediaRecorder.onstop = () => {
-    recordedBlob = new Blob(audioChunks, { type: 'audio/webm' });
-    autoTranscribe();
-  };
-  mediaRecorder.start(1000);
-  isRecording = true;
-  answerStartTime = Date.now();
-
-  const btn = document.getElementById('rec-btn');
-  btn.classList.add('border-red-500', 'bg-red-50', 'dark:bg-red-900/20', 'text-red-600');
-  btn.classList.remove('border-gray-300', 'dark:border-gray-600');
-  document.getElementById('rec-dot').className = 'w-4 h-4 rounded-full bg-red-500 animate-pulse';
-  document.getElementById('rec-label').textContent = 'Recording...';
-
-  recTimer = setInterval(() => {
-    const s = Math.floor((Date.now() - answerStartTime) / 1000);
-    document.getElementById('rec-time').textContent = Math.floor(s/60) + ':' + (s%60).toString().padStart(2,'0');
-    document.getElementById('answer-time').textContent = s;
-  }, 1000);
+  if(!mediaStream){showToast('No mic','error');return;}
+  audioChunks=[]; recordedBlob=null;
+  const as = new MediaStream(mediaStream.getAudioTracks());
+  mediaRecorder = new MediaRecorder(as, { mimeType:'audio/webm;codecs=opus' });
+  mediaRecorder.ondataavailable = (e) => { if(e.data.size>0) audioChunks.push(e.data); };
+  mediaRecorder.onstop = () => { recordedBlob = new Blob(audioChunks,{type:'audio/webm'}); autoTranscribe(); };
+  mediaRecorder.start(1000); isRecording=true; answerStartTime=Date.now();
+  const btn=document.getElementById('rec-btn');
+  btn.classList.add('border-red-500','bg-red-50','text-red-600'); btn.classList.remove('border-gray-300','dark:border-gray-600');
+  document.getElementById('rec-dot').className='w-3 h-3 rounded-full bg-red-500 animate-pulse';
+  document.getElementById('rec-label').textContent='Stop';
+  recTimer=setInterval(()=>{const s=Math.floor((Date.now()-answerStartTime)/1000);document.getElementById('rec-time').textContent=Math.floor(s/60)+':'+(s%60).toString().padStart(2,'0');document.getElementById('answer-time').textContent=s;},1000);
 }
 
 function stopRecording() {
-  if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
-  isRecording = false;
-  clearInterval(recTimer);
-
-  const btn = document.getElementById('rec-btn');
-  btn.classList.remove('border-red-500', 'bg-red-50', 'dark:bg-red-900/20', 'text-red-600');
-  btn.classList.add('border-gray-300', 'dark:border-gray-600');
-  document.getElementById('rec-dot').className = 'w-4 h-4 rounded-full bg-gray-400';
-  document.getElementById('rec-label').textContent = 'Record Again';
+  if(mediaRecorder&&mediaRecorder.state!=='inactive') mediaRecorder.stop();
+  isRecording=false; clearInterval(recTimer);
+  const btn=document.getElementById('rec-btn');
+  btn.classList.remove('border-red-500','bg-red-50','text-red-600'); btn.classList.add('border-gray-300','dark:border-gray-600');
+  document.getElementById('rec-dot').className='w-3 h-3 rounded-full bg-gray-400';
+  document.getElementById('rec-label').textContent='Record';
 }
 
-// ===================== AUTO TRANSCRIBE =====================
-async function autoTranscribe() {
-  if (!recordedBlob) return;
-  document.getElementById('transcribe-status').textContent = 'Transcribing with AI...';
-
-  const reader = new FileReader();
-  reader.onloadend = () => {
-    socket.emit('transcribe', { audio: reader.result });
-  };
-  reader.readAsArrayBuffer(recordedBlob);
+// ===================== TRANSCRIBE =====================
+function autoTranscribe() {
+  if(!recordedBlob)return;
+  document.getElementById('transcribe-status').textContent='Transcribing...';
+  const r=new FileReader();
+  r.onloadend=()=>{ socket.emit('transcribe',{audio:r.result}); };
+  r.readAsArrayBuffer(recordedBlob);
 }
 
-// ===================== TRANSCRIPT BUBBLES =====================
+// ===================== TRANSCRIPT =====================
 function addTranscriptBubble(who, text) {
-  const area = document.getElementById('transcript-area');
-  const placeholder = document.getElementById('transcript-placeholder');
-  if (placeholder) placeholder.remove();
+  const area=document.getElementById('transcript-area');
+  const ph=document.getElementById('transcript-placeholder'); if(ph)ph.remove();
+  const b=document.createElement('div');
+  if(who==='ai'){b.className='flex items-start gap-1.5';b.innerHTML='<div class="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0 mt-0.5"><i class="fas fa-user-tie text-white" style="font-size:8px"></i></div><div class="bg-blue-50 dark:bg-blue-900/30 text-xs rounded-lg px-2 py-1.5 max-w-[85%]">'+escapeHtml(text)+'</div>';}
+  else{b.className='flex items-start gap-1.5 justify-end';b.innerHTML='<div class="bg-gray-100 dark:bg-gray-800 text-xs rounded-lg px-2 py-1.5 max-w-[85%]">'+escapeHtml(text)+'</div><div class="w-5 h-5 rounded-full bg-gray-400 flex items-center justify-center flex-shrink-0 mt-0.5"><i class="fas fa-user text-white" style="font-size:8px"></i></div>';}
+  area.appendChild(b); area.scrollTop=area.scrollHeight;
+}
+function escapeHtml(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
 
-  const bubble = document.createElement('div');
-  if (who === 'ai') {
-    bubble.className = 'flex items-start gap-2';
-    bubble.innerHTML = '<div class="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0 mt-0.5"><i class="fas fa-robot text-white text-xs"></i></div>' +
-      '<div class="bg-blue-50 dark:bg-blue-900/30 text-sm rounded-lg px-3 py-2 max-w-[85%]">' + escapeHtml(text) + '</div>';
-  } else {
-    bubble.className = 'flex items-start gap-2 justify-end';
-    bubble.innerHTML = '<div class="bg-gray-100 dark:bg-gray-800 text-sm rounded-lg px-3 py-2 max-w-[85%]">' + escapeHtml(text) + '</div>' +
-      '<div class="w-6 h-6 rounded-full bg-gray-400 flex items-center justify-center flex-shrink-0 mt-0.5"><i class="fas fa-user text-white text-xs"></i></div>';
-  }
-  area.appendChild(bubble);
-  area.scrollTop = area.scrollHeight;
+// ===================== SUBMIT =====================
+function submitCurrentAnswer() {
+  if(isRecording) stopRecording();
+  const ta=document.getElementById('answer-text'); let txt=ta.value.trim();
+  if(!txt&&recordedBlob){showToast('Transcribing...','success');return;}
+  if(!txt) return showToast('Please record or type your answer','error');
+  const dur=Math.floor((Date.now()-answerStartTime)/1000);
+  const btn=document.getElementById('submit-btn');
+  btn.disabled=true; btn.innerHTML='<i class="fas fa-spinner fa-spin text-xs"></i> Saving...';
+  socket.emit('submit-answer',{questionId:currentQuestionId, answerText:txt, answerDuration:dur});
 }
 
-function escapeHtml(str) {
-  const d = document.createElement('div');
-  d.textContent = str;
-  return d.innerHTML;
-}
-
-// ===================== SUBMIT ANSWER =====================
-async function submitCurrentAnswer() {
-  if (isRecording) stopRecording();
-
-  const textarea = document.getElementById('answer-text');
-  let answerText = textarea.value.trim();
-
-  // If no text but has a recording that hasn't been transcribed yet, wait a moment
-  if (!answerText && recordedBlob) {
-    showToast('Transcribing your recording...', 'success');
-    return;
-  }
-  if (!answerText) return showToast('Please record or type your answer first', 'error');
-
-  const duration = Math.floor((Date.now() - answerStartTime) / 1000);
-  const btn = document.getElementById('submit-btn');
-  btn.disabled = true;
-  btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Processing...';
-
-  socket.emit('submit-answer', {
-    questionId: currentQuestionId,
-    answerText: answerText,
-    answerDuration: duration,
-  });
+// ===================== SKIP =====================
+function skipQuestion() {
+  if(isRecording) stopRecording();
+  const dur=Math.floor((Date.now()-answerStartTime)/1000);
+  const btn=document.getElementById('skip-btn');
+  btn.disabled=true; btn.innerHTML='<i class="fas fa-spinner fa-spin"></i>';
+  socket.emit('submit-answer',{questionId:currentQuestionId, answerText:'[Skipped]', answerDuration:dur});
 }
 
 // ===================== LOAD QUESTION =====================
 function loadQuestion(q, progress) {
-  currentQuestionId = q.id;
-  recordedBlob = null;
-  audioChunks = [];
-
-  document.getElementById('q-number').textContent = q.question_order;
-  document.getElementById('q-type').textContent = q.is_follow_up ? 'Follow-up' : 'Question';
-  document.getElementById('q-text').textContent = q.question;
-  document.getElementById('answer-text').value = '';
-  document.getElementById('word-count').textContent = '0';
-  document.getElementById('answer-time').textContent = '0';
-  document.getElementById('rec-time').textContent = '';
-  document.getElementById('rec-label').textContent = 'Record Answer';
-  document.getElementById('transcribe-status').textContent = '';
-
-  const btn = document.getElementById('submit-btn');
-  btn.disabled = false;
-  btn.innerHTML = '<i class="fas fa-paper-plane mr-1"></i><span>Submit</span>';
-
+  currentQuestionId=q.id; recordedBlob=null; audioChunks=[];
+  document.getElementById('q-number').textContent=q.question_order;
+  document.getElementById('q-type').textContent=q.is_follow_up?'Follow-up':'Question';
+  document.getElementById('q-text').textContent=q.question;
+  document.getElementById('answer-text').value='';
+  document.getElementById('word-count').textContent='0';
+  document.getElementById('answer-time').textContent='0';
+  document.getElementById('rec-time').textContent='';
+  document.getElementById('rec-label').textContent='Record';
+  document.getElementById('transcribe-status').textContent='';
+  const btn=document.getElementById('submit-btn');
+  btn.disabled=false; btn.innerHTML='<i class="fas fa-paper-plane text-xs"></i> Submit & Next';
+  const skipBtn=document.getElementById('skip-btn');
+  skipBtn.disabled=false; skipBtn.innerHTML='<i class="fas fa-forward"></i> Skip';
   addTranscriptBubble('ai', q.question);
-
-  if (progress) {
-    const pct = Math.round((progress.answered / progress.total) * 100);
-    document.getElementById('progress-bar').style.width = pct + '%';
-    document.getElementById('progress-text').textContent = progress.answered + ' / ' + progress.total + ' questions';
+  if(progress){
+    const pct=Math.round((progress.answered/progress.total)*100);
+    document.getElementById('progress-bar').style.width=pct+'%';
+    document.getElementById('progress-text').textContent=progress.answered+'/'+progress.total;
+    document.getElementById('answered-count').textContent=progress.answered;
   }
-
-  answerStartTime = Date.now();
-  speakQuestion(q.id);
+  answerStartTime=Date.now(); speakQuestion(q.id);
 }
 
-// ===================== COMPLETE / END =====================
+// ===================== COMPLETE =====================
 function showComplete() {
   document.getElementById('question-card').classList.add('hidden');
   document.getElementById('controls-bar').classList.add('hidden');
+  document.getElementById('save-bar').classList.add('hidden');
   document.getElementById('complete-section').classList.remove('hidden');
-  document.getElementById('progress-bar').style.width = '100%';
-  setAvatarState('idle');
-  clearInterval(interviewTimer);
-  if (isRecording) stopRecording();
+  document.getElementById('progress-bar').style.width='100%';
+  setAvatarState('idle'); clearInterval(interviewTimer); if(isRecording)stopRecording();
 }
 
 function endInterview() {
-  if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
-  const btn = document.getElementById('end-btn');
-  btn.disabled = true;
-  btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Generating Report...';
-  socket.emit('end-interview', { userId });
-}
-
-// ===================== TIMER =====================
-function startTimer() {
-  interviewTimer = setInterval(() => {
-    const s = Math.floor((Date.now() - interviewStartTime) / 1000);
-    document.getElementById('timer').textContent =
-      Math.floor(s/60).toString().padStart(2,'0') + ':' + (s%60).toString().padStart(2,'0');
-  }, 1000);
-}
-
-// ===================== WORD COUNT =====================
-function initWordCount() {
-  document.getElementById('answer-text').addEventListener('input', () => {
-    const t = document.getElementById('answer-text').value.trim();
-    document.getElementById('word-count').textContent = t ? t.split(/\s+/).length : 0;
-  });
+  if(mediaStream) mediaStream.getTracks().forEach(t=>t.stop());
+  const btn=document.getElementById('end-btn')||document.getElementById('save-exit-btn');
+  if(btn){btn.disabled=true; btn.innerHTML='<i class="fas fa-spinner fa-spin mr-1"></i>Generating Report...';}
+  socket.emit('end-interview',{userId});
 }
 
 // ===================== INIT =====================
+function initWordCount(){document.getElementById('answer-text').addEventListener('input',()=>{const t=document.getElementById('answer-text').value.trim();document.getElementById('word-count').textContent=t?t.split(/\s+/).length:0;});}
+
 async function init() {
-  drawAvatar();
-  await initMedia();
-  startTimer();
+  drawAvatar(); await initMedia();
+  interviewTimer=setInterval(()=>{const s=Math.floor((Date.now()-interviewStartTime)/1000);document.getElementById('timer').textContent=Math.floor(s/60).toString().padStart(2,'0')+':'+(s%60).toString().padStart(2,'0');},1000);
   initWordCount();
-  if (!currentQuestionId) showComplete();
+  if(!currentQuestionId) showComplete();
   else addTranscriptBubble('ai', document.getElementById('q-text').textContent);
 }
 
-window.addEventListener('beforeunload', () => {
-  if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
-  if (isRecording) stopRecording();
-  if (audioContext) audioContext.close();
-});
-
+window.addEventListener('beforeunload',()=>{if(mediaStream)mediaStream.getTracks().forEach(t=>t.stop());if(isRecording)stopRecording();if(audioContext)audioContext.close();});
 init();
 </script>
