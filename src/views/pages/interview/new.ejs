@@ -6,10 +6,10 @@
     <div class="space-y-4">
       <div>
         <label class="label-field">Interview Type</label>
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-2 gap-3" id="type-options">
           <% ['technical', 'behavioral', 'hr', 'case_study'].forEach(type => { %>
-            <label class="flex items-center gap-3 p-4 border-2 rounded-lg cursor-pointer hover:border-accent transition interview-type-option">
-              <input type="radio" name="interviewType" value="<%= type %>" <%= type === 'behavioral' ? 'checked' : '' %> class="text-accent">
+            <label class="flex items-center gap-3 p-4 border-2 rounded-lg cursor-pointer hover:border-accent transition <%= type === 'behavioral' ? 'border-accent bg-accent/5' : 'border-gray-200' %>">
+              <input type="radio" name="interviewType" value="<%= type %>" <%= type === 'behavioral' ? 'checked' : '' %> class="text-accent" onchange="highlightSelection('type-options', this)">
               <div>
                 <p class="font-medium capitalize"><%= type.replace('_', ' ') %></p>
                 <p class="text-xs text-gray-500">
@@ -23,11 +23,11 @@
 
       <div>
         <label class="label-field">Mode</label>
-        <div class="grid grid-cols-3 gap-3">
+        <div class="grid grid-cols-3 gap-3" id="mode-options">
           <% [{val:'text',icon:'fa-keyboard',label:'Text'}, {val:'audio',icon:'fa-headphones',label:'Audio'}, {val:'video',icon:'fa-video',label:'Video'}].forEach(m => { %>
-            <label class="flex flex-col items-center gap-2 p-4 border-2 rounded-lg cursor-pointer hover:border-accent transition">
-              <input type="radio" name="mode" value="<%= m.val %>" <%= m.val === 'text' ? 'checked' : '' %> class="sr-only">
-              <i class="fas <%= m.icon %> text-xl text-gray-500"></i>
+            <label class="flex flex-col items-center gap-2 p-4 border-2 rounded-lg cursor-pointer hover:border-accent transition <%= m.val === 'text' ? 'border-accent bg-accent/5' : 'border-gray-200' %>">
+              <input type="radio" name="mode" value="<%= m.val %>" <%= m.val === 'text' ? 'checked' : '' %> class="sr-only" onchange="highlightSelection('mode-options', this)">
+              <i class="fas <%= m.icon %> text-xl <%= m.val === 'text' ? 'text-accent' : 'text-gray-500' %>"></i>
               <span class="text-sm font-medium"><%= m.label %></span>
             </label>
           <% }); %>
@@ -45,11 +45,32 @@
 </div>
 
 <script>
+function highlightSelection(containerId, selectedInput) {
+  const container = document.getElementById(containerId);
+  container.querySelectorAll('label').forEach(label => {
+    label.classList.remove('border-accent', 'bg-accent/5');
+    label.classList.add('border-gray-200');
+    const icon = label.querySelector('i.fas');
+    if (icon) { icon.classList.remove('text-accent'); icon.classList.add('text-gray-500'); }
+  });
+  const selectedLabel = selectedInput.closest('label');
+  selectedLabel.classList.remove('border-gray-200');
+  selectedLabel.classList.add('border-accent', 'bg-accent/5');
+  const icon = selectedLabel.querySelector('i.fas');
+  if (icon) { icon.classList.remove('text-gray-500'); icon.classList.add('text-accent'); }
+}
+
 async function startInterview() {
   const btn = document.getElementById('start-btn');
+  const modeInput = document.querySelector('input[name="mode"]:checked');
+  const typeInput = document.querySelector('input[name="interviewType"]:checked');
+  if (!modeInput || !typeInput) {
+    showToast('Please select interview type and mode', 'error');
+    return;
+  }
   const data = {
-    interviewType: document.querySelector('input[name="interviewType"]:checked').value,
-    mode: document.querySelector('input[name="mode"]:checked').value,
+    interviewType: typeInput.value,
+    mode: modeInput.value,
     jobRole: document.getElementById('int-role').value,
   };
   btn.disabled = true;
@@ -58,6 +79,7 @@ async function startInterview() {
     const res = await fetch('/interview/start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
     const result = await res.json();
     if (result.success) window.location.href = '/interview/' + result.interview.id + '/session';
+    else showToast(result.error || 'Failed to start interview', 'error');
   } catch (err) { showToast('Failed to start', 'error'); }
   btn.disabled = false;
   btn.innerHTML = '<i class="fas fa-play mr-2"></i>Start Interview';
