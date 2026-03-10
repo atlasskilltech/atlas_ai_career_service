@@ -4,7 +4,7 @@ const path = require('path');
 require('dotenv').config();
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey: process.env.OPENAI_API_KEY || 'sk-placeholder-key-not-set',
 });
 
 async function chatCompletion(systemPrompt, userPrompt, options = {}) {
