@@ -2,7 +2,7 @@ const pool = require('../src/config/database');
 require('dotenv').config();
 
 const tables = [
-  `CREATE TABLE IF NOT EXISTS users (
+  `CREATE TABLE IF NOT EXISTS aicp_users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
@@ -20,7 +20,7 @@ const tables = [
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
   )`,
 
-  `CREATE TABLE IF NOT EXISTS resumes (
+  `CREATE TABLE IF NOT EXISTS aicp_resumes (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     title VARCHAR(255) DEFAULT 'Untitled Resume',
@@ -36,10 +36,10 @@ const tables = [
     is_primary TINYINT(1) DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES aicp_users(id) ON DELETE CASCADE
   )`,
 
-  `CREATE TABLE IF NOT EXISTS cover_letters (
+  `CREATE TABLE IF NOT EXISTS aicp_cover_letters (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     title VARCHAR(255),
@@ -50,10 +50,10 @@ const tables = [
     version INT DEFAULT 1,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES aicp_users(id) ON DELETE CASCADE
   )`,
 
-  `CREATE TABLE IF NOT EXISTS linkedin_profiles (
+  `CREATE TABLE IF NOT EXISTS aicp_linkedin_profiles (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     original_headline VARCHAR(500),
@@ -65,10 +65,10 @@ const tables = [
     overall_score INT DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES aicp_users(id) ON DELETE CASCADE
   )`,
 
-  `CREATE TABLE IF NOT EXISTS jobs (
+  `CREATE TABLE IF NOT EXISTS aicp_jobs (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     company VARCHAR(255) NOT NULL,
@@ -83,20 +83,20 @@ const tables = [
     match_score INT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES aicp_users(id) ON DELETE CASCADE
   )`,
 
-  `CREATE TABLE IF NOT EXISTS job_tasks (
+  `CREATE TABLE IF NOT EXISTS aicp_job_tasks (
     id INT AUTO_INCREMENT PRIMARY KEY,
     job_id INT NOT NULL,
     title VARCHAR(255) NOT NULL,
     due_date DATE,
     completed TINYINT(1) DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE CASCADE
+    FOREIGN KEY (job_id) REFERENCES aicp_jobs(id) ON DELETE CASCADE
   )`,
 
-  `CREATE TABLE IF NOT EXISTS contacts (
+  `CREATE TABLE IF NOT EXISTS aicp_contacts (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     name VARCHAR(255) NOT NULL,
@@ -111,10 +111,10 @@ const tables = [
     follow_up_date DATE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES aicp_users(id) ON DELETE CASCADE
   )`,
 
-  `CREATE TABLE IF NOT EXISTS interaction_logs (
+  `CREATE TABLE IF NOT EXISTS aicp_interaction_logs (
     id INT AUTO_INCREMENT PRIMARY KEY,
     contact_id INT NOT NULL,
     user_id INT NOT NULL,
@@ -122,11 +122,11 @@ const tables = [
     notes TEXT,
     interaction_date DATETIME DEFAULT CURRENT_TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    FOREIGN KEY (contact_id) REFERENCES aicp_contacts(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES aicp_users(id) ON DELETE CASCADE
   )`,
 
-  `CREATE TABLE IF NOT EXISTS mock_interviews (
+  `CREATE TABLE IF NOT EXISTS aicp_mock_interviews (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     interview_type ENUM('technical','behavioral','hr','case_study') DEFAULT 'behavioral',
@@ -137,10 +137,10 @@ const tables = [
     status ENUM('in_progress','completed') DEFAULT 'in_progress',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES aicp_users(id) ON DELETE CASCADE
   )`,
 
-  `CREATE TABLE IF NOT EXISTS interview_feedback (
+  `CREATE TABLE IF NOT EXISTS aicp_interview_feedback (
     id INT AUTO_INCREMENT PRIMARY KEY,
     interview_id INT NOT NULL,
     user_id INT NOT NULL,
@@ -152,11 +152,11 @@ const tables = [
     feedback_text TEXT,
     suggestions JSON,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (interview_id) REFERENCES mock_interviews(id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    FOREIGN KEY (interview_id) REFERENCES aicp_mock_interviews(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES aicp_users(id) ON DELETE CASCADE
   )`,
 
-  `CREATE TABLE IF NOT EXISTS skill_analyses (
+  `CREATE TABLE IF NOT EXISTS aicp_skill_analyses (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     target_role VARCHAR(255),
@@ -166,10 +166,10 @@ const tables = [
     recommended_courses JSON,
     match_percentage INT DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES aicp_users(id) ON DELETE CASCADE
   )`,
 
-  `CREATE TABLE IF NOT EXISTS documents (
+  `CREATE TABLE IF NOT EXISTS aicp_documents (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     title VARCHAR(255) NOT NULL,
@@ -182,10 +182,10 @@ const tables = [
     notes TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES aicp_users(id) ON DELETE CASCADE
   )`,
 
-  `CREATE TABLE IF NOT EXISTS ats_analyses (
+  `CREATE TABLE IF NOT EXISTS aicp_ats_analyses (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     resume_id INT,
@@ -196,8 +196,8 @@ const tables = [
     formatting_issues JSON,
     suggestions JSON,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (resume_id) REFERENCES resumes(id) ON DELETE SET NULL
+    FOREIGN KEY (user_id) REFERENCES aicp_users(id) ON DELETE CASCADE,
+    FOREIGN KEY (resume_id) REFERENCES aicp_resumes(id) ON DELETE SET NULL
   )`,
 ];
 

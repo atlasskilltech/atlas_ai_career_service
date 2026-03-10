@@ -16,7 +16,7 @@ async function seed() {
   for (const user of users) {
     try {
       await pool.execute(
-        'INSERT IGNORE INTO users (name, email, password, role, email_verified) VALUES (?, ?, ?, ?, ?)',
+        'INSERT IGNORE INTO aicp_users (name, email, password, role, email_verified) VALUES (?, ?, ?, ?, ?)',
         user
       );
       console.log(`  ✓ User "${user[0]}" seeded`);
