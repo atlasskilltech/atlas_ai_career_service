@@ -8,15 +8,17 @@
         <label class="label-field">Interview Type</label>
         <div class="grid grid-cols-2 gap-3" id="type-options">
           <% ['technical', 'behavioral', 'hr', 'case_study'].forEach(type => { %>
-            <label class="flex items-center gap-3 p-4 border-2 rounded-lg cursor-pointer hover:border-accent transition <%= type === 'behavioral' ? 'border-accent bg-accent/5' : 'border-gray-200' %>">
-              <input type="radio" name="interviewType" value="<%= type %>" <%= type === 'behavioral' ? 'checked' : '' %> class="text-accent" onchange="highlightSelection('type-options', this)">
+            <div class="mode-card flex items-center gap-3 p-4 border-2 rounded-lg cursor-pointer hover:border-accent transition border-gray-200" data-name="interviewType" data-value="<%= type %>">
+              <div class="w-4 h-4 rounded-full border-2 border-gray-400 flex items-center justify-center flex-shrink-0 radio-dot">
+                <div class="w-2 h-2 rounded-full"></div>
+              </div>
               <div>
                 <p class="font-medium capitalize"><%= type.replace('_', ' ') %></p>
                 <p class="text-xs text-gray-500">
                   <%= type === 'technical' ? 'Coding & system design' : type === 'behavioral' ? 'Situational questions' : type === 'hr' ? 'Culture & personality' : 'Problem solving' %>
                 </p>
               </div>
-            </label>
+            </div>
           <% }); %>
         </div>
       </div>
@@ -25,13 +27,13 @@
         <label class="label-field">Mode</label>
         <div class="grid grid-cols-3 gap-3" id="mode-options">
           <% [{val:'text',icon:'fa-keyboard',label:'Text'}, {val:'audio',icon:'fa-headphones',label:'Audio'}, {val:'video',icon:'fa-video',label:'Video'}].forEach(m => { %>
-            <label class="flex flex-col items-center gap-2 p-4 border-2 rounded-lg cursor-pointer hover:border-accent transition <%= m.val === 'text' ? 'border-accent bg-accent/5' : 'border-gray-200' %>">
-              <input type="radio" name="mode" value="<%= m.val %>" <%= m.val === 'text' ? 'checked' : '' %> class="sr-only" onchange="highlightSelection('mode-options', this)">
-              <i class="fas <%= m.icon %> text-xl <%= m.val === 'text' ? 'text-accent' : 'text-gray-500' %>"></i>
+            <div class="mode-card flex flex-col items-center gap-2 p-4 border-2 rounded-lg cursor-pointer hover:border-accent transition border-gray-200" data-name="mode" data-value="<%= m.val %>">
+              <i class="fas <%= m.icon %> text-xl text-gray-500 mode-icon"></i>
               <span class="text-sm font-medium"><%= m.label %></span>
-            </label>
+            </div>
           <% }); %>
         </div>
+        <p id="permission-status" class="text-xs mt-2 hidden"></p>
       </div>
 
       <div>
@@ -45,32 +47,102 @@
 </div>
 
 <script>
-function highlightSelection(containerId, selectedInput) {
-  const container = document.getElementById(containerId);
-  container.querySelectorAll('label').forEach(label => {
-    label.classList.remove('border-accent', 'bg-accent/5');
-    label.classList.add('border-gray-200');
-    const icon = label.querySelector('i.fas');
-    if (icon) { icon.classList.remove('text-accent'); icon.classList.add('text-gray-500'); }
+const selected = { interviewType: 'behavioral', mode: 'text' };
+
+function initSelection() {
+  document.querySelectorAll('.mode-card').forEach(card => {
+    card.addEventListener('click', () => selectCard(card));
   });
-  const selectedLabel = selectedInput.closest('label');
-  selectedLabel.classList.remove('border-gray-200');
-  selectedLabel.classList.add('border-accent', 'bg-accent/5');
-  const icon = selectedLabel.querySelector('i.fas');
+  // Set defaults
+  selectCardByValue('interviewType', 'behavioral');
+  selectCardByValue('mode', 'text');
+}
+
+function selectCardByValue(name, value) {
+  const card = document.querySelector(`.mode-card[data-name="${name}"][data-value="${value}"]`);
+  if (card) selectCard(card);
+}
+
+function selectCard(card) {
+  const name = card.dataset.name;
+  const value = card.dataset.value;
+  selected[name] = value;
+
+  // Reset all cards in same group
+  document.querySelectorAll(`.mode-card[data-name="${name}"]`).forEach(c => {
+    c.classList.remove('border-accent', 'bg-green-50');
+    c.classList.add('border-gray-200');
+    const icon = c.querySelector('.mode-icon');
+    if (icon) { icon.classList.remove('text-accent'); icon.classList.add('text-gray-500'); }
+    const dot = c.querySelector('.radio-dot');
+    if (dot) { dot.classList.remove('border-accent'); dot.classList.add('border-gray-400'); dot.querySelector('div').classList.remove('bg-accent'); }
+  });
+
+  // Highlight selected
+  card.classList.remove('border-gray-200');
+  card.classList.add('border-accent', 'bg-green-50');
+  const icon = card.querySelector('.mode-icon');
   if (icon) { icon.classList.remove('text-gray-500'); icon.classList.add('text-accent'); }
+  const dot = card.querySelector('.radio-dot');
+  if (dot) { dot.classList.remove('border-gray-400'); dot.classList.add('border-accent'); dot.querySelector('div').classList.add('bg-accent'); }
+
+  // Check permissions for audio/video
+  if (name === 'mode') checkPermissions(value);
+}
+
+async function checkPermissions(mode) {
+  const status = document.getElementById('permission-status');
+  status.classList.remove('hidden', 'text-green-600', 'text-red-600', 'text-yellow-600');
+
+  if (mode === 'text') {
+    status.classList.add('hidden');
+    return true;
+  }
+
+  const constraints = mode === 'video' ? { audio: true, video: true } : { audio: true };
+  const label = mode === 'video' ? 'Camera & Microphone' : 'Microphone';
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia(constraints);
+    stream.getTracks().forEach(t => t.stop());
+    status.textContent = label + ' access granted';
+    status.classList.add('text-green-600');
+    return true;
+  } catch (err) {
+    if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+      status.textContent = label + ' access denied. Please allow in browser settings to use this mode.';
+      status.classList.add('text-red-600');
+    } else if (err.name === 'NotFoundError') {
+      status.textContent = 'No ' + label.toLowerCase() + ' found on this device.';
+      status.classList.add('text-red-600');
+    } else {
+      status.textContent = 'Could not access ' + label.toLowerCase() + ': ' + err.message;
+      status.classList.add('text-yellow-600');
+    }
+    return false;
+  }
 }
 
 async function startInterview() {
   const btn = document.getElementById('start-btn');
-  const modeInput = document.querySelector('input[name="mode"]:checked');
-  const typeInput = document.querySelector('input[name="interviewType"]:checked');
-  if (!modeInput || !typeInput) {
+  if (!selected.interviewType || !selected.mode) {
     showToast('Please select interview type and mode', 'error');
     return;
   }
+
+  // Verify permissions for audio/video before starting
+  if (selected.mode !== 'text') {
+    const hasPermission = await checkPermissions(selected.mode);
+    if (!hasPermission) {
+      const label = selected.mode === 'video' ? 'camera and microphone' : 'microphone';
+      showToast('Please grant ' + label + ' access to use ' + selected.mode + ' mode', 'error');
+      return;
+    }
+  }
+
   const data = {
-    interviewType: typeInput.value,
-    mode: modeInput.value,
+    interviewType: selected.interviewType,
+    mode: selected.mode,
     jobRole: document.getElementById('int-role').value,
   };
   btn.disabled = true;
@@ -84,4 +156,6 @@ async function startInterview() {
   btn.disabled = false;
   btn.innerHTML = '<i class="fas fa-play mr-2"></i>Start Interview';
 }
+
+initSelection();
 </script>
