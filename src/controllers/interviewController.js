@@ -1,4 +1,13 @@
 const interviewService = require('../services/interviewService');
+const { textToSpeech, speechToText } = require('../config/openai');
+const path = require('path');
+const fs = require('fs');
+const multer = require('multer');
+
+const audioUpload = multer({
+  dest: path.join(__dirname, '../../uploads/audio/'),
+  limits: { fileSize: 25 * 1024 * 1024 },
+});
 
 class InterviewController {
   async index(req, res) {
@@ -50,6 +59,54 @@ class InterviewController {
     }
   }
 
+  // TTS: Generate and serve audio for a question
+  async questionAudio(req, res) {
+    try {
+      const questionId = req.params.qid;
+      const audioDir = path.join(__dirname, '../../uploads/tts/');
+      const audioPath = path.join(audioDir, `q_${questionId}.mp3`);
+
+      // Serve cached audio if exists
+      if (fs.existsSync(audioPath)) {
+        res.setHeader('Content-Type', 'audio/mpeg');
+        return fs.createReadStream(audioPath).pipe(res);
+      }
+
+      // Generate TTS
+      const question = await interviewService.getQuestionById(questionId);
+      if (!question) return res.status(404).json({ error: 'Question not found' });
+
+      await textToSpeech(question.question, audioPath);
+      res.setHeader('Content-Type', 'audio/mpeg');
+      fs.createReadStream(audioPath).pipe(res);
+    } catch (err) {
+      res.status(500).json({ error: 'TTS generation failed: ' + err.message });
+    }
+  }
+
+  // Whisper: Transcribe uploaded audio
+  async transcribe(req, res) {
+    try {
+      if (!req.file) return res.status(400).json({ error: 'No audio file uploaded' });
+
+      // Rename to .webm for Whisper compatibility
+      const ext = '.webm';
+      const newPath = req.file.path + ext;
+      fs.renameSync(req.file.path, newPath);
+
+      const text = await speechToText(newPath);
+
+      // Cleanup temp file
+      try { fs.unlinkSync(newPath); } catch {}
+
+      res.json({ success: true, text });
+    } catch (err) {
+      // Cleanup on error
+      if (req.file) try { fs.unlinkSync(req.file.path); fs.unlinkSync(req.file.path + '.webm'); } catch {}
+      res.status(500).json({ error: 'Transcription failed: ' + err.message });
+    }
+  }
+
   async submitAnswer(req, res) {
     try {
       const { questionId, answerText, answerDuration } = req.body;
@@ -95,4 +152,5 @@ class InterviewController {
   }
 }
 
-module.exports = new InterviewController();
+const controller = new InterviewController();
+module.exports = { controller, audioUpload };
