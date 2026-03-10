@@ -6,7 +6,6 @@ RUN npm ci --omit=dev
 FROM node:20-alpine AS runner
 WORKDIR /app
 
-# Puppeteer dependencies
 RUN apk add --no-cache \
     chromium \
     nss \
@@ -21,7 +20,10 @@ ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup && \
+    mkdir -p /app/uploads /app/public/uploads && \
+    chown -R appuser:appgroup /app
+
 USER appuser
 
 EXPOSE 6700
