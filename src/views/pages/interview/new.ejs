@@ -1,161 +1,182 @@
 <div class="max-w-2xl mx-auto space-y-6">
-  <h1 class="text-2xl font-bold text-center">Start Mock Interview</h1>
-  <p class="text-gray-500 text-center">Choose your interview type and get started</p>
+  <div class="text-center">
+    <h1 class="text-2xl font-bold">AI Video Mock Interview</h1>
+    <p class="text-gray-500 mt-1">Simulate a real job interview with AI-powered questions and feedback</p>
+  </div>
 
-  <div class="card">
-    <div class="space-y-4">
-      <div>
-        <label class="label-field">Interview Type</label>
-        <div class="grid grid-cols-2 gap-3" id="type-options">
-          <% ['technical', 'behavioral', 'hr', 'case_study'].forEach(type => { %>
-            <div class="mode-card flex items-center gap-3 p-4 border-2 rounded-lg cursor-pointer hover:border-accent transition border-gray-200" data-name="interviewType" data-value="<%= type %>">
-              <div class="w-4 h-4 rounded-full border-2 border-gray-400 flex items-center justify-center flex-shrink-0 radio-dot">
-                <div class="w-2 h-2 rounded-full"></div>
+  <div class="card space-y-5">
+    <!-- Job Role -->
+    <div>
+      <label class="label-field">Target Job Role <span class="text-red-500">*</span></label>
+      <input type="text" id="job-role" class="input-field" placeholder="e.g., Software Engineer, Product Manager, Data Analyst" required>
+    </div>
+
+    <!-- Company (optional) -->
+    <div>
+      <label class="label-field">Company <span class="text-xs text-gray-400">(optional)</span></label>
+      <input type="text" id="company" class="input-field" placeholder="e.g., Google, TCS, Infosys">
+    </div>
+
+    <!-- Interview Type -->
+    <div>
+      <label class="label-field">Interview Type</label>
+      <div class="grid grid-cols-2 gap-3" id="type-options">
+        <% [
+          {val:'technical', icon:'fa-code', label:'Technical', desc:'Coding, system design & concepts'},
+          {val:'behavioral', icon:'fa-users', label:'Behavioral', desc:'STAR method & situational questions'},
+          {val:'hr', icon:'fa-handshake', label:'HR', desc:'Culture fit & motivation'},
+          {val:'case_study', icon:'fa-lightbulb', label:'Case Study', desc:'Analytical & problem solving'},
+        ].forEach(t => { %>
+          <div class="sel-card border-gray-200" data-group="interviewType" data-value="<%= t.val %>">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+                <i class="fas <%= t.icon %> text-gray-500 sel-icon"></i>
               </div>
               <div>
-                <p class="font-medium capitalize"><%= type.replace('_', ' ') %></p>
-                <p class="text-xs text-gray-500">
-                  <%= type === 'technical' ? 'Coding & system design' : type === 'behavioral' ? 'Situational questions' : type === 'hr' ? 'Culture & personality' : 'Problem solving' %>
-                </p>
+                <p class="font-medium text-sm"><%= t.label %></p>
+                <p class="text-xs text-gray-400"><%= t.desc %></p>
               </div>
             </div>
-          <% }); %>
-        </div>
+          </div>
+        <% }); %>
       </div>
-
-      <div>
-        <label class="label-field">Mode</label>
-        <div class="grid grid-cols-3 gap-3" id="mode-options">
-          <% [{val:'text',icon:'fa-keyboard',label:'Text'}, {val:'audio',icon:'fa-headphones',label:'Audio'}, {val:'video',icon:'fa-video',label:'Video'}].forEach(m => { %>
-            <div class="mode-card flex flex-col items-center gap-2 p-4 border-2 rounded-lg cursor-pointer hover:border-accent transition border-gray-200" data-name="mode" data-value="<%= m.val %>">
-              <i class="fas <%= m.icon %> text-xl text-gray-500 mode-icon"></i>
-              <span class="text-sm font-medium"><%= m.label %></span>
-            </div>
-          <% }); %>
-        </div>
-        <p id="permission-status" class="text-xs mt-2 hidden"></p>
-      </div>
-
-      <div>
-        <label class="label-field">Target Job Role</label>
-        <input type="text" id="int-role" class="input-field" placeholder="e.g., Software Engineer, Product Manager">
-      </div>
-
-      <button onclick="startInterview()" id="start-btn" class="btn-primary w-full text-lg py-3"><i class="fas fa-play mr-2"></i>Start Interview</button>
     </div>
+
+    <!-- Difficulty -->
+    <div>
+      <label class="label-field">Difficulty Level</label>
+      <div class="grid grid-cols-3 gap-3" id="diff-options">
+        <% [
+          {val:'easy', icon:'fa-seedling', label:'Easy', desc:'8 questions'},
+          {val:'medium', icon:'fa-fire', label:'Medium', desc:'10 questions'},
+          {val:'hard', icon:'fa-bolt', label:'Hard', desc:'12 questions'},
+        ].forEach(d => { %>
+          <div class="sel-card border-gray-200" data-group="difficulty" data-value="<%= d.val %>">
+            <div class="flex flex-col items-center gap-1 text-center">
+              <i class="fas <%= d.icon %> text-lg text-gray-500 sel-icon"></i>
+              <span class="text-sm font-medium"><%= d.label %></span>
+              <span class="text-xs text-gray-400"><%= d.desc %></span>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+    </div>
+
+    <!-- Camera Check -->
+    <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <i class="fas fa-video text-lg text-gray-500" id="cam-icon"></i>
+          <div>
+            <p class="text-sm font-medium">Video Interview Mode</p>
+            <p class="text-xs text-gray-400" id="cam-status">Click "Check Camera" to verify access</p>
+          </div>
+        </div>
+        <button onclick="checkCamera()" id="cam-btn" class="btn-outline text-xs px-3 py-1.5">Check Camera</button>
+      </div>
+      <div id="cam-preview-wrap" class="hidden mt-3">
+        <video id="cam-preview" autoplay muted playsinline class="w-full max-h-40 rounded-lg bg-black object-cover"></video>
+      </div>
+    </div>
+
+    <!-- Start Button -->
+    <button onclick="startInterview()" id="start-btn" class="btn-primary w-full text-lg py-3" disabled>
+      <i class="fas fa-video mr-2"></i>Start Video Interview
+    </button>
   </div>
 </div>
 
 <script>
-const selected = { interviewType: 'behavioral', mode: 'text' };
+const selected = { interviewType: 'behavioral', difficulty: 'medium' };
+let cameraReady = false;
+let previewStream = null;
 
-function initSelection() {
-  document.querySelectorAll('.mode-card').forEach(card => {
-    card.addEventListener('click', () => selectCard(card));
+// Selection logic
+document.querySelectorAll('.sel-card').forEach(card => {
+  card.addEventListener('click', () => {
+    const group = card.dataset.group;
+    selected[group] = card.dataset.value;
+    document.querySelectorAll(`.sel-card[data-group="${group}"]`).forEach(c => {
+      c.classList.remove('border-accent', 'bg-green-50', 'dark:bg-green-950');
+      c.classList.add('border-gray-200');
+      const icon = c.querySelector('.sel-icon');
+      if (icon) { icon.classList.remove('text-accent'); icon.classList.add('text-gray-500'); }
+      const bg = c.querySelector('.w-10');
+      if (bg) { bg.classList.remove('bg-green-100'); bg.classList.add('bg-gray-100'); }
+    });
+    card.classList.remove('border-gray-200');
+    card.classList.add('border-accent', 'bg-green-50', 'dark:bg-green-950');
+    const icon = card.querySelector('.sel-icon');
+    if (icon) { icon.classList.remove('text-gray-500'); icon.classList.add('text-accent'); }
+    const bg = card.querySelector('.w-10');
+    if (bg) { bg.classList.remove('bg-gray-100'); bg.classList.add('bg-green-100'); }
   });
-  // Set defaults
-  selectCardByValue('interviewType', 'behavioral');
-  selectCardByValue('mode', 'text');
-}
+});
 
-function selectCardByValue(name, value) {
-  const card = document.querySelector(`.mode-card[data-name="${name}"][data-value="${value}"]`);
-  if (card) selectCard(card);
-}
+// Set defaults
+document.querySelector('.sel-card[data-value="behavioral"]').click();
+document.querySelector('.sel-card[data-value="medium"]').click();
 
-function selectCard(card) {
-  const name = card.dataset.name;
-  const value = card.dataset.value;
-  selected[name] = value;
+async function checkCamera() {
+  const statusEl = document.getElementById('cam-status');
+  const iconEl = document.getElementById('cam-icon');
+  const btnEl = document.getElementById('cam-btn');
+  const wrapEl = document.getElementById('cam-preview-wrap');
+  const videoEl = document.getElementById('cam-preview');
 
-  // Reset all cards in same group
-  document.querySelectorAll(`.mode-card[data-name="${name}"]`).forEach(c => {
-    c.classList.remove('border-accent', 'bg-green-50');
-    c.classList.add('border-gray-200');
-    const icon = c.querySelector('.mode-icon');
-    if (icon) { icon.classList.remove('text-accent'); icon.classList.add('text-gray-500'); }
-    const dot = c.querySelector('.radio-dot');
-    if (dot) { dot.classList.remove('border-accent'); dot.classList.add('border-gray-400'); dot.querySelector('div').classList.remove('bg-accent'); }
-  });
-
-  // Highlight selected
-  card.classList.remove('border-gray-200');
-  card.classList.add('border-accent', 'bg-green-50');
-  const icon = card.querySelector('.mode-icon');
-  if (icon) { icon.classList.remove('text-gray-500'); icon.classList.add('text-accent'); }
-  const dot = card.querySelector('.radio-dot');
-  if (dot) { dot.classList.remove('border-gray-400'); dot.classList.add('border-accent'); dot.querySelector('div').classList.add('bg-accent'); }
-
-  // Check permissions for audio/video
-  if (name === 'mode') checkPermissions(value);
-}
-
-async function checkPermissions(mode) {
-  const status = document.getElementById('permission-status');
-  status.classList.remove('hidden', 'text-green-600', 'text-red-600', 'text-yellow-600');
-
-  if (mode === 'text') {
-    status.classList.add('hidden');
-    return true;
-  }
-
-  const constraints = mode === 'video' ? { audio: true, video: true } : { audio: true };
-  const label = mode === 'video' ? 'Camera & Microphone' : 'Microphone';
-
+  btnEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
   try {
-    const stream = await navigator.mediaDevices.getUserMedia(constraints);
-    stream.getTracks().forEach(t => t.stop());
-    status.textContent = label + ' access granted';
-    status.classList.add('text-green-600');
-    return true;
+    previewStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    videoEl.srcObject = previewStream;
+    wrapEl.classList.remove('hidden');
+    statusEl.textContent = 'Camera & microphone ready';
+    statusEl.classList.add('text-green-600');
+    iconEl.classList.remove('text-gray-500');
+    iconEl.classList.add('text-green-600');
+    btnEl.textContent = 'Ready';
+    btnEl.disabled = true;
+    btnEl.classList.add('opacity-50');
+    cameraReady = true;
+    document.getElementById('start-btn').disabled = false;
   } catch (err) {
-    if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-      status.textContent = label + ' access denied. Please allow in browser settings to use this mode.';
-      status.classList.add('text-red-600');
-    } else if (err.name === 'NotFoundError') {
-      status.textContent = 'No ' + label.toLowerCase() + ' found on this device.';
-      status.classList.add('text-red-600');
-    } else {
-      status.textContent = 'Could not access ' + label.toLowerCase() + ': ' + err.message;
-      status.classList.add('text-yellow-600');
-    }
-    return false;
+    statusEl.textContent = err.name === 'NotAllowedError'
+      ? 'Permission denied. Allow camera & microphone in browser settings.'
+      : 'Camera not available: ' + err.message;
+    statusEl.classList.add('text-red-600');
+    iconEl.classList.add('text-red-600');
+    btnEl.textContent = 'Retry';
+    cameraReady = false;
   }
 }
 
 async function startInterview() {
+  const jobRole = document.getElementById('job-role').value.trim();
+  if (!jobRole) return showToast('Please enter a job role', 'error');
+  if (!cameraReady) return showToast('Please check camera access first', 'error');
+
+  // Stop preview stream
+  if (previewStream) { previewStream.getTracks().forEach(t => t.stop()); }
+
   const btn = document.getElementById('start-btn');
-  if (!selected.interviewType || !selected.mode) {
-    showToast('Please select interview type and mode', 'error');
-    return;
-  }
-
-  // Verify permissions for audio/video before starting
-  if (selected.mode !== 'text') {
-    const hasPermission = await checkPermissions(selected.mode);
-    if (!hasPermission) {
-      const label = selected.mode === 'video' ? 'camera and microphone' : 'microphone';
-      showToast('Please grant ' + label + ' access to use ' + selected.mode + ' mode', 'error');
-      return;
-    }
-  }
-
-  const data = {
-    interviewType: selected.interviewType,
-    mode: selected.mode,
-    jobRole: document.getElementById('int-role').value,
-  };
   btn.disabled = true;
-  btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Generating Questions...';
-  try {
-    const res = await fetch('/interview/start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
-    const result = await res.json();
-    if (result.success) window.location.href = '/interview/' + result.interview.id + '/session';
-    else showToast(result.error || 'Failed to start interview', 'error');
-  } catch (err) { showToast('Failed to start', 'error'); }
-  btn.disabled = false;
-  btn.innerHTML = '<i class="fas fa-play mr-2"></i>Start Interview';
-}
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Generating interview questions...';
 
-initSelection();
+  try {
+    const res = await fetch('/interview/start', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jobRole,
+        company: document.getElementById('company').value.trim(),
+        interviewType: selected.interviewType,
+        difficulty: selected.difficulty,
+      }),
+    });
+    const data = await res.json();
+    if (data.success) window.location.href = '/interview/' + data.interviewId + '/session';
+    else showToast(data.error || 'Failed to start', 'error');
+  } catch (err) { showToast('Failed to start interview', 'error'); }
+  btn.disabled = false;
+  btn.innerHTML = '<i class="fas fa-video mr-2"></i>Start Video Interview';
+}
 </script>

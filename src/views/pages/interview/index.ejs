@@ -1,41 +1,42 @@
 <div class="space-y-6">
   <div class="flex items-center justify-between">
-    <h1 class="text-2xl font-bold">AI Mock Interviews</h1>
+    <h1 class="text-2xl font-bold">AI Video Mock Interviews</h1>
     <div class="flex gap-2">
-      <a href="/interview/new" class="btn-primary"><i class="fas fa-play mr-2"></i>Start Interview</a>
-      <a href="/interview/feedback/all" class="btn-outline"><i class="fas fa-chart-bar mr-2"></i>All Feedback</a>
+      <a href="/interview/new" class="btn-primary"><i class="fas fa-video mr-2"></i>Start Interview</a>
+      <a href="/interview/feedback/all" class="btn-outline"><i class="fas fa-chart-bar mr-2"></i>All Reports</a>
     </div>
   </div>
 
   <!-- Average Scores -->
   <% if (avgScores && avgScores.total > 0) { %>
-    <div class="grid grid-cols-4 gap-4">
-      <div class="stat-card">
-        <span class="text-sm text-gray-500">Confidence</span>
-        <div class="text-2xl font-bold mt-1"><%= Math.round(avgScores.avg_confidence || 0) %>%</div>
-      </div>
-      <div class="stat-card">
-        <span class="text-sm text-gray-500">Communication</span>
-        <div class="text-2xl font-bold mt-1"><%= Math.round(avgScores.avg_communication || 0) %>%</div>
-      </div>
-      <div class="stat-card">
-        <span class="text-sm text-gray-500">Technical</span>
-        <div class="text-2xl font-bold mt-1"><%= Math.round(avgScores.avg_technical || 0) %>%</div>
-      </div>
-      <div class="stat-card">
-        <span class="text-sm text-gray-500">Overall</span>
-        <div class="text-2xl font-bold mt-1"><%= Math.round(avgScores.avg_overall || 0) %>%</div>
-      </div>
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+      <% [
+        {label: 'Technical', score: avgScores.avg_technical, icon: 'fa-code', color: 'blue'},
+        {label: 'Communication', score: avgScores.avg_communication, icon: 'fa-comments', color: 'green'},
+        {label: 'Confidence', score: avgScores.avg_confidence, icon: 'fa-shield-halved', color: 'purple'},
+        {label: 'Problem Solving', score: avgScores.avg_problem_solving, icon: 'fa-puzzle-piece', color: 'orange'},
+        {label: 'Overall', score: avgScores.avg_overall, icon: 'fa-star', color: 'primary'},
+      ].forEach(s => { %>
+        <div class="stat-card">
+          <div class="flex items-center gap-2">
+            <i class="fas <%= s.icon %> text-<%= s.color %>-500 text-sm"></i>
+            <span class="text-xs text-gray-500"><%= s.label %></span>
+          </div>
+          <div class="text-2xl font-bold mt-1"><%= Math.round(s.score || 0) %>%</div>
+          <div class="progress-bar mt-1 h-1"><div class="progress-fill bg-<%= s.color %>-500" style="width: <%= Math.round(s.score || 0) %>%"></div></div>
+        </div>
+      <% }); %>
     </div>
+    <p class="text-xs text-gray-400 text-right"><%= avgScores.total %> interview<%= avgScores.total > 1 ? 's' : '' %> completed</p>
   <% } %>
 
   <!-- Interview History -->
   <% if (interviews.length === 0) { %>
     <div class="card text-center py-16">
-      <i class="fas fa-microphone text-6xl text-gray-300 mb-4"></i>
+      <i class="fas fa-video text-6xl text-gray-300 mb-4"></i>
       <h3 class="text-xl font-semibold text-gray-600">No interviews yet</h3>
-      <p class="text-gray-400 mt-2">Start your first AI mock interview</p>
-      <a href="/interview/new" class="btn-accent mt-6 inline-block">Start Interview</a>
+      <p class="text-gray-400 mt-2">Start your first AI video mock interview to practice for placements</p>
+      <a href="/interview/new" class="btn-accent mt-6 inline-block"><i class="fas fa-play mr-2"></i>Start Interview</a>
     </div>
   <% } else { %>
     <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -43,19 +44,22 @@
         <div class="card hover:shadow-md transition-shadow">
           <div class="flex items-start justify-between mb-2">
             <div>
-              <h3 class="font-semibold capitalize"><%= i.interview_type %> Interview</h3>
-              <p class="text-sm text-gray-500"><%= i.job_role || 'General' %></p>
+              <h3 class="font-semibold capitalize"><%= i.interview_type.replace('_', ' ') %> Interview</h3>
+              <p class="text-sm text-gray-500"><%= i.job_role %><%= i.company ? ' - ' + i.company : '' %></p>
             </div>
-            <span class="<%= i.status === 'completed' ? 'badge-success' : 'badge-warning' %>"><%= i.status %></span>
+            <span class="<%= i.status === 'completed' ? 'badge-success' : i.status === 'in_progress' ? 'badge-warning' : 'badge-info' %>"><%= i.status.replace('_', ' ') %></span>
           </div>
-          <div class="text-xs text-gray-400 mb-3">
-            <i class="fas fa-<%= i.mode === 'text' ? 'keyboard' : i.mode === 'audio' ? 'headphones' : 'video' %> mr-1"></i><%= i.mode %> mode
-            | <%= new Date(i.created_at).toLocaleDateString() %>
+          <div class="text-xs text-gray-400 mb-3 flex items-center gap-3">
+            <span><i class="fas fa-signal mr-1"></i><%= i.difficulty %></span>
+            <span><i class="fas fa-question-circle mr-1"></i><%= i.total_questions %> questions</span>
+            <span><%= new Date(i.created_at).toLocaleDateString() %></span>
           </div>
           <% if (i.status === 'completed') { %>
-            <a href="/interview/<%= i.id %>/feedback" class="btn-primary text-sm w-full">View Feedback</a>
+            <a href="/interview/<%= i.id %>/report" class="btn-primary text-sm w-full"><i class="fas fa-chart-bar mr-1"></i>View Report</a>
+          <% } else if (i.status === 'in_progress') { %>
+            <a href="/interview/<%= i.id %>/session" class="btn-accent text-sm w-full"><i class="fas fa-video mr-1"></i>Continue</a>
           <% } else { %>
-            <a href="/interview/<%= i.id %>/session" class="btn-accent text-sm w-full">Continue</a>
+            <a href="/interview/<%= i.id %>/session" class="btn-outline text-sm w-full"><i class="fas fa-play mr-1"></i>Begin</a>
           <% } %>
         </div>
       <% }); %>

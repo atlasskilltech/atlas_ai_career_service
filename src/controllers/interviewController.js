@@ -18,8 +18,9 @@ class InterviewController {
 
   async start(req, res) {
     try {
-      const interview = await interviewService.startInterview(req.session.user.id, req.body);
-      res.json({ success: true, interview });
+      const interview = await interviewService.createInterview(req.session.user.id, req.body);
+      await interviewService.generateQuestions(interview.id);
+      res.json({ success: true, interviewId: interview.id });
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
@@ -28,37 +29,54 @@ class InterviewController {
   async session(req, res) {
     try {
       const interview = await interviewService.getById(req.params.id);
-      res.render('pages/interview/session', { title: 'Interview Session', layout: 'layouts/app', interview });
+      if (!interview) throw new Error('Interview not found');
+      const { question, progress } = await interviewService.getNextQuestion(req.params.id);
+      res.render('pages/interview/session', {
+        title: 'Interview Session', layout: 'layouts/app',
+        interview, currentQuestion: question, progress,
+      });
     } catch (err) {
       req.flash('error', err.message);
       res.redirect('/interview');
     }
   }
 
-  async submitAnswer(req, res) {
+  async getQuestion(req, res) {
     try {
-      const result = await interviewService.submitAnswer(req.params.id, req.body.questionIndex, req.body.answer);
-      res.json({ success: true, result });
+      const result = await interviewService.getNextQuestion(req.params.id);
+      res.json({ success: true, ...result });
     } catch (err) {
       res.status(400).json({ error: err.message });
     }
   }
 
-  async complete(req, res) {
+  async submitAnswer(req, res) {
     try {
-      await interviewService.completeInterview(req.params.id);
-      const feedback = await interviewService.generateFeedback(req.params.id, req.session.user.id);
-      res.json({ success: true, feedback });
+      const { questionId, answerText, answerDuration } = req.body;
+      const result = await interviewService.submitAnswer(req.params.id, questionId, answerText, answerDuration);
+      res.json({ success: true, ...result });
+    } catch (err) {
+      res.status(400).json({ error: err.message });
+    }
+  }
+
+  async end(req, res) {
+    try {
+      const result = await interviewService.completeInterview(req.params.id, req.session.user.id);
+      res.json({ success: true, result });
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
   }
 
-  async feedback(req, res) {
+  async report(req, res) {
     try {
-      const interview = await interviewService.getById(req.params.id);
-      const feedback = await interviewService.getFeedback(req.params.id);
-      res.render('pages/interview/feedback', { title: 'Interview Feedback', layout: 'layouts/app', interview, feedback });
+      const data = await interviewService.getReport(req.params.id);
+      if (!data.interview) throw new Error('Interview not found');
+      res.render('pages/interview/report', {
+        title: 'Interview Report', layout: 'layouts/app',
+        ...data,
+      });
     } catch (err) {
       req.flash('error', err.message);
       res.redirect('/interview');
@@ -67,9 +85,9 @@ class InterviewController {
 
   async allFeedback(req, res) {
     try {
-      const feedbacks = await interviewService.getAllFeedback(req.session.user.id);
+      const results = await interviewService.getResultsByUserId(req.session.user.id);
       const avgScores = await interviewService.getAverageScores(req.session.user.id);
-      res.render('pages/interview/all-feedback', { title: 'Interview History', layout: 'layouts/app', feedbacks, avgScores });
+      res.render('pages/interview/all-feedback', { title: 'Interview History', layout: 'layouts/app', results, avgScores });
     } catch (err) {
       req.flash('error', err.message);
       res.redirect('/interview');

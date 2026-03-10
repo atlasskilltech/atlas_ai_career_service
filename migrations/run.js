@@ -126,33 +126,64 @@ const tables = [
     FOREIGN KEY (user_id) REFERENCES aicp_users(id) ON DELETE CASCADE
   )`,
 
-  `CREATE TABLE IF NOT EXISTS aicp_mock_interviews (
+  `CREATE TABLE IF NOT EXISTS aicp_interviews (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
+    job_role VARCHAR(255) NOT NULL DEFAULT 'Software Engineer',
+    company VARCHAR(255),
     interview_type ENUM('technical','behavioral','hr','case_study') DEFAULT 'behavioral',
-    mode ENUM('text','audio','video') DEFAULT 'text',
-    job_role VARCHAR(255),
-    questions JSON,
-    answers JSON,
-    status ENUM('in_progress','completed') DEFAULT 'in_progress',
+    difficulty ENUM('easy','medium','hard') DEFAULT 'medium',
+    status ENUM('setup','in_progress','completed') DEFAULT 'setup',
+    total_questions INT DEFAULT 0,
+    total_answered INT DEFAULT 0,
+    duration_seconds INT DEFAULT 0,
+    started_at DATETIME,
+    completed_at DATETIME,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES aicp_users(id) ON DELETE CASCADE
   )`,
 
-  `CREATE TABLE IF NOT EXISTS aicp_interview_feedback (
+  `CREATE TABLE IF NOT EXISTS aicp_interview_questions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    interview_id INT NOT NULL,
+    question TEXT NOT NULL,
+    question_order INT NOT NULL,
+    is_follow_up TINYINT(1) DEFAULT 0,
+    parent_question_id INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (interview_id) REFERENCES aicp_interviews(id) ON DELETE CASCADE
+  )`,
+
+  `CREATE TABLE IF NOT EXISTS aicp_interview_answers (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    question_id INT NOT NULL,
+    interview_id INT NOT NULL,
+    answer_text TEXT,
+    answer_duration_seconds INT DEFAULT 0,
+    filler_words_count INT DEFAULT 0,
+    word_count INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (question_id) REFERENCES aicp_interview_questions(id) ON DELETE CASCADE,
+    FOREIGN KEY (interview_id) REFERENCES aicp_interviews(id) ON DELETE CASCADE
+  )`,
+
+  `CREATE TABLE IF NOT EXISTS aicp_interview_results (
     id INT AUTO_INCREMENT PRIMARY KEY,
     interview_id INT NOT NULL,
     user_id INT NOT NULL,
-    confidence_score INT DEFAULT 0,
-    communication_score INT DEFAULT 0,
     technical_score INT DEFAULT 0,
-    star_score INT DEFAULT 0,
+    communication_score INT DEFAULT 0,
+    confidence_score INT DEFAULT 0,
+    problem_solving_score INT DEFAULT 0,
     overall_score INT DEFAULT 0,
-    feedback_text TEXT,
+    strengths JSON,
+    weaknesses JSON,
     suggestions JSON,
+    detailed_feedback TEXT,
+    question_feedback JSON,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (interview_id) REFERENCES aicp_mock_interviews(id) ON DELETE CASCADE,
+    FOREIGN KEY (interview_id) REFERENCES aicp_interviews(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES aicp_users(id) ON DELETE CASCADE
   )`,
 

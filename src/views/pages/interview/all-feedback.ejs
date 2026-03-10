@@ -1,41 +1,66 @@
 <div class="space-y-6">
   <div class="flex items-center justify-between">
-    <h1 class="text-2xl font-bold">Interview Feedback History</h1>
-    <a href="/interview" class="btn-outline"><i class="fas fa-arrow-left mr-2"></i>Back</a>
+    <h1 class="text-2xl font-bold">Interview Performance History</h1>
+    <div class="flex gap-2">
+      <a href="/interview/new" class="btn-primary"><i class="fas fa-video mr-2"></i>New Interview</a>
+      <a href="/interview" class="btn-outline"><i class="fas fa-arrow-left mr-2"></i>Back</a>
+    </div>
   </div>
 
   <% if (avgScores && avgScores.total > 0) { %>
-    <div class="grid grid-cols-4 gap-4">
-      <div class="stat-card"><span class="text-sm text-gray-500">Avg Confidence</span><div class="text-2xl font-bold mt-1"><%= Math.round(avgScores.avg_confidence || 0) %>%</div></div>
-      <div class="stat-card"><span class="text-sm text-gray-500">Avg Communication</span><div class="text-2xl font-bold mt-1"><%= Math.round(avgScores.avg_communication || 0) %>%</div></div>
-      <div class="stat-card"><span class="text-sm text-gray-500">Avg Technical</span><div class="text-2xl font-bold mt-1"><%= Math.round(avgScores.avg_technical || 0) %>%</div></div>
-      <div class="stat-card"><span class="text-sm text-gray-500">Avg Overall</span><div class="text-2xl font-bold mt-1"><%= Math.round(avgScores.avg_overall || 0) %>%</div></div>
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+      <% [
+        {label: 'Avg Technical', score: avgScores.avg_technical, color: 'blue'},
+        {label: 'Avg Communication', score: avgScores.avg_communication, color: 'green'},
+        {label: 'Avg Confidence', score: avgScores.avg_confidence, color: 'purple'},
+        {label: 'Avg Problem Solving', score: avgScores.avg_problem_solving, color: 'orange'},
+        {label: 'Avg Overall', score: avgScores.avg_overall, color: 'primary'},
+      ].forEach(s => { %>
+        <div class="stat-card">
+          <span class="text-xs text-gray-500"><%= s.label %></span>
+          <div class="text-2xl font-bold mt-1"><%= Math.round(s.score || 0) %>%</div>
+        </div>
+      <% }); %>
     </div>
   <% } %>
 
-  <% if (feedbacks.length === 0) { %>
+  <% if (results.length === 0) { %>
     <div class="card text-center py-12 text-gray-400">
-      <p>No feedback history yet. Complete some mock interviews first.</p>
+      <p>No interview results yet. Complete a mock interview to see your history.</p>
     </div>
   <% } else { %>
     <div class="space-y-4">
-      <% feedbacks.forEach(f => { %>
+      <% results.forEach(r => {
+        const parseJSON = (v) => { try { return typeof v === 'string' ? JSON.parse(v) : (v || []); } catch { return []; } };
+        const strengths = parseJSON(r.strengths);
+      %>
         <div class="card hover:shadow-md transition-shadow">
           <div class="flex items-center justify-between">
             <div>
-              <h3 class="font-semibold capitalize"><%= f.interview_type %> Interview</h3>
-              <p class="text-sm text-gray-500"><%= f.job_role || 'General' %> | <%= new Date(f.created_at).toLocaleDateString() %></p>
+              <h3 class="font-semibold capitalize"><%= r.interview_type.replace('_', ' ') %> Interview</h3>
+              <p class="text-sm text-gray-500"><%= r.job_role %><%= r.company ? ' at ' + r.company : '' %> | <%= r.difficulty %> | <%= r.total_questions %> questions</p>
+              <p class="text-xs text-gray-400 mt-1"><%= new Date(r.created_at).toLocaleDateString() %> | <%= Math.floor((r.duration_seconds || 0) / 60) %> min</p>
             </div>
             <div class="text-right">
-              <div class="text-2xl font-bold"><%= f.overall_score %>%</div>
+              <div class="text-3xl font-bold <%= r.overall_score >= 70 ? 'text-green-600' : r.overall_score >= 50 ? 'text-yellow-600' : 'text-red-600' %>"><%= r.overall_score %>%</div>
               <p class="text-xs text-gray-500">Overall</p>
             </div>
           </div>
           <div class="grid grid-cols-4 gap-2 mt-3">
-            <div class="text-center p-2 bg-gray-50 dark:bg-gray-800 rounded"><div class="font-semibold text-sm"><%= f.confidence_score %>%</div><p class="text-xs text-gray-500">Confidence</p></div>
-            <div class="text-center p-2 bg-gray-50 dark:bg-gray-800 rounded"><div class="font-semibold text-sm"><%= f.communication_score %>%</div><p class="text-xs text-gray-500">Comm</p></div>
-            <div class="text-center p-2 bg-gray-50 dark:bg-gray-800 rounded"><div class="font-semibold text-sm"><%= f.technical_score %>%</div><p class="text-xs text-gray-500">Technical</p></div>
-            <div class="text-center p-2 bg-gray-50 dark:bg-gray-800 rounded"><div class="font-semibold text-sm"><%= f.star_score %>%</div><p class="text-xs text-gray-500">STAR</p></div>
+            <div class="text-center p-2 bg-gray-50 dark:bg-gray-800 rounded"><div class="font-semibold text-sm"><%= r.technical_score %>%</div><p class="text-xs text-gray-500">Technical</p></div>
+            <div class="text-center p-2 bg-gray-50 dark:bg-gray-800 rounded"><div class="font-semibold text-sm"><%= r.communication_score %>%</div><p class="text-xs text-gray-500">Comm</p></div>
+            <div class="text-center p-2 bg-gray-50 dark:bg-gray-800 rounded"><div class="font-semibold text-sm"><%= r.confidence_score %>%</div><p class="text-xs text-gray-500">Confidence</p></div>
+            <div class="text-center p-2 bg-gray-50 dark:bg-gray-800 rounded"><div class="font-semibold text-sm"><%= r.problem_solving_score %>%</div><p class="text-xs text-gray-500">Problem Solving</p></div>
+          </div>
+          <% if (strengths.length > 0) { %>
+            <div class="mt-3 flex flex-wrap gap-1">
+              <% strengths.slice(0, 3).forEach(s => { %>
+                <span class="text-xs bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400 px-2 py-0.5 rounded-full"><%= s.substring(0, 50) %></span>
+              <% }); %>
+            </div>
+          <% } %>
+          <div class="mt-3">
+            <a href="/interview/<%= r.interview_id %>/report" class="text-sm text-accent hover:underline font-medium"><i class="fas fa-arrow-right mr-1"></i>View Full Report</a>
           </div>
         </div>
       <% }); %>
