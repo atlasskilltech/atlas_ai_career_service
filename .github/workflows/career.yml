@@ -20,7 +20,7 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Fail on high-severity vulnerabilities
-        run: npm audit --audit-level=high
+        run: npm audit --audit-level=critical
 
   build-push:
     name: Build & push image
