@@ -1,6 +1,6 @@
 services:
   app:
-    image: ghcr.io/${GITHUB_REPOSITORY}:${IMAGE}
+    image: ghcr.io/atlasskilltech/atlas_ai_career_service:${IMAGE}
     network_mode: host
     restart: unless-stopped
     env_file: .env
