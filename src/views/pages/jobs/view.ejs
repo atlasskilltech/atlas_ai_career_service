@@ -1,0 +1,83 @@
+<div class="space-y-6">
+  <a href="/jobs" class="text-gray-500 hover:text-gray-700 text-sm"><i class="fas fa-arrow-left mr-1"></i>Back to Tracker</a>
+
+  <div class="grid lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2 space-y-6">
+      <div class="card">
+        <div class="flex items-start justify-between">
+          <div>
+            <h1 class="text-2xl font-bold"><%= job.position %></h1>
+            <p class="text-lg text-gray-500"><%= job.company %></p>
+            <div class="flex gap-4 mt-2 text-sm text-gray-400">
+              <% if (job.location) { %><span><i class="fas fa-map-marker-alt mr-1"></i><%= job.location %></span><% } %>
+              <% if (job.salary_range) { %><span><i class="fas fa-money-bill mr-1"></i><%= job.salary_range %></span><% } %>
+            </div>
+          </div>
+          <span class="badge-info capitalize"><%= job.status %></span>
+        </div>
+        <% if (job.description) { %>
+          <div class="mt-4 pt-4 border-t dark:border-gray-700">
+            <h3 class="font-medium mb-2">Description</h3>
+            <p class="text-sm text-gray-600 whitespace-pre-wrap"><%= job.description %></p>
+          </div>
+        <% } %>
+        <% if (job.notes) { %>
+          <div class="mt-4 pt-4 border-t dark:border-gray-700">
+            <h3 class="font-medium mb-2">Notes</h3>
+            <p class="text-sm text-gray-600 whitespace-pre-wrap"><%= job.notes %></p>
+          </div>
+        <% } %>
+      </div>
+    </div>
+
+    <div class="space-y-6">
+      <div class="card">
+        <h3 class="font-semibold mb-3">Tasks</h3>
+        <div id="tasks-list" class="space-y-2">
+          <% (job.tasks || []).forEach(task => { %>
+            <div class="flex items-center gap-2">
+              <input type="checkbox" <%= task.completed ? 'checked' : '' %> onchange="toggleTask(<%= task.id %>)" class="rounded">
+              <span class="text-sm <%= task.completed ? 'line-through text-gray-400' : '' %>"><%= task.title %></span>
+            </div>
+          <% }); %>
+        </div>
+        <div class="flex gap-2 mt-3">
+          <input type="text" id="new-task" class="input-field text-sm" placeholder="Add task...">
+          <button onclick="addTask()" class="btn-accent text-sm"><i class="fas fa-plus"></i></button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="font-semibold mb-3">Update Status</h3>
+        <div class="space-y-2">
+          <% ['saved','applied','interview','offer','rejected'].forEach(s => { %>
+            <button onclick="updateStatus('<%= s %>')" class="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-gray-800 <%= job.status === s ? 'bg-accent text-white hover:bg-accent' : '' %> capitalize"><%= s %></button>
+          <% }); %>
+        </div>
+      </div>
+
+      <button onclick="deleteJob()" class="btn-danger w-full"><i class="fas fa-trash mr-2"></i>Delete Job</button>
+    </div>
+  </div>
+</div>
+
+<script>
+async function addTask() {
+  const title = document.getElementById('new-task').value;
+  if (!title) return;
+  try {
+    await fetch('/jobs/<%= job.id %>/tasks', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title }) });
+    location.reload();
+  } catch (err) { showToast('Failed', 'error'); }
+}
+async function toggleTask(id) {
+  try { await fetch('/jobs/tasks/' + id + '/toggle', { method: 'PATCH' }); } catch (err) { showToast('Failed', 'error'); }
+}
+async function updateStatus(status) {
+  try { await fetch('/jobs/<%= job.id %>/status', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) }); location.reload(); } catch (err) { showToast('Failed', 'error'); }
+}
+async function deleteJob() {
+  if (!confirm('Delete this job?')) return;
+  try { await fetch('/jobs/<%= job.id %>', { method: 'DELETE' }); window.location.href = '/jobs'; } catch (err) { showToast('Failed', 'error'); }
+}
+</script>

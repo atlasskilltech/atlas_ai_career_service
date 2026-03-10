@@ -1,0 +1,64 @@
+<div class="space-y-6">
+  <div class="flex items-center justify-between">
+    <h1 class="text-2xl font-bold">AI Mock Interviews</h1>
+    <div class="flex gap-2">
+      <a href="/interview/new" class="btn-primary"><i class="fas fa-play mr-2"></i>Start Interview</a>
+      <a href="/interview/feedback/all" class="btn-outline"><i class="fas fa-chart-bar mr-2"></i>All Feedback</a>
+    </div>
+  </div>
+
+  <!-- Average Scores -->
+  <% if (avgScores && avgScores.total > 0) { %>
+    <div class="grid grid-cols-4 gap-4">
+      <div class="stat-card">
+        <span class="text-sm text-gray-500">Confidence</span>
+        <div class="text-2xl font-bold mt-1"><%= Math.round(avgScores.avg_confidence || 0) %>%</div>
+      </div>
+      <div class="stat-card">
+        <span class="text-sm text-gray-500">Communication</span>
+        <div class="text-2xl font-bold mt-1"><%= Math.round(avgScores.avg_communication || 0) %>%</div>
+      </div>
+      <div class="stat-card">
+        <span class="text-sm text-gray-500">Technical</span>
+        <div class="text-2xl font-bold mt-1"><%= Math.round(avgScores.avg_technical || 0) %>%</div>
+      </div>
+      <div class="stat-card">
+        <span class="text-sm text-gray-500">Overall</span>
+        <div class="text-2xl font-bold mt-1"><%= Math.round(avgScores.avg_overall || 0) %>%</div>
+      </div>
+    </div>
+  <% } %>
+
+  <!-- Interview History -->
+  <% if (interviews.length === 0) { %>
+    <div class="card text-center py-16">
+      <i class="fas fa-microphone text-6xl text-gray-300 mb-4"></i>
+      <h3 class="text-xl font-semibold text-gray-600">No interviews yet</h3>
+      <p class="text-gray-400 mt-2">Start your first AI mock interview</p>
+      <a href="/interview/new" class="btn-accent mt-6 inline-block">Start Interview</a>
+    </div>
+  <% } else { %>
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <% interviews.forEach(i => { %>
+        <div class="card hover:shadow-md transition-shadow">
+          <div class="flex items-start justify-between mb-2">
+            <div>
+              <h3 class="font-semibold capitalize"><%= i.interview_type %> Interview</h3>
+              <p class="text-sm text-gray-500"><%= i.job_role || 'General' %></p>
+            </div>
+            <span class="<%= i.status === 'completed' ? 'badge-success' : 'badge-warning' %>"><%= i.status %></span>
+          </div>
+          <div class="text-xs text-gray-400 mb-3">
+            <i class="fas fa-<%= i.mode === 'text' ? 'keyboard' : i.mode === 'audio' ? 'headphones' : 'video' %> mr-1"></i><%= i.mode %> mode
+            | <%= new Date(i.created_at).toLocaleDateString() %>
+          </div>
+          <% if (i.status === 'completed') { %>
+            <a href="/interview/<%= i.id %>/feedback" class="btn-primary text-sm w-full">View Feedback</a>
+          <% } else { %>
+            <a href="/interview/<%= i.id %>/session" class="btn-accent text-sm w-full">Continue</a>
+          <% } %>
+        </div>
+      <% }); %>
+    </div>
+  <% } %>
+</div>

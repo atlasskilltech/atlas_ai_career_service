@@ -1,0 +1,47 @@
+<div class="card">
+  <h2 class="text-2xl font-bold text-center mb-6">Create Account</h2>
+  <form action="/auth/register" method="POST" class="space-y-4">
+    <div>
+      <label class="label-field">Full Name</label>
+      <input type="text" name="name" required class="input-field" placeholder="John Doe">
+    </div>
+    <div>
+      <label class="label-field">University Email</label>
+      <input type="email" name="email" required class="input-field" placeholder="your@atlas.edu.in">
+    </div>
+    <div>
+      <label class="label-field">Department</label>
+      <select name="department" class="input-field">
+        <option value="">Select Department</option>
+        <option value="Computer Science">Computer Science</option>
+        <option value="Information Technology">Information Technology</option>
+        <option value="Electronics">Electronics</option>
+        <option value="Mechanical">Mechanical</option>
+        <option value="Civil">Civil</option>
+        <option value="Design">Design</option>
+        <option value="Management">Management</option>
+      </select>
+    </div>
+    <div>
+      <label class="label-field">Year of Study</label>
+      <select name="yearOfStudy" class="input-field">
+        <option value="1">1st Year</option>
+        <option value="2">2nd Year</option>
+        <option value="3">3rd Year</option>
+        <option value="4">4th Year</option>
+      </select>
+    </div>
+    <div>
+      <label class="label-field">Password</label>
+      <input type="password" name="password" required minlength="8" class="input-field" placeholder="Min 8 characters">
+    </div>
+    <div>
+      <label class="label-field">Confirm Password</label>
+      <input type="password" name="confirmPassword" required class="input-field" placeholder="Confirm your password">
+    </div>
+    <button type="submit" class="btn-primary w-full">Create Account</button>
+  </form>
+  <p class="text-center text-sm text-gray-500 mt-6">
+    Already have an account? <a href="/auth/login" class="text-accent hover:underline font-medium">Sign In</a>
+  </p>
+</div>

@@ -1,0 +1,45 @@
+<div class="space-y-6">
+  <div class="flex items-center justify-between">
+    <h1 class="text-2xl font-bold">My Resumes</h1>
+    <a href="/resume/new" class="btn-primary"><i class="fas fa-plus mr-2"></i> New Resume</a>
+  </div>
+
+  <% if (resumes.length === 0) { %>
+    <div class="card text-center py-16">
+      <i class="fas fa-file-alt text-6xl text-gray-300 mb-4"></i>
+      <h3 class="text-xl font-semibold text-gray-600">No resumes yet</h3>
+      <p class="text-gray-400 mt-2">Create your first AI-powered resume to get started</p>
+      <a href="/resume/new" class="btn-accent mt-6 inline-block">Create Resume</a>
+    </div>
+  <% } else { %>
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <% resumes.forEach(resume => { %>
+        <div class="card hover:shadow-md transition-shadow">
+          <div class="flex items-start justify-between mb-4">
+            <div>
+              <h3 class="font-semibold text-lg"><%= resume.title %></h3>
+              <p class="text-sm text-gray-500">Updated <%= new Date(resume.updated_at).toLocaleDateString() %></p>
+            </div>
+            <% if (resume.is_primary) { %>
+              <span class="badge-success">Primary</span>
+            <% } %>
+          </div>
+          <div class="flex items-center gap-2 mb-4">
+            <span class="text-sm text-gray-500">ATS Score:</span>
+            <div class="flex-1 progress-bar">
+              <div class="progress-fill <%= resume.ats_score >= 70 ? 'bg-green-500' : resume.ats_score >= 40 ? 'bg-yellow-500' : 'bg-red-500' %>" style="width: <%= resume.ats_score %>%"></div>
+            </div>
+            <span class="text-sm font-semibold"><%= resume.ats_score %>%</span>
+          </div>
+          <div class="flex gap-2">
+            <a href="/resume/<%= resume.id %>/edit" class="btn-primary text-sm flex-1">Edit</a>
+            <a href="/resume/<%= resume.id %>/preview" target="_blank" class="btn-outline text-sm"><i class="fas fa-eye"></i></a>
+            <form action="/resume/<%= resume.id %>?_method=DELETE" method="POST" class="inline">
+              <button type="submit" class="btn-danger text-sm" onclick="return confirm('Delete this resume?')"><i class="fas fa-trash"></i></button>
+            </form>
+          </div>
+        </div>
+      <% }); %>
+    </div>
+  <% } %>
+</div>

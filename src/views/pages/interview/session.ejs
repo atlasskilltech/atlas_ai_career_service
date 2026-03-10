@@ -1,0 +1,72 @@
+<% const questions = typeof interview.questions === 'string' ? JSON.parse(interview.questions) : (interview.questions || []); %>
+<% const answers = typeof interview.answers === 'string' ? JSON.parse(interview.answers) : (interview.answers || []); %>
+
+<div class="max-w-3xl mx-auto space-y-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold capitalize"><%= interview.interview_type %> Interview</h1>
+      <p class="text-gray-500"><%= interview.job_role || 'General' %> | <%= interview.mode %> mode</p>
+    </div>
+    <span class="badge-warning">In Progress</span>
+  </div>
+
+  <div class="card">
+    <div class="flex items-center justify-between mb-6">
+      <h3 class="font-semibold">Questions</h3>
+      <span class="text-sm text-gray-500" id="progress-text">0 / <%= questions.length %> answered</span>
+    </div>
+
+    <div class="space-y-6" id="questions-container">
+      <% questions.forEach((q, i) => { %>
+        <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg" id="q-<%= i %>">
+          <div class="flex items-start gap-3 mb-3">
+            <span class="w-7 h-7 bg-primary text-white rounded-full flex items-center justify-center text-sm flex-shrink-0"><%= i + 1 %></span>
+            <p class="font-medium"><%= q %></p>
+          </div>
+          <textarea class="input-field answer-input" rows="4" placeholder="Type your answer here..." data-index="<%= i %>"><%= answers[i] || '' %></textarea>
+          <button onclick="submitAnswer(<%= i %>)" class="btn-accent text-sm mt-2">Save Answer</button>
+        </div>
+      <% }); %>
+    </div>
+
+    <div class="mt-6 pt-6 border-t dark:border-gray-700 flex justify-end">
+      <button onclick="completeInterview()" id="complete-btn" class="btn-primary text-lg px-8"><i class="fas fa-check-circle mr-2"></i>Complete & Get Feedback</button>
+    </div>
+  </div>
+</div>
+
+<script>
+async function submitAnswer(index) {
+  const answer = document.querySelector(`textarea[data-index="${index}"]`).value;
+  if (!answer) return showToast('Please type an answer', 'error');
+  try {
+    await fetch('/interview/<%= interview.id %>/answer', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ questionIndex: index, answer }),
+    });
+    showToast('Answer saved', 'success');
+    updateProgress();
+  } catch (err) { showToast('Failed', 'error'); }
+}
+
+function updateProgress() {
+  const answered = document.querySelectorAll('.answer-input').length;
+  const filled = Array.from(document.querySelectorAll('.answer-input')).filter(t => t.value.trim()).length;
+  document.getElementById('progress-text').textContent = filled + ' / ' + answered + ' answered';
+}
+
+async function completeInterview() {
+  const btn = document.getElementById('complete-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Generating Feedback...';
+  try {
+    const res = await fetch('/interview/<%= interview.id %>/complete', { method: 'POST' });
+    const data = await res.json();
+    if (data.success) window.location.href = '/interview/<%= interview.id %>/feedback';
+  } catch (err) { showToast('Failed', 'error'); }
+  btn.disabled = false;
+  btn.innerHTML = '<i class="fas fa-check-circle mr-2"></i>Complete & Get Feedback';
+}
+
+updateProgress();
+</script>

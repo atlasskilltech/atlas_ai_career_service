@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title><%= resume.profile_data?.name || 'Resume' %> - Resume</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Georgia', serif; color: #333; line-height: 1.5; padding: 40px; max-width: 800px; margin: 0 auto; }
+    h1 { font-size: 28px; text-align: center; margin-bottom: 4px; }
+    .contact { text-align: center; font-size: 12px; color: #666; margin-bottom: 16px; }
+    .summary { font-size: 13px; color: #555; margin-bottom: 20px; }
+    h2 { font-size: 14px; text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid #0a1a4a; padding-bottom: 4px; margin: 16px 0 10px; color: #0a1a4a; }
+    .entry { margin-bottom: 12px; }
+    .entry-header { display: flex; justify-content: space-between; font-weight: bold; font-size: 14px; }
+    .entry-sub { font-style: italic; font-size: 13px; color: #555; }
+    .entry-desc { font-size: 13px; margin-top: 4px; white-space: pre-line; }
+    .skills-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 13px; }
+    .skill-cat { font-weight: bold; }
+    ul { padding-left: 20px; font-size: 13px; }
+    li { margin-bottom: 4px; }
+    @media print { body { padding: 20px; } }
+  </style>
+</head>
+<body>
+  <% const profile = resume.profile_data || {}; %>
+  <h1><%= profile.name || 'Your Name' %></h1>
+  <div class="contact">
+    <%= [profile.email, profile.phone, profile.location, profile.linkedin].filter(Boolean).join(' | ') %>
+  </div>
+
+  <% if (profile.summary) { %>
+    <div class="summary"><%= profile.summary %></div>
+  <% } %>
+
+  <% const education = resume.education_data || []; %>
+  <% if (education.length > 0) { %>
+    <h2>Education</h2>
+    <% education.forEach(edu => { %>
+      <div class="entry">
+        <div class="entry-header"><span><%= edu.institution %></span><span><%= edu.year %></span></div>
+        <div class="entry-sub"><%= edu.degree %><%= edu.gpa ? ' | ' + edu.gpa : '' %></div>
+      </div>
+    <% }); %>
+  <% } %>
+
+  <% const experience = resume.experience_data || []; %>
+  <% if (experience.length > 0) { %>
+    <h2>Experience</h2>
+    <% experience.forEach(exp => { %>
+      <div class="entry">
+        <div class="entry-header"><span><%= exp.title %> - <%= exp.company %></span><span><%= exp.startDate %> - <%= exp.endDate %></span></div>
+        <div class="entry-desc"><%= exp.description %></div>
+      </div>
+    <% }); %>
+  <% } %>
+
+  <% const projects = resume.projects_data || []; %>
+  <% if (projects.length > 0) { %>
+    <h2>Projects</h2>
+    <% projects.forEach(proj => { %>
+      <div class="entry">
+        <div class="entry-header"><span><%= proj.name %></span><span><%= proj.technologies %></span></div>
+        <div class="entry-desc"><%= proj.description %></div>
+      </div>
+    <% }); %>
+  <% } %>
+
+  <% const skills = resume.skills_data || {}; %>
+  <% if (skills.technical || skills.soft || skills.tools) { %>
+    <h2>Skills</h2>
+    <div class="skills-grid">
+      <% if (skills.technical) { %><div><span class="skill-cat">Technical:</span> <%= skills.technical %></div><% } %>
+      <% if (skills.tools) { %><div><span class="skill-cat">Tools:</span> <%= skills.tools %></div><% } %>
+      <% if (skills.soft) { %><div><span class="skill-cat">Soft Skills:</span> <%= skills.soft %></div><% } %>
+      <% if (skills.languages) { %><div><span class="skill-cat">Languages:</span> <%= skills.languages %></div><% } %>
+    </div>
+  <% } %>
+
+  <% const achievements = resume.achievements_data || []; %>
+  <% if (achievements.length > 0) { %>
+    <h2>Achievements</h2>
+    <ul>
+      <% achievements.forEach(ach => { %>
+        <li><%= ach %></li>
+      <% }); %>
+    </ul>
+  <% } %>
+</body>
+</html>

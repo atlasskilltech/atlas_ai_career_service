@@ -1,0 +1,24 @@
+<div class="card">
+  <h2 class="text-2xl font-bold text-center mb-6">Welcome Back</h2>
+  <form action="/auth/login" method="POST" class="space-y-4">
+    <div>
+      <label class="label-field">Email</label>
+      <input type="email" name="email" required class="input-field" placeholder="your@atlas.edu.in">
+    </div>
+    <div>
+      <label class="label-field">Password</label>
+      <input type="password" name="password" required class="input-field" placeholder="Enter your password">
+    </div>
+    <div class="flex items-center justify-between text-sm">
+      <label class="flex items-center gap-2 cursor-pointer">
+        <input type="checkbox" name="remember" class="rounded">
+        <span class="text-gray-600">Remember me</span>
+      </label>
+      <a href="/auth/forgot-password" class="text-accent hover:underline">Forgot Password?</a>
+    </div>
+    <button type="submit" class="btn-primary w-full">Sign In</button>
+  </form>
+  <p class="text-center text-sm text-gray-500 mt-6">
+    Don't have an account? <a href="/auth/register" class="text-accent hover:underline font-medium">Register</a>
+  </p>
+</div>

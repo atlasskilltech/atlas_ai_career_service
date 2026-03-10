@@ -1,0 +1,29 @@
+<div class="space-y-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <a href="/cover-letter" class="text-gray-500 hover:text-gray-700 text-sm"><i class="fas fa-arrow-left mr-1"></i>Back</a>
+      <h1 class="text-2xl font-bold mt-2"><%= letter.title %></h1>
+      <p class="text-gray-500"><%= letter.company_name %> - <%= letter.job_title %></p>
+    </div>
+    <div class="flex gap-2">
+      <button onclick="saveCoverLetter()" class="btn-accent"><i class="fas fa-save mr-1"></i>Save</button>
+      <button onclick="window.print()" class="btn-outline"><i class="fas fa-download mr-1"></i>Download</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <textarea id="cl-content" rows="20" class="w-full bg-transparent border-none outline-none resize-none text-sm leading-relaxed"><%= letter.content %></textarea>
+  </div>
+</div>
+
+<script>
+async function saveCoverLetter() {
+  try {
+    const res = await fetch('/cover-letter/<%= letter.id %>', {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: document.getElementById('cl-content').value }),
+    });
+    if (res.ok) showToast('Saved!', 'success');
+  } catch (err) { showToast('Save failed', 'error'); }
+}
+</script>

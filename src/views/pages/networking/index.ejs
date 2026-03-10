@@ -1,0 +1,112 @@
+<div class="space-y-6">
+  <div class="flex items-center justify-between">
+    <h1 class="text-2xl font-bold">Networking CRM</h1>
+    <button onclick="openContactModal()" class="btn-primary"><i class="fas fa-plus mr-2"></i>Add Contact</button>
+  </div>
+
+  <!-- Upcoming Follow-ups -->
+  <% if (followUps.length > 0) { %>
+    <div class="card bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800">
+      <h3 class="font-semibold mb-3"><i class="fas fa-bell text-yellow-500 mr-2"></i>Upcoming Follow-ups</h3>
+      <div class="space-y-2">
+        <% followUps.forEach(f => { %>
+          <div class="flex items-center justify-between bg-white dark:bg-gray-800 p-3 rounded-lg">
+            <div>
+              <span class="font-medium text-sm"><%= f.name %></span>
+              <span class="text-xs text-gray-500 ml-2"><%= f.company || '' %></span>
+            </div>
+            <span class="text-xs text-yellow-600"><%= new Date(f.follow_up_date).toLocaleDateString() %></span>
+          </div>
+        <% }); %>
+      </div>
+    </div>
+  <% } %>
+
+  <!-- Contacts Grid -->
+  <% if (contacts.length === 0) { %>
+    <div class="card text-center py-16">
+      <i class="fas fa-users text-6xl text-gray-300 mb-4"></i>
+      <h3 class="text-xl font-semibold text-gray-600">No contacts yet</h3>
+      <p class="text-gray-400 mt-2">Start building your professional network</p>
+    </div>
+  <% } else { %>
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <% contacts.forEach(c => { %>
+        <div class="card hover:shadow-md transition-shadow">
+          <div class="flex items-start justify-between">
+            <div>
+              <h3 class="font-semibold"><%= c.name %></h3>
+              <p class="text-sm text-gray-500"><%= c.position || '' %><%= c.company ? ' at ' + c.company : '' %></p>
+            </div>
+            <span class="badge-info text-xs capitalize"><%= c.contact_type ? c.contact_type.replace('_', ' ') : '' %></span>
+          </div>
+          <div class="mt-3 space-y-1 text-sm text-gray-500">
+            <% if (c.email) { %><p><i class="fas fa-envelope w-4"></i> <%= c.email %></p><% } %>
+            <% if (c.phone) { %><p><i class="fas fa-phone w-4"></i> <%= c.phone %></p><% } %>
+            <% if (c.last_contacted) { %><p><i class="fas fa-clock w-4"></i> Last contacted: <%= new Date(c.last_contacted).toLocaleDateString() %></p><% } %>
+          </div>
+          <div class="flex gap-2 mt-4">
+            <a href="/networking/<%= c.id %>" class="btn-primary text-sm flex-1">View</a>
+            <button onclick="deleteContact(<%= c.id %>)" class="btn-danger text-sm"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+      <% }); %>
+    </div>
+  <% } %>
+</div>
+
+<!-- Add Contact Modal -->
+<div id="contact-modal" class="modal-overlay hidden">
+  <div class="modal-content p-6">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-lg font-semibold">Add Contact</h3>
+      <button onclick="closeContactModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="space-y-3">
+      <div><label class="label-field">Name</label><input type="text" id="ct-name" class="input-field" required></div>
+      <div><label class="label-field">Email</label><input type="email" id="ct-email" class="input-field"></div>
+      <div><label class="label-field">Phone</label><input type="tel" id="ct-phone" class="input-field"></div>
+      <div><label class="label-field">Company</label><input type="text" id="ct-company" class="input-field"></div>
+      <div><label class="label-field">Position</label><input type="text" id="ct-position" class="input-field"></div>
+      <div><label class="label-field">LinkedIn URL</label><input type="url" id="ct-linkedin" class="input-field"></div>
+      <div><label class="label-field">Contact Type</label>
+        <select id="ct-type" class="input-field">
+          <option value="recruiter">Recruiter</option><option value="hiring_manager">Hiring Manager</option>
+          <option value="referral">Referral</option><option value="mentor">Mentor</option><option value="other">Other</option>
+        </select>
+      </div>
+      <div><label class="label-field">Follow-up Date</label><input type="date" id="ct-followup" class="input-field"></div>
+      <div><label class="label-field">Notes</label><textarea id="ct-notes" rows="2" class="input-field"></textarea></div>
+      <button onclick="addContact()" class="btn-primary w-full">Add Contact</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function openContactModal() { document.getElementById('contact-modal').classList.remove('hidden'); }
+function closeContactModal() { document.getElementById('contact-modal').classList.add('hidden'); }
+
+async function addContact() {
+  const data = {
+    name: document.getElementById('ct-name').value,
+    email: document.getElementById('ct-email').value,
+    phone: document.getElementById('ct-phone').value,
+    company: document.getElementById('ct-company').value,
+    position: document.getElementById('ct-position').value,
+    linkedinUrl: document.getElementById('ct-linkedin').value,
+    contactType: document.getElementById('ct-type').value,
+    followUpDate: document.getElementById('ct-followup').value || null,
+    notes: document.getElementById('ct-notes').value,
+  };
+  if (!data.name) return showToast('Name is required', 'error');
+  try {
+    const res = await fetch('/networking', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+    if (res.ok) location.reload();
+  } catch (err) { showToast('Failed', 'error'); }
+}
+
+async function deleteContact(id) {
+  if (!confirm('Delete this contact?')) return;
+  try { await fetch('/networking/' + id, { method: 'DELETE' }); location.reload(); } catch (err) { showToast('Failed', 'error'); }
+}
+</script>

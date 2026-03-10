@@ -1,0 +1,94 @@
+<div class="space-y-6">
+  <h1 class="text-2xl font-bold">Skill Gap Analyzer</h1>
+  <p class="text-gray-500">Identify missing skills and get a personalized learning roadmap</p>
+
+  <div class="grid lg:grid-cols-2 gap-6">
+    <div class="card">
+      <h3 class="font-semibold mb-4"><i class="fas fa-search mr-2"></i>Analyze Your Skills</h3>
+      <div class="space-y-4">
+        <div>
+          <label class="label-field">Your Resume / Current Skills</label>
+          <textarea id="sk-resume" rows="6" class="input-field" placeholder="Paste your resume or list your current skills..."></textarea>
+        </div>
+        <div>
+          <label class="label-field">Target Job Role</label>
+          <input type="text" id="sk-role" class="input-field" placeholder="e.g., Full Stack Developer, Data Scientist">
+        </div>
+        <button onclick="analyzeSkills()" id="sk-btn" class="btn-primary w-full"><i class="fas fa-chart-line mr-2"></i>Analyze Skills</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 class="font-semibold mb-4"><i class="fas fa-chart-pie mr-2"></i>Analysis Results</h3>
+      <div id="sk-results" class="text-center py-12 text-gray-400">
+        <i class="fas fa-chart-line text-5xl mb-4"></i>
+        <p>Enter your skills and target role to see the analysis</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- History -->
+  <% if (analyses.length > 0) { %>
+    <div class="card">
+      <h3 class="font-semibold mb-4"><i class="fas fa-history mr-2"></i>Previous Analyses</h3>
+      <div class="space-y-4">
+        <% analyses.forEach(a => { %>
+          <% const missing = typeof a.missing_skills === 'string' ? JSON.parse(a.missing_skills) : (a.missing_skills || []); %>
+          <% const roadmap = typeof a.learning_roadmap === 'string' ? JSON.parse(a.learning_roadmap) : (a.learning_roadmap || []); %>
+          <% const courses = typeof a.recommended_courses === 'string' ? JSON.parse(a.recommended_courses) : (a.recommended_courses || []); %>
+          <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+            <div class="flex items-center justify-between mb-3">
+              <div>
+                <h4 class="font-medium"><%= a.target_role %></h4>
+                <p class="text-xs text-gray-500"><%= new Date(a.created_at).toLocaleDateString() %></p>
+              </div>
+              <div class="text-right">
+                <span class="text-2xl font-bold <%= a.match_percentage >= 70 ? 'text-green-600' : a.match_percentage >= 40 ? 'text-yellow-600' : 'text-red-600' %>"><%= a.match_percentage %>%</span>
+                <p class="text-xs text-gray-500">Match</p>
+              </div>
+            </div>
+            <% if (missing.length > 0) { %>
+              <div class="mb-2"><span class="text-xs font-medium text-red-600">Missing Skills:</span>
+                <div class="flex flex-wrap gap-1 mt-1"><% missing.forEach(s => { %><span class="badge-danger"><%= s %></span><% }); %></div>
+              </div>
+            <% } %>
+            <% if (roadmap.length > 0) { %>
+              <div><span class="text-xs font-medium text-blue-600">Learning Roadmap:</span>
+                <div class="mt-1 space-y-1">
+                  <% roadmap.slice(0, 3).forEach(r => { %>
+                    <div class="flex items-center gap-2 text-xs">
+                      <span class="<%= r.priority === 'high' ? 'badge-danger' : r.priority === 'medium' ? 'badge-warning' : 'badge-info' %>"><%= r.priority %></span>
+                      <span><%= r.skill %></span>
+                      <span class="text-gray-400"><%= r.timeEstimate %></span>
+                    </div>
+                  <% }); %>
+                </div>
+              </div>
+            <% } %>
+          </div>
+        <% }); %>
+      </div>
+    </div>
+  <% } %>
+</div>
+
+<script>
+async function analyzeSkills() {
+  const btn = document.getElementById('sk-btn');
+  const data = { resumeText: document.getElementById('sk-resume').value, targetRole: document.getElementById('sk-role').value };
+  if (!data.resumeText || !data.targetRole) return showToast('Please fill both fields', 'error');
+
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Analyzing...';
+
+  try {
+    const res = await fetch('/skills/analyze', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data),
+    });
+    const result = await res.json();
+    if (result.success) location.reload();
+  } catch (err) { showToast('Analysis failed', 'error'); }
+  btn.disabled = false;
+  btn.innerHTML = '<i class="fas fa-chart-line mr-2"></i>Analyze Skills';
+}
+</script>

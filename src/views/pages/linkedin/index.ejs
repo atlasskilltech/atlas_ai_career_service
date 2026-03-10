@@ -1,0 +1,84 @@
+<div class="space-y-6">
+  <h1 class="text-2xl font-bold">LinkedIn Profile Optimizer</h1>
+  <p class="text-gray-500">Analyze and optimize your LinkedIn profile for maximum visibility</p>
+
+  <div class="grid lg:grid-cols-2 gap-6">
+    <div class="card">
+      <h3 class="font-semibold mb-4"><i class="fab fa-linkedin mr-2 text-blue-600"></i>Your Profile</h3>
+      <div class="space-y-4">
+        <div><label class="label-field">Current Headline</label><input type="text" id="li-headline" class="input-field" placeholder="e.g., Software Engineer | React Developer"></div>
+        <div><label class="label-field">About Section</label><textarea id="li-about" rows="6" class="input-field" placeholder="Paste your LinkedIn About section..."></textarea></div>
+        <div><label class="label-field">Target Role / Industry</label><input type="text" id="li-role" class="input-field" placeholder="e.g., Full Stack Developer"></div>
+        <button onclick="optimizeLinkedIn()" id="li-btn" class="btn-primary w-full"><i class="fas fa-magic mr-2"></i>Optimize Profile</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 class="font-semibold mb-4"><i class="fas fa-chart-bar mr-2"></i>Optimization Results</h3>
+      <div id="li-results">
+        <% if (latest) { %>
+          <div class="space-y-4">
+            <div class="text-center mb-4">
+              <div class="inline-flex items-center justify-center w-20 h-20 rounded-full border-4 <%= latest.overall_score >= 70 ? 'border-green-500' : 'border-yellow-500' %>">
+                <span class="text-2xl font-bold"><%= latest.overall_score %></span>
+              </div>
+              <p class="text-sm text-gray-500 mt-2">Profile Score</p>
+            </div>
+            <div>
+              <h4 class="font-medium text-sm mb-1">Optimized Headline</h4>
+              <p class="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg text-sm"><%= latest.optimized_headline %></p>
+            </div>
+            <div>
+              <h4 class="font-medium text-sm mb-1">Optimized About</h4>
+              <p class="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg text-sm whitespace-pre-wrap"><%= latest.optimized_about %></p>
+            </div>
+            <% const skills = typeof latest.skill_recommendations === 'string' ? JSON.parse(latest.skill_recommendations) : (latest.skill_recommendations || []); %>
+            <% if (skills.length > 0) { %>
+              <div>
+                <h4 class="font-medium text-sm mb-2">Recommended Skills</h4>
+                <div class="flex flex-wrap gap-2"><% skills.forEach(s => { %><span class="badge-info"><%= s %></span><% }); %></div>
+              </div>
+            <% } %>
+            <% const keywords = typeof latest.keyword_suggestions === 'string' ? JSON.parse(latest.keyword_suggestions) : (latest.keyword_suggestions || []); %>
+            <% if (keywords.length > 0) { %>
+              <div>
+                <h4 class="font-medium text-sm mb-2">Keyword Suggestions</h4>
+                <div class="flex flex-wrap gap-2"><% keywords.forEach(k => { %><span class="badge-warning"><%= k %></span><% }); %></div>
+              </div>
+            <% } %>
+          </div>
+        <% } else { %>
+          <div class="text-center py-12 text-gray-400">
+            <i class="fab fa-linkedin text-5xl mb-4"></i>
+            <p>Enter your profile details to get optimization suggestions</p>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+async function optimizeLinkedIn() {
+  const btn = document.getElementById('li-btn');
+  const data = {
+    headline: document.getElementById('li-headline').value,
+    about: document.getElementById('li-about').value,
+    targetRole: document.getElementById('li-role').value,
+  };
+  if (!data.headline && !data.about) return showToast('Please enter profile details', 'error');
+
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Optimizing...';
+
+  try {
+    const res = await fetch('/linkedin/optimize', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data),
+    });
+    const result = await res.json();
+    if (result.success) location.reload();
+  } catch (err) { showToast('Optimization failed', 'error'); }
+  btn.disabled = false;
+  btn.innerHTML = '<i class="fas fa-magic mr-2"></i>Optimize Profile';
+}
+</script>

@@ -1,0 +1,65 @@
+<div class="max-w-2xl mx-auto space-y-6">
+  <h1 class="text-2xl font-bold text-center">Start Mock Interview</h1>
+  <p class="text-gray-500 text-center">Choose your interview type and get started</p>
+
+  <div class="card">
+    <div class="space-y-4">
+      <div>
+        <label class="label-field">Interview Type</label>
+        <div class="grid grid-cols-2 gap-3">
+          <% ['technical', 'behavioral', 'hr', 'case_study'].forEach(type => { %>
+            <label class="flex items-center gap-3 p-4 border-2 rounded-lg cursor-pointer hover:border-accent transition interview-type-option">
+              <input type="radio" name="interviewType" value="<%= type %>" <%= type === 'behavioral' ? 'checked' : '' %> class="text-accent">
+              <div>
+                <p class="font-medium capitalize"><%= type.replace('_', ' ') %></p>
+                <p class="text-xs text-gray-500">
+                  <%= type === 'technical' ? 'Coding & system design' : type === 'behavioral' ? 'Situational questions' : type === 'hr' ? 'Culture & personality' : 'Problem solving' %>
+                </p>
+              </div>
+            </label>
+          <% }); %>
+        </div>
+      </div>
+
+      <div>
+        <label class="label-field">Mode</label>
+        <div class="grid grid-cols-3 gap-3">
+          <% [{val:'text',icon:'fa-keyboard',label:'Text'}, {val:'audio',icon:'fa-headphones',label:'Audio'}, {val:'video',icon:'fa-video',label:'Video'}].forEach(m => { %>
+            <label class="flex flex-col items-center gap-2 p-4 border-2 rounded-lg cursor-pointer hover:border-accent transition">
+              <input type="radio" name="mode" value="<%= m.val %>" <%= m.val === 'text' ? 'checked' : '' %> class="sr-only">
+              <i class="fas <%= m.icon %> text-xl text-gray-500"></i>
+              <span class="text-sm font-medium"><%= m.label %></span>
+            </label>
+          <% }); %>
+        </div>
+      </div>
+
+      <div>
+        <label class="label-field">Target Job Role</label>
+        <input type="text" id="int-role" class="input-field" placeholder="e.g., Software Engineer, Product Manager">
+      </div>
+
+      <button onclick="startInterview()" id="start-btn" class="btn-primary w-full text-lg py-3"><i class="fas fa-play mr-2"></i>Start Interview</button>
+    </div>
+  </div>
+</div>
+
+<script>
+async function startInterview() {
+  const btn = document.getElementById('start-btn');
+  const data = {
+    interviewType: document.querySelector('input[name="interviewType"]:checked').value,
+    mode: document.querySelector('input[name="mode"]:checked').value,
+    jobRole: document.getElementById('int-role').value,
+  };
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Generating Questions...';
+  try {
+    const res = await fetch('/interview/start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+    const result = await res.json();
+    if (result.success) window.location.href = '/interview/' + result.interview.id + '/session';
+  } catch (err) { showToast('Failed to start', 'error'); }
+  btn.disabled = false;
+  btn.innerHTML = '<i class="fas fa-play mr-2"></i>Start Interview';
+}
+</script>
