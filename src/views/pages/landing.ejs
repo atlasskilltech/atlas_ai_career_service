@@ -1,0 +1,108 @@
+<nav class="bg-white dark:bg-gray-900 shadow-sm">
+  <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+        <i class="fas fa-rocket text-white"></i>
+      </div>
+      <div>
+        <h1 class="text-xl font-bold text-primary dark:text-white">Atlas Career Platform</h1>
+        <p class="text-xs text-gray-500">Atlas SkillTech University</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-4">
+      <a href="/auth/login" class="btn-outline text-sm">Login</a>
+      <a href="/auth/register" class="btn-primary text-sm">Get Started</a>
+    </div>
+  </div>
+</nav>
+
+<section class="max-w-7xl mx-auto px-6 py-20">
+  <div class="grid lg:grid-cols-2 gap-12 items-center">
+    <div>
+      <span class="badge-info mb-4">AI-Powered Career Platform</span>
+      <h2 class="text-5xl font-extrabold text-primary dark:text-white leading-tight mt-4">
+        Your AI Career<br>
+        <span class="text-accent">Co-Pilot</span>
+      </h2>
+      <p class="text-lg text-gray-600 dark:text-gray-400 mt-6 leading-relaxed">
+        Build ATS-optimized resumes, ace interviews with AI coaching, track applications,
+        and get placement-ready with Atlas SkillTech's comprehensive career platform.
+      </p>
+      <div class="flex gap-4 mt-8">
+        <a href="/auth/register" class="btn-primary text-lg px-8 py-3">Start Free <i class="fas fa-arrow-right ml-2"></i></a>
+        <a href="#features" class="btn-outline text-lg px-8 py-3">Explore Features</a>
+      </div>
+      <div class="flex items-center gap-8 mt-10 text-sm text-gray-500">
+        <div class="flex items-center gap-2"><i class="fas fa-check-circle text-accent"></i> AI Resume Builder</div>
+        <div class="flex items-center gap-2"><i class="fas fa-check-circle text-accent"></i> Mock Interviews</div>
+        <div class="flex items-center gap-2"><i class="fas fa-check-circle text-accent"></i> Job Tracker</div>
+      </div>
+    </div>
+    <div class="relative">
+      <div class="bg-gradient-to-br from-primary/5 to-accent/5 rounded-2xl p-8">
+        <div class="grid grid-cols-2 gap-4">
+          <div class="card text-center p-6">
+            <div class="text-3xl font-bold text-primary">95%</div>
+            <p class="text-sm text-gray-500 mt-1">ATS Score</p>
+          </div>
+          <div class="card text-center p-6">
+            <div class="text-3xl font-bold text-accent">50+</div>
+            <p class="text-sm text-gray-500 mt-1">AI Tools</p>
+          </div>
+          <div class="card text-center p-6">
+            <div class="text-3xl font-bold text-primary">14</div>
+            <p class="text-sm text-gray-500 mt-1">Modules</p>
+          </div>
+          <div class="card text-center p-6">
+            <div class="text-3xl font-bold text-accent">24/7</div>
+            <p class="text-sm text-gray-500 mt-1">AI Coach</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="features" class="bg-white dark:bg-gray-900 py-20">
+  <div class="max-w-7xl mx-auto px-6">
+    <div class="text-center mb-16">
+      <h3 class="text-3xl font-bold text-primary dark:text-white">Everything You Need to Land Your Dream Job</h3>
+      <p class="text-gray-500 mt-4 max-w-2xl mx-auto">From resume building to interview prep, our AI-powered platform covers every step of your career journey.</p>
+    </div>
+    <div class="grid md:grid-cols-3 lg:grid-cols-4 gap-6">
+      <% const features = [
+        { icon: 'fa-file-alt', title: 'AI Resume Builder', desc: 'Build ATS-optimized resumes with AI suggestions' },
+        { icon: 'fa-search-plus', title: 'ATS Analyzer', desc: 'Score your resume against job descriptions' },
+        { icon: 'fa-envelope-open-text', title: 'Cover Letters', desc: 'Generate tailored cover letters with AI' },
+        { icon: 'fa-briefcase', title: 'Job Tracker', desc: 'Kanban board to track all applications' },
+        { icon: 'fa-microphone', title: 'Mock Interviews', desc: 'Practice with AI-generated questions' },
+        { icon: 'fa-chart-line', title: 'Skill Gap Analysis', desc: 'Identify missing skills & learning paths' },
+        { icon: 'fa-users', title: 'Networking CRM', desc: 'Track recruiter contacts & follow-ups' },
+        { icon: 'fa-folder-open', title: 'Document Hub', desc: 'Store all career documents securely' },
+      ]; %>
+      <% features.forEach(f => { %>
+        <div class="card hover:shadow-md transition-shadow">
+          <div class="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center mb-4">
+            <i class="fas <%= f.icon %> text-accent text-xl"></i>
+          </div>
+          <h4 class="font-semibold text-lg"><%= f.title %></h4>
+          <p class="text-gray-500 text-sm mt-2"><%= f.desc %></p>
+        </div>
+      <% }); %>
+    </div>
+  </div>
+</section>
+
+<section class="py-20 bg-primary text-white text-center">
+  <div class="max-w-3xl mx-auto px-6">
+    <h3 class="text-3xl font-bold">Ready to Kickstart Your Career?</h3>
+    <p class="text-blue-200 mt-4 text-lg">Join Atlas SkillTech students who are already placement-ready.</p>
+    <a href="/auth/register" class="btn-accent text-lg px-10 py-3 mt-8 inline-block">Create Free Account</a>
+  </div>
+</section>
+
+<footer class="bg-gray-900 text-gray-400 py-8">
+  <div class="max-w-7xl mx-auto px-6 text-center">
+    <p>&copy; 2025 Atlas SkillTech University. All rights reserved.</p>
+  </div>
+</footer>

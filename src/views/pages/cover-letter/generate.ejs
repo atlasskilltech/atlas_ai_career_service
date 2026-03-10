@@ -1,0 +1,60 @@
+<div class="space-y-6">
+  <h1 class="text-2xl font-bold">Generate Cover Letter</h1>
+
+  <div class="grid lg:grid-cols-2 gap-6">
+    <div class="card">
+      <h3 class="font-semibold mb-4">Details</h3>
+      <div class="space-y-4">
+        <div><label class="label-field">Company Name</label><input type="text" id="cl-company" class="input-field" placeholder="Google, Microsoft, etc."></div>
+        <div><label class="label-field">Job Title</label><input type="text" id="cl-job-title" class="input-field" placeholder="Software Engineer"></div>
+        <div><label class="label-field">Job Description</label><textarea id="cl-jd" rows="5" class="input-field" placeholder="Paste the job description..."></textarea></div>
+        <div><label class="label-field">Your Resume / Background</label><textarea id="cl-resume" rows="5" class="input-field" placeholder="Paste your resume or key details..."></textarea></div>
+        <button onclick="generateCoverLetter()" id="cl-btn" class="btn-primary w-full"><i class="fas fa-magic mr-2"></i>Generate Cover Letter</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 class="font-semibold mb-4">Generated Cover Letter</h3>
+      <div id="cl-result" class="text-center py-12 text-gray-400">
+        <i class="fas fa-envelope text-5xl mb-4"></i>
+        <p>Fill in the details and generate your cover letter</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+async function generateCoverLetter() {
+  const btn = document.getElementById('cl-btn');
+  const data = {
+    companyName: document.getElementById('cl-company').value,
+    jobTitle: document.getElementById('cl-job-title').value,
+    jobDescription: document.getElementById('cl-jd').value,
+    resumeText: document.getElementById('cl-resume').value,
+  };
+  if (!data.companyName || !data.jobTitle) return showToast('Please fill required fields', 'error');
+
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Generating...';
+
+  try {
+    const res = await fetch('/cover-letter/generate', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data),
+    });
+    const result = await res.json();
+    if (result.success) {
+      document.getElementById('cl-result').innerHTML = `
+        <div class="text-left">
+          <div class="flex items-center justify-between mb-4">
+            <h4 class="font-medium">${result.letter.title}</h4>
+            <a href="/cover-letter/${result.letter.id}" class="text-accent text-sm hover:underline">Edit & Save</a>
+          </div>
+          <div class="prose prose-sm max-w-none whitespace-pre-wrap bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">${result.letter.content}</div>
+        </div>
+      `;
+    }
+  } catch (err) { showToast('Generation failed', 'error'); }
+  btn.disabled = false;
+  btn.innerHTML = '<i class="fas fa-magic mr-2"></i>Generate Cover Letter';
+}
+</script>

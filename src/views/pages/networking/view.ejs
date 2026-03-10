@@ -1,0 +1,71 @@
+<div class="space-y-6">
+  <a href="/networking" class="text-gray-500 hover:text-gray-700 text-sm"><i class="fas fa-arrow-left mr-1"></i>Back</a>
+
+  <div class="grid lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2 space-y-6">
+      <div class="card">
+        <div class="flex items-start justify-between">
+          <div>
+            <h1 class="text-2xl font-bold"><%= contact.name %></h1>
+            <p class="text-gray-500"><%= contact.position || '' %><%= contact.company ? ' at ' + contact.company : '' %></p>
+          </div>
+          <span class="badge-info capitalize"><%= contact.contact_type ? contact.contact_type.replace('_', ' ') : '' %></span>
+        </div>
+        <div class="grid grid-cols-2 gap-4 mt-4 text-sm">
+          <% if (contact.email) { %><div><span class="text-gray-500">Email:</span> <%= contact.email %></div><% } %>
+          <% if (contact.phone) { %><div><span class="text-gray-500">Phone:</span> <%= contact.phone %></div><% } %>
+          <% if (contact.linkedin_url) { %><div><span class="text-gray-500">LinkedIn:</span> <a href="<%= contact.linkedin_url %>" target="_blank" class="text-accent"><%= contact.linkedin_url %></a></div><% } %>
+          <% if (contact.follow_up_date) { %><div><span class="text-gray-500">Follow-up:</span> <%= new Date(contact.follow_up_date).toLocaleDateString() %></div><% } %>
+        </div>
+        <% if (contact.notes) { %>
+          <div class="mt-4 pt-4 border-t dark:border-gray-700"><h3 class="font-medium mb-2">Notes</h3><p class="text-sm text-gray-600 whitespace-pre-wrap"><%= contact.notes %></p></div>
+        <% } %>
+      </div>
+
+      <!-- Interactions -->
+      <div class="card">
+        <h3 class="font-semibold mb-4">Interaction History</h3>
+        <% if (contact.interactions && contact.interactions.length > 0) { %>
+          <div class="space-y-3">
+            <% contact.interactions.forEach(i => { %>
+              <div class="flex gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <div class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center flex-shrink-0">
+                  <i class="fas fa-<%= i.interaction_type === 'email' ? 'envelope' : i.interaction_type === 'call' ? 'phone' : i.interaction_type === 'meeting' ? 'handshake' : 'comment' %> text-blue-600 text-xs"></i>
+                </div>
+                <div>
+                  <p class="text-sm font-medium capitalize"><%= i.interaction_type %></p>
+                  <p class="text-xs text-gray-500"><%= new Date(i.interaction_date).toLocaleString() %></p>
+                  <% if (i.notes) { %><p class="text-sm text-gray-600 mt-1"><%= i.notes %></p><% } %>
+                </div>
+              </div>
+            <% }); %>
+          </div>
+        <% } else { %>
+          <p class="text-gray-400 text-sm">No interactions logged yet</p>
+        <% } %>
+      </div>
+    </div>
+
+    <div class="card h-fit">
+      <h3 class="font-semibold mb-3">Log Interaction</h3>
+      <div class="space-y-3">
+        <select id="int-type" class="input-field">
+          <option value="email">Email</option><option value="call">Call</option>
+          <option value="meeting">Meeting</option><option value="linkedin">LinkedIn</option><option value="other">Other</option>
+        </select>
+        <textarea id="int-notes" rows="3" class="input-field" placeholder="Notes about the interaction..."></textarea>
+        <button onclick="logInteraction()" class="btn-primary w-full">Log Interaction</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+async function logInteraction() {
+  const data = { interactionType: document.getElementById('int-type').value, notes: document.getElementById('int-notes').value };
+  try {
+    await fetch('/networking/<%= contact.id %>/interactions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+    location.reload();
+  } catch (err) { showToast('Failed', 'error'); }
+}
+</script>

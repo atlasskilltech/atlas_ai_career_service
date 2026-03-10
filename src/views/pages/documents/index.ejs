@@ -1,0 +1,103 @@
+<div class="space-y-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold">Document Hub</h1>
+      <p class="text-gray-500">Storage used: <%= storageUsed %> MB</p>
+    </div>
+    <button onclick="openUploadModal()" class="btn-primary"><i class="fas fa-upload mr-2"></i>Upload</button>
+  </div>
+
+  <!-- Filter Tabs -->
+  <div class="flex gap-4 border-b dark:border-gray-700">
+    <button onclick="filterDocs('all')" class="pb-2 text-sm font-medium tab-active" data-filter="all">All</button>
+    <button onclick="filterDocs('resume')" class="pb-2 text-sm font-medium text-gray-500 hover:text-gray-700" data-filter="resume">Resumes</button>
+    <button onclick="filterDocs('certificate')" class="pb-2 text-sm font-medium text-gray-500 hover:text-gray-700" data-filter="certificate">Certificates</button>
+    <button onclick="filterDocs('project')" class="pb-2 text-sm font-medium text-gray-500 hover:text-gray-700" data-filter="project">Projects</button>
+    <button onclick="filterDocs('portfolio')" class="pb-2 text-sm font-medium text-gray-500 hover:text-gray-700" data-filter="portfolio">Portfolio</button>
+  </div>
+
+  <% if (documents.length === 0) { %>
+    <div class="card text-center py-16">
+      <i class="fas fa-folder-open text-6xl text-gray-300 mb-4"></i>
+      <h3 class="text-xl font-semibold text-gray-600">No documents yet</h3>
+      <p class="text-gray-400 mt-2">Upload your career documents to keep them organized</p>
+    </div>
+  <% } else { %>
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" id="docs-grid">
+      <% documents.forEach(doc => { %>
+        <div class="card hover:shadow-md transition-shadow doc-card" data-type="<%= doc.doc_type %>">
+          <div class="flex items-start justify-between mb-3">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center
+              <%= doc.mime_type?.includes('pdf') ? 'bg-red-100 text-red-600' : doc.mime_type?.includes('image') ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600' %>">
+              <i class="fas <%= doc.mime_type?.includes('pdf') ? 'fa-file-pdf' : doc.mime_type?.includes('image') ? 'fa-file-image' : 'fa-file-alt' %> text-lg"></i>
+            </div>
+            <span class="badge-info text-xs capitalize"><%= doc.doc_type %></span>
+          </div>
+          <h4 class="font-medium text-sm truncate"><%= doc.title %></h4>
+          <p class="text-xs text-gray-500 mt-1"><%= doc.file_name %></p>
+          <p class="text-xs text-gray-400 mt-1"><%= (doc.file_size / 1024).toFixed(1) %> KB | v<%= doc.version %></p>
+          <div class="flex gap-2 mt-3">
+            <a href="<%= doc.file_path %>" target="_blank" class="btn-outline text-xs flex-1"><i class="fas fa-eye mr-1"></i>View</a>
+            <a href="<%= doc.file_path %>" download class="btn-accent text-xs"><i class="fas fa-download"></i></a>
+            <button onclick="deleteDoc(<%= doc.id %>)" class="btn-danger text-xs"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+      <% }); %>
+    </div>
+  <% } %>
+</div>
+
+<!-- Upload Modal -->
+<div id="upload-modal" class="modal-overlay hidden">
+  <div class="modal-content p-6">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-lg font-semibold">Upload Document</h3>
+      <button onclick="closeUploadModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+    </div>
+    <form id="upload-form" enctype="multipart/form-data" class="space-y-3">
+      <div><label class="label-field">Title</label><input type="text" name="title" id="doc-title" class="input-field" required></div>
+      <div><label class="label-field">Type</label>
+        <select name="docType" id="doc-type" class="input-field">
+          <option value="resume">Resume</option><option value="certificate">Certificate</option>
+          <option value="project">Project</option><option value="portfolio">Portfolio</option><option value="other">Other</option>
+        </select>
+      </div>
+      <div><label class="label-field">File</label><input type="file" name="file" id="doc-file" class="input-field" required accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"></div>
+      <div><label class="label-field">Notes</label><textarea name="notes" id="doc-notes" rows="2" class="input-field"></textarea></div>
+      <button type="submit" class="btn-primary w-full">Upload</button>
+    </form>
+  </div>
+</div>
+
+<script>
+function openUploadModal() { document.getElementById('upload-modal').classList.remove('hidden'); }
+function closeUploadModal() { document.getElementById('upload-modal').classList.add('hidden'); }
+
+function filterDocs(type) {
+  document.querySelectorAll('.doc-card').forEach(c => {
+    c.style.display = type === 'all' || c.dataset.type === type ? '' : 'none';
+  });
+  document.querySelectorAll('[data-filter]').forEach(b => {
+    b.classList.toggle('tab-active', b.dataset.filter === type);
+    b.classList.toggle('text-gray-500', b.dataset.filter !== type);
+  });
+}
+
+document.getElementById('upload-form').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const formData = new FormData();
+  formData.append('file', document.getElementById('doc-file').files[0]);
+  formData.append('title', document.getElementById('doc-title').value);
+  formData.append('docType', document.getElementById('doc-type').value);
+  formData.append('notes', document.getElementById('doc-notes').value);
+  try {
+    const res = await fetch('/documents/upload', { method: 'POST', body: formData });
+    if (res.ok) location.reload();
+  } catch (err) { showToast('Upload failed', 'error'); }
+});
+
+async function deleteDoc(id) {
+  if (!confirm('Delete this document?')) return;
+  try { await fetch('/documents/' + id, { method: 'DELETE' }); location.reload(); } catch (err) { showToast('Failed', 'error'); }
+}
+</script>

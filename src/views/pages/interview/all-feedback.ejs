@@ -1,0 +1,44 @@
+<div class="space-y-6">
+  <div class="flex items-center justify-between">
+    <h1 class="text-2xl font-bold">Interview Feedback History</h1>
+    <a href="/interview" class="btn-outline"><i class="fas fa-arrow-left mr-2"></i>Back</a>
+  </div>
+
+  <% if (avgScores && avgScores.total > 0) { %>
+    <div class="grid grid-cols-4 gap-4">
+      <div class="stat-card"><span class="text-sm text-gray-500">Avg Confidence</span><div class="text-2xl font-bold mt-1"><%= Math.round(avgScores.avg_confidence || 0) %>%</div></div>
+      <div class="stat-card"><span class="text-sm text-gray-500">Avg Communication</span><div class="text-2xl font-bold mt-1"><%= Math.round(avgScores.avg_communication || 0) %>%</div></div>
+      <div class="stat-card"><span class="text-sm text-gray-500">Avg Technical</span><div class="text-2xl font-bold mt-1"><%= Math.round(avgScores.avg_technical || 0) %>%</div></div>
+      <div class="stat-card"><span class="text-sm text-gray-500">Avg Overall</span><div class="text-2xl font-bold mt-1"><%= Math.round(avgScores.avg_overall || 0) %>%</div></div>
+    </div>
+  <% } %>
+
+  <% if (feedbacks.length === 0) { %>
+    <div class="card text-center py-12 text-gray-400">
+      <p>No feedback history yet. Complete some mock interviews first.</p>
+    </div>
+  <% } else { %>
+    <div class="space-y-4">
+      <% feedbacks.forEach(f => { %>
+        <div class="card hover:shadow-md transition-shadow">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="font-semibold capitalize"><%= f.interview_type %> Interview</h3>
+              <p class="text-sm text-gray-500"><%= f.job_role || 'General' %> | <%= new Date(f.created_at).toLocaleDateString() %></p>
+            </div>
+            <div class="text-right">
+              <div class="text-2xl font-bold"><%= f.overall_score %>%</div>
+              <p class="text-xs text-gray-500">Overall</p>
+            </div>
+          </div>
+          <div class="grid grid-cols-4 gap-2 mt-3">
+            <div class="text-center p-2 bg-gray-50 dark:bg-gray-800 rounded"><div class="font-semibold text-sm"><%= f.confidence_score %>%</div><p class="text-xs text-gray-500">Confidence</p></div>
+            <div class="text-center p-2 bg-gray-50 dark:bg-gray-800 rounded"><div class="font-semibold text-sm"><%= f.communication_score %>%</div><p class="text-xs text-gray-500">Comm</p></div>
+            <div class="text-center p-2 bg-gray-50 dark:bg-gray-800 rounded"><div class="font-semibold text-sm"><%= f.technical_score %>%</div><p class="text-xs text-gray-500">Technical</p></div>
+            <div class="text-center p-2 bg-gray-50 dark:bg-gray-800 rounded"><div class="font-semibold text-sm"><%= f.star_score %>%</div><p class="text-xs text-gray-500">STAR</p></div>
+          </div>
+        </div>
+      <% }); %>
+    </div>
+  <% } %>
+</div>

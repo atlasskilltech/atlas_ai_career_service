@@ -1,0 +1,146 @@
+<div class="space-y-6">
+  <div class="flex items-center justify-between">
+    <h1 class="text-2xl font-bold">Job Application Tracker</h1>
+    <div class="flex gap-2">
+      <button onclick="openJobModal()" class="btn-primary"><i class="fas fa-plus mr-2"></i>Add Job</button>
+      <button onclick="openMatchModal()" class="btn-outline"><i class="fas fa-chart-pie mr-2"></i>Match Analyzer</button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="grid grid-cols-5 gap-4">
+    <% ['saved','applied','interview','offer','rejected'].forEach(status => { %>
+      <div class="card text-center p-4">
+        <div class="text-2xl font-bold"><%= stats[status] || 0 %></div>
+        <p class="text-xs text-gray-500 capitalize"><%= status %></p>
+      </div>
+    <% }); %>
+  </div>
+
+  <!-- Kanban Board -->
+  <div class="grid grid-cols-5 gap-4">
+    <% ['saved','applied','interview','offer','rejected'].forEach(status => { %>
+      <div class="kanban-column" id="col-<%= status %>" ondrop="dropJob(event, '<%= status %>')" ondragover="event.preventDefault()">
+        <h3 class="font-semibold text-sm uppercase tracking-wide mb-3 flex items-center gap-2">
+          <% const colors = {saved:'blue', applied:'yellow', interview:'purple', offer:'green', rejected:'red'}; %>
+          <span class="w-2 h-2 rounded-full bg-<%= colors[status] %>-500"></span>
+          <%= status %> (<%= jobs.filter(j => j.status === status).length %>)
+        </h3>
+        <% jobs.filter(j => j.status === status).forEach(job => { %>
+          <div class="kanban-card" draggable="true" ondragstart="dragJob(event, <%= job.id %>)" id="job-<%= job.id %>">
+            <h4 class="font-medium text-sm"><%= job.position %></h4>
+            <p class="text-xs text-gray-500 mt-1"><%= job.company %></p>
+            <% if (job.location) { %><p class="text-xs text-gray-400"><i class="fas fa-map-marker-alt"></i> <%= job.location %></p><% } %>
+            <div class="flex items-center justify-between mt-3">
+              <span class="text-xs text-gray-400"><%= job.applied_date ? new Date(job.applied_date).toLocaleDateString() : '' %></span>
+              <a href="/jobs/<%= job.id %>" class="text-xs text-accent hover:underline">Details</a>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+    <% }); %>
+  </div>
+</div>
+
+<!-- Add Job Modal -->
+<div id="job-modal" class="modal-overlay hidden">
+  <div class="modal-content p-6">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-lg font-semibold">Add Job Application</h3>
+      <button onclick="closeJobModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="space-y-3">
+      <div><label class="label-field">Company</label><input type="text" id="job-company" class="input-field" placeholder="Google"></div>
+      <div><label class="label-field">Position</label><input type="text" id="job-position" class="input-field" placeholder="Software Engineer"></div>
+      <div><label class="label-field">Location</label><input type="text" id="job-location" class="input-field" placeholder="Mumbai, India"></div>
+      <div><label class="label-field">Job URL</label><input type="url" id="job-url" class="input-field" placeholder="https://..."></div>
+      <div><label class="label-field">Salary Range</label><input type="text" id="job-salary" class="input-field" placeholder="10-15 LPA"></div>
+      <div><label class="label-field">Status</label>
+        <select id="job-status" class="input-field">
+          <option value="saved">Saved</option><option value="applied">Applied</option><option value="interview">Interview</option>
+        </select>
+      </div>
+      <div><label class="label-field">Notes</label><textarea id="job-notes" rows="2" class="input-field" placeholder="Any notes..."></textarea></div>
+      <button onclick="addJob()" class="btn-primary w-full">Add Job</button>
+    </div>
+  </div>
+</div>
+
+<!-- Match Analyzer Modal -->
+<div id="match-modal" class="modal-overlay hidden">
+  <div class="modal-content p-6">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-lg font-semibold">Job Match Analyzer</h3>
+      <button onclick="closeMatchModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="space-y-3">
+      <div><label class="label-field">Your Resume</label><textarea id="match-resume" rows="4" class="input-field" placeholder="Paste resume..."></textarea></div>
+      <div><label class="label-field">Job Description</label><textarea id="match-jd" rows="4" class="input-field" placeholder="Paste JD..."></textarea></div>
+      <button onclick="analyzeMatch()" id="match-btn" class="btn-primary w-full">Analyze Match</button>
+      <div id="match-results"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+function openJobModal() { document.getElementById('job-modal').classList.remove('hidden'); }
+function closeJobModal() { document.getElementById('job-modal').classList.add('hidden'); }
+function openMatchModal() { document.getElementById('match-modal').classList.remove('hidden'); }
+function closeMatchModal() { document.getElementById('match-modal').classList.add('hidden'); }
+
+function dragJob(e, id) { e.dataTransfer.setData('text/plain', id); }
+async function dropJob(e, status) {
+  e.preventDefault();
+  const id = e.dataTransfer.getData('text/plain');
+  try {
+    await fetch('/jobs/' + id + '/status', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }),
+    });
+    location.reload();
+  } catch (err) { showToast('Failed to update', 'error'); }
+}
+
+async function addJob() {
+  const data = {
+    company: document.getElementById('job-company').value,
+    position: document.getElementById('job-position').value,
+    location: document.getElementById('job-location').value,
+    url: document.getElementById('job-url').value,
+    salaryRange: document.getElementById('job-salary').value,
+    status: document.getElementById('job-status').value,
+    notes: document.getElementById('job-notes').value,
+  };
+  if (!data.company || !data.position) return showToast('Company and position required', 'error');
+  try {
+    const res = await fetch('/jobs', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data),
+    });
+    if (res.ok) location.reload();
+  } catch (err) { showToast('Failed to add job', 'error'); }
+}
+
+async function analyzeMatch() {
+  const btn = document.getElementById('match-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Analyzing...';
+  try {
+    const res = await fetch('/jobs/match/analyze', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ resumeText: document.getElementById('match-resume').value, jobDescription: document.getElementById('match-jd').value }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      const r = data.result;
+      document.getElementById('match-results').innerHTML = `
+        <div class="mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg space-y-3">
+          <div class="text-center"><span class="text-3xl font-bold ${r.matchPercentage >= 70 ? 'text-green-600' : 'text-yellow-600'}">${r.matchPercentage}%</span><p class="text-xs text-gray-500">Match</p></div>
+          <div><strong class="text-xs">Matching:</strong><div class="flex flex-wrap gap-1 mt-1">${(r.matchingSkills||[]).map(s=>'<span class="badge-success">'+s+'</span>').join('')}</div></div>
+          <div><strong class="text-xs">Missing:</strong><div class="flex flex-wrap gap-1 mt-1">${(r.missingSkills||[]).map(s=>'<span class="badge-danger">'+s+'</span>').join('')}</div></div>
+          <p class="text-xs">${r.gapAnalysis||''}</p>
+        </div>`;
+    }
+  } catch (err) { showToast('Analysis failed', 'error'); }
+  btn.disabled = false;
+  btn.innerHTML = 'Analyze Match';
+}
+</script>

@@ -1,0 +1,369 @@
+<div class="grid grid-cols-12 gap-6 h-[calc(100vh-120px)]">
+  <!-- Sidebar: Sections -->
+  <div class="col-span-3">
+    <div class="card h-full overflow-y-auto">
+      <h3 class="font-semibold text-lg mb-4">Sections</h3>
+      <nav class="space-y-1">
+        <button onclick="showSection('profile')" class="section-btn sidebar-link active w-full text-left" data-section="profile">
+          <i class="fas fa-user w-5"></i> Profile
+        </button>
+        <button onclick="showSection('education')" class="section-btn sidebar-link w-full text-left" data-section="education">
+          <i class="fas fa-graduation-cap w-5"></i> Education
+        </button>
+        <button onclick="showSection('experience')" class="section-btn sidebar-link w-full text-left" data-section="experience">
+          <i class="fas fa-briefcase w-5"></i> Experience
+        </button>
+        <button onclick="showSection('projects')" class="section-btn sidebar-link w-full text-left" data-section="projects">
+          <i class="fas fa-code w-5"></i> Projects
+        </button>
+        <button onclick="showSection('skills')" class="section-btn sidebar-link w-full text-left" data-section="skills">
+          <i class="fas fa-tools w-5"></i> Skills
+        </button>
+        <button onclick="showSection('achievements')" class="section-btn sidebar-link w-full text-left" data-section="achievements">
+          <i class="fas fa-trophy w-5"></i> Achievements
+        </button>
+      </nav>
+      <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+        <h4 class="text-sm font-medium text-gray-500 mb-3">AI Tools</h4>
+        <button onclick="generateSummary()" class="sidebar-link w-full text-left text-sm">
+          <i class="fas fa-magic w-5 text-accent"></i> Generate Summary
+        </button>
+        <button onclick="generateBullets()" class="sidebar-link w-full text-left text-sm">
+          <i class="fas fa-list w-5 text-accent"></i> Generate Bullets
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Editor -->
+  <div class="col-span-5">
+    <div class="card h-full overflow-y-auto">
+      <div class="flex items-center justify-between mb-4">
+        <input type="text" id="resume-title" value="<%= resume ? resume.title : 'Untitled Resume' %>" class="text-lg font-semibold bg-transparent border-none outline-none focus:ring-0 w-full" placeholder="Resume Title">
+        <button onclick="saveResume()" class="btn-accent text-sm"><i class="fas fa-save mr-1"></i> Save</button>
+      </div>
+
+      <!-- Profile Section -->
+      <div id="section-profile" class="section-content">
+        <h3 class="font-semibold mb-4">Profile</h3>
+        <div class="space-y-4">
+          <div><label class="label-field">Full Name</label><input type="text" id="profile-name" class="input-field" value="<%= resume?.profile_data?.name || '' %>" placeholder="John Doe"></div>
+          <div><label class="label-field">Email</label><input type="email" id="profile-email" class="input-field" value="<%= resume?.profile_data?.email || '' %>" placeholder="john@email.com"></div>
+          <div><label class="label-field">Phone</label><input type="tel" id="profile-phone" class="input-field" value="<%= resume?.profile_data?.phone || '' %>" placeholder="+91 9876543210"></div>
+          <div><label class="label-field">Location</label><input type="text" id="profile-location" class="input-field" value="<%= resume?.profile_data?.location || '' %>" placeholder="Mumbai, India"></div>
+          <div><label class="label-field">LinkedIn</label><input type="url" id="profile-linkedin" class="input-field" value="<%= resume?.profile_data?.linkedin || '' %>" placeholder="linkedin.com/in/johndoe"></div>
+          <div><label class="label-field">Portfolio/Website</label><input type="url" id="profile-website" class="input-field" value="<%= resume?.profile_data?.website || '' %>" placeholder="johndoe.com"></div>
+          <div>
+            <div class="flex items-center justify-between">
+              <label class="label-field">Professional Summary</label>
+              <button onclick="generateSummary()" class="text-xs text-accent hover:underline"><i class="fas fa-magic"></i> AI Generate</button>
+            </div>
+            <textarea id="profile-summary" rows="4" class="input-field" placeholder="Brief professional summary..."><%= resume?.profile_data?.summary || '' %></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Education Section -->
+      <div id="section-education" class="section-content hidden">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-semibold">Education</h3>
+          <button onclick="addEducation()" class="text-sm text-accent hover:underline"><i class="fas fa-plus"></i> Add</button>
+        </div>
+        <div id="education-list" class="space-y-4">
+          <% if (resume?.education_data?.length > 0) { %>
+            <% resume.education_data.forEach((edu, i) => { %>
+              <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg" data-index="<%= i %>">
+                <input type="text" class="input-field mb-2 edu-institution" value="<%= edu.institution || '' %>" placeholder="Institution">
+                <input type="text" class="input-field mb-2 edu-degree" value="<%= edu.degree || '' %>" placeholder="Degree">
+                <div class="grid grid-cols-2 gap-2">
+                  <input type="text" class="input-field edu-year" value="<%= edu.year || '' %>" placeholder="Year">
+                  <input type="text" class="input-field edu-gpa" value="<%= edu.gpa || '' %>" placeholder="GPA/Percentage">
+                </div>
+              </div>
+            <% }); %>
+          <% } %>
+        </div>
+      </div>
+
+      <!-- Experience Section -->
+      <div id="section-experience" class="section-content hidden">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-semibold">Experience</h3>
+          <button onclick="addExperience()" class="text-sm text-accent hover:underline"><i class="fas fa-plus"></i> Add</button>
+        </div>
+        <div id="experience-list" class="space-y-4">
+          <% if (resume?.experience_data?.length > 0) { %>
+            <% resume.experience_data.forEach((exp, i) => { %>
+              <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg" data-index="<%= i %>">
+                <input type="text" class="input-field mb-2 exp-title" value="<%= exp.title || '' %>" placeholder="Job Title">
+                <input type="text" class="input-field mb-2 exp-company" value="<%= exp.company || '' %>" placeholder="Company">
+                <div class="grid grid-cols-2 gap-2 mb-2">
+                  <input type="text" class="input-field exp-start" value="<%= exp.startDate || '' %>" placeholder="Start Date">
+                  <input type="text" class="input-field exp-end" value="<%= exp.endDate || '' %>" placeholder="End Date">
+                </div>
+                <textarea class="input-field exp-desc" rows="3" placeholder="Description / bullet points"><%= exp.description || '' %></textarea>
+                <button onclick="generateBulletsFor(this)" class="text-xs text-accent hover:underline mt-2"><i class="fas fa-magic"></i> AI Generate Bullets</button>
+              </div>
+            <% }); %>
+          <% } %>
+        </div>
+      </div>
+
+      <!-- Projects Section -->
+      <div id="section-projects" class="section-content hidden">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-semibold">Projects</h3>
+          <button onclick="addProject()" class="text-sm text-accent hover:underline"><i class="fas fa-plus"></i> Add</button>
+        </div>
+        <div id="projects-list" class="space-y-4">
+          <% if (resume?.projects_data?.length > 0) { %>
+            <% resume.projects_data.forEach((proj, i) => { %>
+              <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg" data-index="<%= i %>">
+                <input type="text" class="input-field mb-2 proj-name" value="<%= proj.name || '' %>" placeholder="Project Name">
+                <input type="text" class="input-field mb-2 proj-tech" value="<%= proj.technologies || '' %>" placeholder="Technologies Used">
+                <textarea class="input-field proj-desc" rows="3" placeholder="Project description"><%= proj.description || '' %></textarea>
+                <input type="url" class="input-field mt-2 proj-url" value="<%= proj.url || '' %>" placeholder="Project URL">
+              </div>
+            <% }); %>
+          <% } %>
+        </div>
+      </div>
+
+      <!-- Skills Section -->
+      <div id="section-skills" class="section-content hidden">
+        <h3 class="font-semibold mb-4">Skills</h3>
+        <div class="space-y-4">
+          <div>
+            <label class="label-field">Technical Skills</label>
+            <textarea id="skills-technical" rows="3" class="input-field" placeholder="JavaScript, React, Node.js, Python..."><%= resume?.skills_data?.technical || '' %></textarea>
+          </div>
+          <div>
+            <label class="label-field">Soft Skills</label>
+            <textarea id="skills-soft" rows="2" class="input-field" placeholder="Leadership, Communication, Teamwork..."><%= resume?.skills_data?.soft || '' %></textarea>
+          </div>
+          <div>
+            <label class="label-field">Tools & Frameworks</label>
+            <textarea id="skills-tools" rows="2" class="input-field" placeholder="Git, Docker, AWS, Figma..."><%= resume?.skills_data?.tools || '' %></textarea>
+          </div>
+          <div>
+            <label class="label-field">Languages</label>
+            <textarea id="skills-languages" rows="2" class="input-field" placeholder="English, Hindi, Marathi..."><%= resume?.skills_data?.languages || '' %></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Achievements Section -->
+      <div id="section-achievements" class="section-content hidden">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-semibold">Achievements</h3>
+          <button onclick="addAchievement()" class="text-sm text-accent hover:underline"><i class="fas fa-plus"></i> Add</button>
+        </div>
+        <div id="achievements-list" class="space-y-3">
+          <% if (resume?.achievements_data?.length > 0) { %>
+            <% resume.achievements_data.forEach((ach, i) => { %>
+              <div class="flex gap-2" data-index="<%= i %>">
+                <input type="text" class="input-field flex-1 ach-text" value="<%= ach %>" placeholder="Achievement">
+                <button onclick="rewriteAchievement(this)" class="text-accent hover:opacity-70" title="AI Rewrite"><i class="fas fa-magic"></i></button>
+              </div>
+            <% }); %>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Live Preview -->
+  <div class="col-span-4">
+    <div class="card h-full overflow-y-auto">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-semibold">Preview</h3>
+        <% if (resume) { %>
+          <a href="/resume/<%= resume.id %>/preview" target="_blank" class="text-sm text-accent hover:underline"><i class="fas fa-external-link-alt"></i> Full View</a>
+        <% } %>
+      </div>
+      <div id="resume-preview" class="border border-gray-200 dark:border-gray-700 rounded-lg p-6 bg-white text-gray-900 text-sm leading-relaxed min-h-[600px]">
+        <div class="text-center mb-4">
+          <h2 class="text-xl font-bold" id="preview-name"><%= resume?.profile_data?.name || 'Your Name' %></h2>
+          <p class="text-gray-500 text-xs" id="preview-contact"><%= resume?.profile_data?.email || '' %> | <%= resume?.profile_data?.phone || '' %></p>
+        </div>
+        <p class="text-xs text-gray-600" id="preview-summary"><%= resume?.profile_data?.summary || 'Your professional summary will appear here...' %></p>
+        <hr class="my-3">
+        <div id="preview-sections">
+          <p class="text-gray-400 text-xs italic">Start filling in the sections to see your resume preview</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<input type="hidden" id="resume-id" value="<%= resume ? resume.id : '' %>">
+
+<script>
+function showSection(name) {
+  document.querySelectorAll('.section-content').forEach(s => s.classList.add('hidden'));
+  document.querySelectorAll('.section-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('section-' + name).classList.remove('hidden');
+  document.querySelector('[data-section="' + name + '"]').classList.add('active');
+}
+
+function addEducation() {
+  const list = document.getElementById('education-list');
+  const i = list.children.length;
+  list.insertAdjacentHTML('beforeend', `
+    <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg" data-index="${i}">
+      <input type="text" class="input-field mb-2 edu-institution" placeholder="Institution">
+      <input type="text" class="input-field mb-2 edu-degree" placeholder="Degree">
+      <div class="grid grid-cols-2 gap-2">
+        <input type="text" class="input-field edu-year" placeholder="Year">
+        <input type="text" class="input-field edu-gpa" placeholder="GPA/Percentage">
+      </div>
+    </div>
+  `);
+}
+
+function addExperience() {
+  const list = document.getElementById('experience-list');
+  list.insertAdjacentHTML('beforeend', `
+    <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+      <input type="text" class="input-field mb-2 exp-title" placeholder="Job Title">
+      <input type="text" class="input-field mb-2 exp-company" placeholder="Company">
+      <div class="grid grid-cols-2 gap-2 mb-2">
+        <input type="text" class="input-field exp-start" placeholder="Start Date">
+        <input type="text" class="input-field exp-end" placeholder="End Date">
+      </div>
+      <textarea class="input-field exp-desc" rows="3" placeholder="Description"></textarea>
+      <button onclick="generateBulletsFor(this)" class="text-xs text-accent hover:underline mt-2"><i class="fas fa-magic"></i> AI Generate Bullets</button>
+    </div>
+  `);
+}
+
+function addProject() {
+  const list = document.getElementById('projects-list');
+  list.insertAdjacentHTML('beforeend', `
+    <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+      <input type="text" class="input-field mb-2 proj-name" placeholder="Project Name">
+      <input type="text" class="input-field mb-2 proj-tech" placeholder="Technologies">
+      <textarea class="input-field proj-desc" rows="3" placeholder="Description"></textarea>
+      <input type="url" class="input-field mt-2 proj-url" placeholder="URL">
+    </div>
+  `);
+}
+
+function addAchievement() {
+  const list = document.getElementById('achievements-list');
+  list.insertAdjacentHTML('beforeend', `
+    <div class="flex gap-2">
+      <input type="text" class="input-field flex-1 ach-text" placeholder="Achievement">
+      <button onclick="rewriteAchievement(this)" class="text-accent hover:opacity-70"><i class="fas fa-magic"></i></button>
+    </div>
+  `);
+}
+
+function collectResumeData() {
+  return {
+    title: document.getElementById('resume-title').value,
+    profile_data: JSON.stringify({
+      name: document.getElementById('profile-name').value,
+      email: document.getElementById('profile-email').value,
+      phone: document.getElementById('profile-phone').value,
+      location: document.getElementById('profile-location').value,
+      linkedin: document.getElementById('profile-linkedin').value,
+      website: document.getElementById('profile-website').value,
+      summary: document.getElementById('profile-summary').value,
+    }),
+    education_data: JSON.stringify(Array.from(document.querySelectorAll('#education-list > div')).map(el => ({
+      institution: el.querySelector('.edu-institution')?.value || '',
+      degree: el.querySelector('.edu-degree')?.value || '',
+      year: el.querySelector('.edu-year')?.value || '',
+      gpa: el.querySelector('.edu-gpa')?.value || '',
+    }))),
+    experience_data: JSON.stringify(Array.from(document.querySelectorAll('#experience-list > div')).map(el => ({
+      title: el.querySelector('.exp-title')?.value || '',
+      company: el.querySelector('.exp-company')?.value || '',
+      startDate: el.querySelector('.exp-start')?.value || '',
+      endDate: el.querySelector('.exp-end')?.value || '',
+      description: el.querySelector('.exp-desc')?.value || '',
+    }))),
+    projects_data: JSON.stringify(Array.from(document.querySelectorAll('#projects-list > div')).map(el => ({
+      name: el.querySelector('.proj-name')?.value || '',
+      technologies: el.querySelector('.proj-tech')?.value || '',
+      description: el.querySelector('.proj-desc')?.value || '',
+      url: el.querySelector('.proj-url')?.value || '',
+    }))),
+    skills_data: JSON.stringify({
+      technical: document.getElementById('skills-technical').value,
+      soft: document.getElementById('skills-soft').value,
+      tools: document.getElementById('skills-tools').value,
+      languages: document.getElementById('skills-languages').value,
+    }),
+    achievements_data: JSON.stringify(Array.from(document.querySelectorAll('.ach-text')).map(el => el.value).filter(Boolean)),
+  };
+}
+
+async function saveResume() {
+  const resumeId = document.getElementById('resume-id').value;
+  const data = collectResumeData();
+  const url = resumeId ? '/resume/' + resumeId : '/resume';
+  const method = resumeId ? 'PUT' : 'POST';
+
+  try {
+    const res = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (res.ok) {
+      const result = await res.json();
+      if (!resumeId && result.id) {
+        document.getElementById('resume-id').value = result.id;
+      }
+      showToast('Resume saved successfully!', 'success');
+    }
+  } catch (err) {
+    showToast('Failed to save resume', 'error');
+  }
+}
+
+async function generateSummary() {
+  const data = {
+    name: document.getElementById('profile-name').value,
+    skills: document.getElementById('skills-technical')?.value || '',
+    experience: Array.from(document.querySelectorAll('.exp-title')).map(e => e.value).join(', '),
+    education: Array.from(document.querySelectorAll('.edu-degree')).map(e => e.value).join(', '),
+  };
+  try {
+    const res = await fetch('/resume/ai/summary', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data),
+    });
+    const result = await res.json();
+    if (result.success) document.getElementById('profile-summary').value = result.summary;
+  } catch (err) { showToast('Failed to generate summary', 'error'); }
+}
+
+async function generateBulletsFor(btn) {
+  const container = btn.closest('div[class*="bg-gray"]');
+  const data = {
+    title: container.querySelector('.exp-title')?.value || '',
+    company: container.querySelector('.exp-company')?.value || '',
+    description: container.querySelector('.exp-desc')?.value || '',
+  };
+  try {
+    const res = await fetch('/resume/ai/bullets', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data),
+    });
+    const result = await res.json();
+    if (result.success) container.querySelector('.exp-desc').value = result.bullets;
+  } catch (err) { showToast('Failed to generate bullets', 'error'); }
+}
+
+async function rewriteAchievement(btn) {
+  const input = btn.parentElement.querySelector('.ach-text');
+  try {
+    const res = await fetch('/resume/ai/rewrite', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ achievement: input.value }),
+    });
+    const result = await res.json();
+    if (result.success) input.value = result.rewritten;
+  } catch (err) { showToast('Failed to rewrite', 'error'); }
+}
+</script>

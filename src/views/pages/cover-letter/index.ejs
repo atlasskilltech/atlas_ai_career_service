@@ -1,0 +1,32 @@
+<div class="space-y-6">
+  <div class="flex items-center justify-between">
+    <h1 class="text-2xl font-bold">Cover Letters</h1>
+    <a href="/cover-letter/new" class="btn-primary"><i class="fas fa-plus mr-2"></i>Generate New</a>
+  </div>
+
+  <% if (letters.length === 0) { %>
+    <div class="card text-center py-16">
+      <i class="fas fa-envelope-open-text text-6xl text-gray-300 mb-4"></i>
+      <h3 class="text-xl font-semibold text-gray-600">No cover letters yet</h3>
+      <p class="text-gray-400 mt-2">Generate your first AI-powered cover letter</p>
+      <a href="/cover-letter/new" class="btn-accent mt-6 inline-block">Generate Cover Letter</a>
+    </div>
+  <% } else { %>
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <% letters.forEach(letter => { %>
+        <div class="card hover:shadow-md transition-shadow">
+          <h3 class="font-semibold text-lg mb-1"><%= letter.title %></h3>
+          <p class="text-sm text-gray-500 mb-1"><%= letter.company_name %> - <%= letter.job_title %></p>
+          <p class="text-xs text-gray-400 mb-4"><%= new Date(letter.updated_at).toLocaleDateString() %></p>
+          <p class="text-sm text-gray-600 line-clamp-3 mb-4"><%= letter.content ? letter.content.substring(0, 150) + '...' : '' %></p>
+          <div class="flex gap-2">
+            <a href="/cover-letter/<%= letter.id %>" class="btn-primary text-sm flex-1">View</a>
+            <form action="/cover-letter/<%= letter.id %>?_method=DELETE" method="POST" class="inline">
+              <button class="btn-danger text-sm" onclick="return confirm('Delete?')"><i class="fas fa-trash"></i></button>
+            </form>
+          </div>
+        </div>
+      <% }); %>
+    </div>
+  <% } %>
+</div>

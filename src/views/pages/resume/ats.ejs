@@ -1,0 +1,105 @@
+<div class="space-y-6">
+  <h1 class="text-2xl font-bold">Resume ATS Analyzer</h1>
+  <p class="text-gray-500">Analyze your resume against a job description for ATS compatibility</p>
+
+  <div class="grid lg:grid-cols-2 gap-6">
+    <!-- Input -->
+    <div class="card">
+      <h3 class="font-semibold mb-4"><i class="fas fa-edit mr-2"></i>Input</h3>
+      <div class="space-y-4">
+        <div>
+          <label class="label-field">Resume Text</label>
+          <textarea id="ats-resume" rows="8" class="input-field" placeholder="Paste your resume content here..."></textarea>
+        </div>
+        <div>
+          <label class="label-field">Job Description</label>
+          <textarea id="ats-jd" rows="8" class="input-field" placeholder="Paste the job description here..."></textarea>
+        </div>
+        <button onclick="analyzeATS()" id="ats-btn" class="btn-primary w-full"><i class="fas fa-search-plus mr-2"></i>Analyze Resume</button>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div class="card">
+      <h3 class="font-semibold mb-4"><i class="fas fa-chart-pie mr-2"></i>Analysis Results</h3>
+      <div id="ats-results" class="text-center py-12 text-gray-400">
+        <i class="fas fa-clipboard-check text-5xl mb-4"></i>
+        <p>Submit your resume and job description to see the analysis</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- History -->
+  <% if (history && history.length > 0) { %>
+    <div class="card">
+      <h3 class="font-semibold mb-4"><i class="fas fa-history mr-2"></i>Previous Analyses</h3>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead><tr class="border-b dark:border-gray-700">
+            <th class="text-left py-2 px-3">Date</th><th class="text-left py-2 px-3">Score</th><th class="text-left py-2 px-3">Keywords Found</th>
+          </tr></thead>
+          <tbody>
+            <% history.forEach(h => { %>
+              <tr class="border-b dark:border-gray-800">
+                <td class="py-2 px-3"><%= new Date(h.created_at).toLocaleDateString() %></td>
+                <td class="py-2 px-3"><span class="font-semibold <%= h.ats_score >= 70 ? 'text-green-600' : h.ats_score >= 40 ? 'text-yellow-600' : 'text-red-600' %>"><%= h.ats_score %>%</span></td>
+                <td class="py-2 px-3"><%= typeof h.keyword_matches === 'string' ? JSON.parse(h.keyword_matches).length : (h.keyword_matches?.length || 0) %></td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  <% } %>
+</div>
+
+<script>
+async function analyzeATS() {
+  const btn = document.getElementById('ats-btn');
+  const resumeText = document.getElementById('ats-resume').value;
+  const jobDescription = document.getElementById('ats-jd').value;
+  if (!resumeText || !jobDescription) return showToast('Please fill both fields', 'error');
+
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Analyzing...';
+
+  try {
+    const res = await fetch('/resume/api/analyze', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ resumeText, jobDescription }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      const a = data.analysis;
+      document.getElementById('ats-results').innerHTML = `
+        <div class="text-left space-y-4">
+          <div class="text-center mb-6">
+            <div class="inline-flex items-center justify-center w-24 h-24 rounded-full border-4 ${a.atsScore >= 70 ? 'border-green-500' : a.atsScore >= 40 ? 'border-yellow-500' : 'border-red-500'}">
+              <span class="text-3xl font-bold">${a.atsScore}</span>
+            </div>
+            <p class="text-sm text-gray-500 mt-2">ATS Score</p>
+          </div>
+          <div>
+            <h4 class="font-medium text-green-600 mb-2"><i class="fas fa-check-circle mr-1"></i>Matching Keywords (${(a.keywordMatches || []).length})</h4>
+            <div class="flex flex-wrap gap-2">${(a.keywordMatches || []).map(k => '<span class="badge-success">' + k + '</span>').join('')}</div>
+          </div>
+          <div>
+            <h4 class="font-medium text-red-600 mb-2"><i class="fas fa-times-circle mr-1"></i>Missing Keywords (${(a.missingKeywords || []).length})</h4>
+            <div class="flex flex-wrap gap-2">${(a.missingKeywords || []).map(k => '<span class="badge-danger">' + k + '</span>').join('')}</div>
+          </div>
+          <div>
+            <h4 class="font-medium text-yellow-600 mb-2"><i class="fas fa-exclamation-triangle mr-1"></i>Formatting Issues</h4>
+            <ul class="text-sm space-y-1">${(a.formattingIssues || []).map(i => '<li>' + i + '</li>').join('')}</ul>
+          </div>
+          <div>
+            <h4 class="font-medium text-blue-600 mb-2"><i class="fas fa-lightbulb mr-1"></i>Suggestions</h4>
+            <ul class="text-sm space-y-1">${(a.suggestions || []).map(s => '<li>• ' + s + '</li>').join('')}</ul>
+          </div>
+        </div>
+      `;
+    }
+  } catch (err) { showToast('Analysis failed', 'error'); }
+  btn.disabled = false;
+  btn.innerHTML = '<i class="fas fa-search-plus mr-2"></i>Analyze Resume';
+}
+</script>

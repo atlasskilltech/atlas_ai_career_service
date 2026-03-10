@@ -1,0 +1,103 @@
+<div class="space-y-6">
+  <h1 class="text-2xl font-bold">Placement Cell Dashboard</h1>
+
+  <!-- Stats -->
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-6">
+    <div class="stat-card">
+      <div class="flex items-center justify-between w-full mb-2">
+        <span class="text-sm text-gray-500">Total Students</span>
+        <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center"><i class="fas fa-user-graduate text-blue-600"></i></div>
+      </div>
+      <div class="text-3xl font-bold"><%= studentCount %></div>
+    </div>
+    <div class="stat-card">
+      <div class="flex items-center justify-between w-full mb-2">
+        <span class="text-sm text-gray-500">Avg Resume Score</span>
+        <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center"><i class="fas fa-file-alt text-green-600"></i></div>
+      </div>
+      <div class="text-3xl font-bold"><%= avgResumeScore %>%</div>
+    </div>
+    <div class="stat-card">
+      <div class="flex items-center justify-between w-full mb-2">
+        <span class="text-sm text-gray-500">Total Applications</span>
+        <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center"><i class="fas fa-paper-plane text-purple-600"></i></div>
+      </div>
+      <div class="text-3xl font-bold"><%= totalApplications %></div>
+    </div>
+    <div class="stat-card">
+      <div class="flex items-center justify-between w-full mb-2">
+        <span class="text-sm text-gray-500">Interview Success</span>
+        <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center"><i class="fas fa-chart-line text-orange-600"></i></div>
+      </div>
+      <div class="text-3xl font-bold"><%= interviewSuccessRate %>%</div>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="grid lg:grid-cols-2 gap-6">
+    <div class="card">
+      <h3 class="font-semibold mb-4">Students by Department</h3>
+      <canvas id="deptChart" height="200"></canvas>
+    </div>
+    <div class="card">
+      <h3 class="font-semibold mb-4">Resume Score Distribution</h3>
+      <canvas id="scoreChart" height="200"></canvas>
+    </div>
+  </div>
+
+  <!-- Students Table -->
+  <div class="card">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-semibold">Recent Students</h3>
+      <a href="/admin/students" class="text-accent text-sm hover:underline">View All</a>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead><tr class="border-b dark:border-gray-700 text-left">
+          <th class="py-2 px-3">Name</th><th class="py-2 px-3">Email</th><th class="py-2 px-3">Department</th><th class="py-2 px-3">Year</th><th class="py-2 px-3">Joined</th>
+        </tr></thead>
+        <tbody>
+          <% students.slice(0, 10).forEach(s => { %>
+            <tr class="border-b dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800">
+              <td class="py-2 px-3 font-medium"><%= s.name %></td>
+              <td class="py-2 px-3 text-gray-500"><%= s.email %></td>
+              <td class="py-2 px-3"><%= s.department || '-' %></td>
+              <td class="py-2 px-3"><%= s.year_of_study || '-' %></td>
+              <td class="py-2 px-3 text-gray-500"><%= new Date(s.created_at).toLocaleDateString() %></td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Department chart
+  const deptData = <%- JSON.stringify(studentsByDept) %>;
+  if (deptData.length > 0) {
+    new Chart(document.getElementById('deptChart'), {
+      type: 'bar',
+      data: {
+        labels: deptData.map(d => d.department || 'Unknown'),
+        datasets: [{ label: 'Students', data: deptData.map(d => d.count), backgroundColor: 'hsl(228, 100%, 11%)' }],
+      },
+      options: { responsive: true, plugins: { legend: { display: false } } },
+    });
+  }
+
+  // Score distribution
+  const scoreData = <%- JSON.stringify(scoreDistribution) %>;
+  if (scoreData.length > 0) {
+    new Chart(document.getElementById('scoreChart'), {
+      type: 'doughnut',
+      data: {
+        labels: scoreData.map(s => s.range_label),
+        datasets: [{ data: scoreData.map(s => s.count), backgroundColor: ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444'] }],
+      },
+      options: { responsive: true },
+    });
+  }
+});
+</script>
