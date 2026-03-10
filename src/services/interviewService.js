@@ -14,6 +14,10 @@ class InterviewService {
     return interviewRepository.findById(id);
   }
 
+  async getQuestionById(questionId) {
+    return interviewRepository.getQuestion(questionId);
+  }
+
   async getAverageScores(userId) {
     return interviewRepository.getAverageScores(userId);
   }
