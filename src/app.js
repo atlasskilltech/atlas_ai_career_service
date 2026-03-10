@@ -1,5 +1,7 @@
 const express = require('express');
 const expressLayouts = require('express-ejs-layouts');
+const http = require('http');
+const { Server } = require('socket.io');
 const path = require('path');
 const session = require('express-session');
 const flash = require('connect-flash');
@@ -9,6 +11,11 @@ require('dotenv').config();
 const { notFound, errorHandler } = require('./middleware/errorHandler');
 
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server);
+
+// Make io accessible to routes
+app.set('io', io);
 
 // View engine
 app.set('view engine', 'ejs');
@@ -62,8 +69,12 @@ app.use('/admin', require('./routes/adminRoutes'));
 app.use(notFound);
 app.use(errorHandler);
 
+// Socket.IO for real-time interview
+const setupInterviewSocket = require('./sockets/interviewSocket');
+setupInterviewSocket(io);
+
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Atlas Career Platform running on http://localhost:${PORT}`);
 });
 
