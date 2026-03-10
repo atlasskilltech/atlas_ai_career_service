@@ -108,4 +108,8 @@
   .progress-fill {
     @apply h-full rounded-full transition-all duration-500;
   }
+
+  .sel-card {
+    @apply p-4 border-2 rounded-lg cursor-pointer hover:border-accent transition-all duration-200;
+  }
 }

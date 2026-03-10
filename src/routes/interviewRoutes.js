@@ -8,10 +8,11 @@ router.use(isAuthenticated);
 router.get('/', interviewController.index);
 router.get('/new', interviewController.getNew);
 router.post('/start', interviewController.start);
-router.get('/:id/session', interviewController.session);
-router.post('/:id/answer', interviewController.submitAnswer);
-router.post('/:id/complete', interviewController.complete);
-router.get('/:id/feedback', interviewController.feedback);
 router.get('/feedback/all', interviewController.allFeedback);
+router.get('/:id/session', interviewController.session);
+router.get('/:id/question', interviewController.getQuestion);
+router.post('/:id/answer', interviewController.submitAnswer);
+router.post('/:id/end', interviewController.end);
+router.get('/:id/report', interviewController.report);
 
 module.exports = router;
