@@ -1,4 +1,4 @@
-<div class="space-y-4">
+<div class="space-y-3" id="interview-app">
   <!-- Header -->
   <div class="flex items-center justify-between">
     <div>
@@ -7,126 +7,135 @@
     </div>
     <div class="flex items-center gap-3">
       <span class="text-sm font-mono bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-lg" id="timer">00:00</span>
-      <span class="badge-warning" id="status-badge">In Progress</span>
+      <div class="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium" id="connection-badge">
+        <span class="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" id="conn-dot"></span>
+        <span id="conn-text">Connecting...</span>
+      </div>
     </div>
   </div>
 
   <!-- Progress Bar -->
-  <div class="progress-bar">
-    <div class="progress-fill bg-accent" id="progress-bar" style="width: <%= progress.total > 0 ? Math.round((progress.answered / progress.total) * 100) : 0 %>%"></div>
+  <div class="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+    <div class="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-500 rounded-full" id="progress-bar" style="width: <%= progress.total > 0 ? Math.round((progress.answered / progress.total) * 100) : 0 %>%"></div>
   </div>
-  <p class="text-xs text-gray-500 text-right" id="progress-text"><%= progress.answered %> / <%= progress.total %> questions answered</p>
+  <p class="text-xs text-gray-500 text-right" id="progress-text"><%= progress.answered %> / <%= progress.total %> questions</p>
 
-  <!-- Main Interview Area -->
-  <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
-    <!-- Left: Video Feed + AI -->
-    <div class="lg:col-span-2 space-y-3">
-      <!-- Camera -->
-      <div class="card p-3">
-        <div class="relative rounded-lg overflow-hidden bg-gray-900 aspect-video">
+  <!-- Main Interview Area: Split Screen -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4" style="min-height: 520px;">
+
+    <!-- LEFT: AI Avatar + Camera -->
+    <div class="space-y-3">
+      <!-- AI Avatar Card -->
+      <div class="card p-0 overflow-hidden" style="min-height: 340px;">
+        <div class="relative bg-gradient-to-br from-slate-800 via-slate-900 to-gray-900" style="height: 340px;">
+          <canvas id="avatar-canvas" width="560" height="340" class="w-full h-full"></canvas>
+          <!-- Avatar Name Tag -->
+          <div class="absolute bottom-3 left-3 flex items-center gap-2 bg-black/50 backdrop-blur px-3 py-1.5 rounded-full">
+            <div class="w-2 h-2 rounded-full" id="avatar-pulse"></div>
+            <span class="text-white text-xs font-medium" id="avatar-label">AI Interviewer</span>
+          </div>
+          <!-- Avatar State Badge -->
+          <div class="absolute top-3 right-3 px-3 py-1 rounded-full text-xs font-medium bg-black/40 backdrop-blur text-white" id="avatar-state-badge">
+            <i class="fas fa-circle-notch fa-spin mr-1"></i>Initializing
+          </div>
+        </div>
+      </div>
+
+      <!-- Your Camera (smaller) -->
+      <div class="card p-2">
+        <div class="relative rounded-lg overflow-hidden bg-gray-900" style="height: 140px;">
           <video id="camera-feed" autoplay muted playsinline class="w-full h-full object-cover"></video>
           <div class="absolute top-2 left-2 flex items-center gap-1.5 bg-black/60 text-white text-xs px-2 py-1 rounded-full">
             <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
-            <span>LIVE</span>
+            <span>YOU</span>
+          </div>
+          <!-- Mic level indicator -->
+          <div class="absolute bottom-2 right-2 flex items-end gap-0.5 h-4" id="mic-levels">
+            <span class="w-1 bg-green-400 rounded-full transition-all" style="height: 2px;"></span>
+            <span class="w-1 bg-green-400 rounded-full transition-all" style="height: 2px;"></span>
+            <span class="w-1 bg-green-400 rounded-full transition-all" style="height: 2px;"></span>
+            <span class="w-1 bg-green-400 rounded-full transition-all" style="height: 2px;"></span>
+            <span class="w-1 bg-green-400 rounded-full transition-all" style="height: 2px;"></span>
           </div>
         </div>
-      </div>
-
-      <!-- AI Interviewer Card -->
-      <div class="card p-3">
-        <div class="flex items-center gap-3 mb-2">
-          <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
-            <i class="fas fa-robot text-white"></i>
-          </div>
-          <div class="flex-1">
-            <p class="text-sm font-semibold">AI Interviewer</p>
-            <p class="text-xs text-gray-500" id="ai-status">Preparing question...</p>
-          </div>
-          <div id="ai-speaking-indicator" class="hidden">
-            <div class="flex items-center gap-1">
-              <span class="w-1 h-3 bg-accent rounded-full animate-pulse"></span>
-              <span class="w-1 h-4 bg-accent rounded-full animate-pulse" style="animation-delay:0.15s"></span>
-              <span class="w-1 h-2 bg-accent rounded-full animate-pulse" style="animation-delay:0.3s"></span>
-            </div>
-          </div>
-        </div>
-        <audio id="ai-audio" class="hidden"></audio>
-      </div>
-
-      <!-- Voice Recorder -->
-      <div class="card p-3">
-        <div class="flex items-center justify-between mb-2">
-          <div class="flex items-center gap-2">
-            <i class="fas fa-microphone text-accent"></i>
-            <span class="text-xs font-medium">Voice Recording</span>
-          </div>
-          <span class="text-xs text-gray-400" id="rec-status">Ready</span>
-        </div>
-        <button onclick="toggleRecording()" id="rec-btn" class="w-full py-3 rounded-lg border-2 border-gray-300 text-sm font-medium flex items-center justify-center gap-2 hover:border-red-400 transition">
-          <span class="w-4 h-4 rounded-full bg-gray-400" id="rec-dot"></span>
-          <span id="rec-label">Hold to Record Answer</span>
-        </button>
-        <div class="flex items-center justify-between mt-2">
-          <span class="text-xs font-mono text-gray-500" id="rec-time">0:00</span>
-          <button onclick="transcribeAudio()" id="transcribe-btn" class="text-xs text-accent hover:underline font-medium hidden">
-            <i class="fas fa-wand-magic-sparkles mr-1"></i>Convert to Text
-          </button>
-        </div>
-        <p class="text-xs text-gray-400 mt-1" id="rec-hint">Records your voice and uses AI (Whisper) for accurate transcription</p>
       </div>
     </div>
 
-    <!-- Right: Question & Answer -->
-    <div class="lg:col-span-3 space-y-3">
+    <!-- RIGHT: Question, Transcript, Controls -->
+    <div class="space-y-3 flex flex-col">
       <!-- Current Question -->
-      <div class="card" id="question-card">
-        <div class="flex items-center justify-between mb-3">
+      <div class="card flex-shrink-0" id="question-card">
+        <div class="flex items-center justify-between mb-2">
           <div class="flex items-center gap-2">
-            <span class="w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center text-sm font-bold" id="q-number"><%= currentQuestion ? currentQuestion.question_order : '-' %></span>
-            <span class="text-xs text-gray-500" id="q-type"><%= currentQuestion && currentQuestion.is_follow_up ? 'Follow-up Question' : 'Question' %></span>
+            <span class="w-7 h-7 bg-gradient-to-br from-blue-500 to-purple-500 text-white rounded-full flex items-center justify-center text-xs font-bold" id="q-number"><%= currentQuestion ? currentQuestion.question_order : '-' %></span>
+            <span class="text-xs text-gray-500" id="q-type"><%= currentQuestion && currentQuestion.is_follow_up ? 'Follow-up' : 'Question' %></span>
           </div>
-          <button onclick="replayQuestion()" id="replay-btn" class="text-xs text-gray-500 hover:text-primary" title="Replay question audio">
+          <button onclick="replayQuestion()" id="replay-btn" class="text-xs text-gray-400 hover:text-blue-500 transition" title="Replay">
             <i class="fas fa-volume-high mr-1"></i>Replay
           </button>
         </div>
-        <p class="text-lg font-medium leading-relaxed" id="q-text"><%= currentQuestion ? currentQuestion.question : 'Interview complete!' %></p>
+        <p class="text-base font-medium leading-relaxed" id="q-text"><%= currentQuestion ? currentQuestion.question : 'Interview complete!' %></p>
       </div>
 
-      <!-- Answer Area -->
-      <div class="card" id="answer-card">
+      <!-- Live Transcript / Conversation -->
+      <div class="card flex-1 flex flex-col" style="min-height: 180px;">
         <div class="flex items-center justify-between mb-2">
-          <label class="label-field mb-0">Your Answer</label>
+          <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Live Transcript</span>
           <span class="text-xs text-gray-400" id="transcribe-status"></span>
         </div>
-        <textarea id="answer-text" class="input-field" rows="6" placeholder="Click 'Hold to Record Answer' and speak, or type here. AI will transcribe your voice accurately."></textarea>
-        <div class="flex items-center justify-between mt-3">
-          <div class="flex items-center gap-3 text-xs text-gray-500">
-            <span><i class="fas fa-font mr-1"></i><span id="word-count">0</span> words</span>
-            <span><i class="fas fa-clock mr-1"></i><span id="answer-time">0</span>s</span>
+        <div class="flex-1 overflow-y-auto space-y-2 mb-3 pr-1" id="transcript-area" style="max-height: 200px;">
+          <div class="text-xs text-gray-400 italic text-center py-4" id="transcript-placeholder">
+            Conversation will appear here as you speak...
           </div>
-          <button onclick="submitCurrentAnswer()" id="submit-btn" class="btn-accent px-6">
-            <i class="fas fa-arrow-right mr-1"></i>Next Question
-          </button>
         </div>
+
+        <!-- Answer Text -->
+        <textarea id="answer-text" class="input-field text-sm" rows="3" placeholder="Your answer will be transcribed here automatically, or type manually..."></textarea>
+        <div class="flex items-center justify-between mt-2 text-xs text-gray-500">
+          <span><i class="fas fa-font mr-1"></i><span id="word-count">0</span> words</span>
+          <span><i class="fas fa-clock mr-1"></i><span id="answer-time">0</span>s</span>
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div class="flex items-center gap-2 flex-shrink-0" id="controls-bar">
+        <!-- Record Button -->
+        <button onclick="toggleRecording()" id="rec-btn" class="flex-1 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 text-sm font-medium flex items-center justify-center gap-2 hover:border-red-400 transition">
+          <span class="w-4 h-4 rounded-full bg-gray-400" id="rec-dot"></span>
+          <span id="rec-label">Record Answer</span>
+          <span class="text-xs text-gray-400 font-mono" id="rec-time"></span>
+        </button>
+
+        <!-- Submit Button -->
+        <button onclick="submitCurrentAnswer()" id="submit-btn" class="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl font-medium text-sm hover:shadow-lg transition flex items-center gap-2">
+          <i class="fas fa-paper-plane"></i>
+          <span>Submit</span>
+        </button>
       </div>
 
       <!-- Complete Section -->
       <div id="complete-section" class="hidden">
-        <div class="card text-center py-6">
+        <div class="card text-center py-6 bg-gradient-to-br from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20">
           <i class="fas fa-check-circle text-4xl text-green-500 mb-3"></i>
-          <h3 class="text-lg font-bold">All Questions Answered!</h3>
-          <p class="text-sm text-gray-500 mb-4">Click below to end the interview and get your AI feedback report.</p>
-          <button onclick="endInterview()" id="end-btn" class="btn-primary text-lg px-8">
-            <i class="fas fa-chart-bar mr-2"></i>Get Interview Report
+          <h3 class="text-lg font-bold">Interview Complete!</h3>
+          <p class="text-sm text-gray-500 mb-4">Your AI feedback report is being generated...</p>
+          <button onclick="endInterview()" id="end-btn" class="px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl font-medium hover:shadow-lg transition">
+            <i class="fas fa-chart-bar mr-2"></i>View Report
           </button>
         </div>
       </div>
     </div>
   </div>
+
+  <!-- Hidden audio element for TTS -->
+  <audio id="ai-audio" class="hidden"></audio>
 </div>
 
+<script src="/socket.io/socket.io.js"></script>
 <script>
+// ===================== CONFIG =====================
 const interviewId = '<%= interview.id %>';
+const userId = '<%= typeof user !== "undefined" && user ? user.id : "" %>';
 let currentQuestionId = <%= currentQuestion ? currentQuestion.id : 'null' %>;
 let mediaStream = null;
 let mediaRecorder = null;
@@ -137,62 +146,394 @@ let recTimer = null;
 let answerStartTime = Date.now();
 let interviewStartTime = Date.now();
 let interviewTimer = null;
+let audioContext = null;
+let analyser = null;
 
-// =========== INIT ===========
-async function init() {
-  try {
-    mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-    document.getElementById('camera-feed').srcObject = mediaStream;
-  } catch (err) {
-    showToast('Camera access failed: ' + err.message, 'error');
+// ===================== SOCKET.IO =====================
+const socket = io('/interview', { transports: ['websocket', 'polling'] });
+
+socket.on('connect', () => {
+  socket.emit('join', { interviewId });
+  setConnectionStatus('connected');
+});
+
+socket.on('disconnect', () => setConnectionStatus('disconnected'));
+socket.on('connect_error', () => setConnectionStatus('error'));
+
+socket.on('joined', () => {
+  if (currentQuestionId) speakQuestion(currentQuestionId);
+});
+
+socket.on('avatar-state', (data) => {
+  setAvatarState(data.state);
+});
+
+socket.on('question-audio-ready', (data) => {
+  playQuestionAudio(data.audioUrl);
+});
+
+socket.on('speak-error', () => {
+  setAvatarState('idle');
+  setAvatarBadge('Ready', 'fa-circle-check');
+});
+
+socket.on('transcribe-result', (data) => {
+  if (data.success && data.text) {
+    const ta = document.getElementById('answer-text');
+    const existing = ta.value.trim();
+    ta.value = existing ? existing + ' ' + data.text : data.text;
+    ta.dispatchEvent(new Event('input'));
+    addTranscriptBubble('you', data.text);
+    document.getElementById('transcribe-status').textContent = '';
+    showToast('Voice transcribed', 'success');
+  } else {
+    document.getElementById('transcribe-status').textContent = 'Transcription failed';
+    showToast(data.error || 'Transcription failed', 'error');
   }
+});
 
-  interviewTimer = setInterval(() => {
-    const s = Math.floor((Date.now() - interviewStartTime) / 1000);
-    document.getElementById('timer').textContent =
-      Math.floor(s/60).toString().padStart(2,'0') + ':' + (s%60).toString().padStart(2,'0');
-  }, 1000);
+socket.on('next-question', (data) => {
+  loadQuestion(data.question, data.progress);
+});
 
-  document.getElementById('answer-text').addEventListener('input', () => {
-    const t = document.getElementById('answer-text').value.trim();
-    document.getElementById('word-count').textContent = t ? t.split(/\s+/).length : 0;
-  });
+socket.on('interview-complete', (data) => {
+  showComplete();
+});
 
-  if (!currentQuestionId) { showComplete(); return; }
-  speakQuestion(currentQuestionId);
+socket.on('answer-error', (data) => {
+  showToast(data.error || 'Failed to save answer', 'error');
+  document.getElementById('submit-btn').disabled = false;
+});
+
+socket.on('interview-ended', (data) => {
+  if (data.success) {
+    window.location.href = '/interview/' + interviewId + '/report';
+  } else {
+    showToast(data.error || 'Failed to end interview', 'error');
+    document.getElementById('end-btn').disabled = false;
+  }
+});
+
+// ===================== CONNECTION STATUS =====================
+function setConnectionStatus(status) {
+  const dot = document.getElementById('conn-dot');
+  const text = document.getElementById('conn-text');
+  const badge = document.getElementById('connection-badge');
+  if (status === 'connected') {
+    dot.className = 'w-2 h-2 rounded-full bg-green-400';
+    text.textContent = 'Live';
+    badge.className = 'flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400';
+  } else if (status === 'disconnected' || status === 'error') {
+    dot.className = 'w-2 h-2 rounded-full bg-red-400 animate-pulse';
+    text.textContent = 'Reconnecting...';
+    badge.className = 'flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400';
+  }
 }
 
-// =========== AI SPEAKS QUESTION (TTS) ===========
-async function speakQuestion(qId) {
-  const audio = document.getElementById('ai-audio');
-  const indicator = document.getElementById('ai-speaking-indicator');
-  const statusEl = document.getElementById('ai-status');
+// ===================== AVATAR CANVAS =====================
+const canvas = document.getElementById('avatar-canvas');
+const ctx = canvas.getContext('2d');
+let avatarState = 'idle'; // idle, thinking, speaking, listening
+let blinkTimer = 0;
+let isBlinking = false;
+let headOffsetX = 0;
+let headOffsetY = 0;
+let headTargetX = 0;
+let headTargetY = 0;
+let mouthOpen = 0;
+let mouthTarget = 0;
+let eyebrowOffset = 0;
+let frameCount = 0;
 
-  statusEl.textContent = 'Speaking...';
-  indicator.classList.remove('hidden');
+function setAvatarState(state) {
+  avatarState = state;
+  const badges = {
+    idle: ['Ready', 'fa-circle-check'],
+    thinking: ['Thinking...', 'fa-brain'],
+    speaking: ['Speaking', 'fa-volume-high'],
+    listening: ['Listening', 'fa-ear-listen'],
+  };
+  const [label, icon] = badges[state] || badges.idle;
+  setAvatarBadge(label, icon);
 
-  try {
-    audio.src = '/interview/' + interviewId + '/question/' + qId + '/audio';
-    audio.onended = () => {
-      indicator.classList.add('hidden');
-      statusEl.textContent = 'Waiting for your answer...';
-    };
-    audio.onerror = () => {
-      indicator.classList.add('hidden');
-      statusEl.textContent = 'Audio unavailable - read the question above';
-    };
-    await audio.play();
-  } catch {
-    indicator.classList.add('hidden');
-    statusEl.textContent = 'Read the question above and answer';
+  const pulse = document.getElementById('avatar-pulse');
+  if (state === 'speaking') pulse.className = 'w-2 h-2 rounded-full bg-green-400 animate-pulse';
+  else if (state === 'listening') pulse.className = 'w-2 h-2 rounded-full bg-blue-400 animate-pulse';
+  else if (state === 'thinking') pulse.className = 'w-2 h-2 rounded-full bg-yellow-400 animate-pulse';
+  else pulse.className = 'w-2 h-2 rounded-full bg-gray-400';
+}
+
+function setAvatarBadge(label, icon) {
+  document.getElementById('avatar-state-badge').innerHTML = '<i class="fas ' + icon + ' mr-1"></i>' + label;
+}
+
+function drawAvatar() {
+  const w = canvas.width;
+  const h = canvas.height;
+  ctx.clearRect(0, 0, w, h);
+
+  // Background gradient
+  const grad = ctx.createRadialGradient(w/2, h/2, 50, w/2, h/2, 300);
+  grad.addColorStop(0, '#1e293b');
+  grad.addColorStop(1, '#0f172a');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, w, h);
+
+  frameCount++;
+
+  // Head movement
+  if (frameCount % 60 === 0) {
+    headTargetX = (Math.random() - 0.5) * 8;
+    headTargetY = (Math.random() - 0.5) * 4;
   }
+  headOffsetX += (headTargetX - headOffsetX) * 0.05;
+  headOffsetY += (headTargetY - headOffsetY) * 0.05;
+
+  // Blink
+  blinkTimer++;
+  if (!isBlinking && blinkTimer > 120 + Math.random() * 180) {
+    isBlinking = true;
+    blinkTimer = 0;
+  }
+  if (isBlinking && blinkTimer > 8) {
+    isBlinking = false;
+    blinkTimer = 0;
+  }
+
+  // Mouth animation
+  if (avatarState === 'speaking') {
+    mouthTarget = 0.3 + Math.sin(frameCount * 0.3) * 0.3 + Math.sin(frameCount * 0.7) * 0.2;
+  } else {
+    mouthTarget = 0;
+  }
+  mouthOpen += (mouthTarget - mouthOpen) * 0.3;
+
+  // Eyebrow
+  if (avatarState === 'thinking') {
+    eyebrowOffset = Math.sin(frameCount * 0.05) * 3;
+  } else if (avatarState === 'listening') {
+    eyebrowOffset = -2;
+  } else {
+    eyebrowOffset += (0 - eyebrowOffset) * 0.1;
+  }
+
+  const cx = w / 2 + headOffsetX;
+  const cy = h / 2 + headOffsetY + 15;
+
+  // Neck
+  ctx.fillStyle = '#d4a574';
+  ctx.fillRect(cx - 18, cy + 55, 36, 40);
+
+  // Shoulders / body
+  ctx.fillStyle = '#3b82f6';
+  ctx.beginPath();
+  ctx.ellipse(cx, cy + 120, 90, 50, 0, Math.PI, 0, true);
+  ctx.fill();
+
+  // Collar
+  ctx.fillStyle = '#2563eb';
+  ctx.beginPath();
+  ctx.moveTo(cx - 20, cy + 72);
+  ctx.lineTo(cx, cy + 90);
+  ctx.lineTo(cx + 20, cy + 72);
+  ctx.closePath();
+  ctx.fill();
+
+  // Head (oval)
+  ctx.fillStyle = '#e8b88a';
+  ctx.beginPath();
+  ctx.ellipse(cx, cy, 55, 65, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Hair
+  ctx.fillStyle = '#1a1a2e';
+  ctx.beginPath();
+  ctx.ellipse(cx, cy - 35, 58, 38, 0, Math.PI, 0, true);
+  ctx.fill();
+  // Side hair
+  ctx.fillRect(cx - 58, cy - 35, 12, 40);
+  ctx.fillRect(cx + 46, cy - 35, 12, 40);
+
+  // Ears
+  ctx.fillStyle = '#d4a574';
+  ctx.beginPath();
+  ctx.ellipse(cx - 55, cy - 5, 10, 15, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(cx + 55, cy - 5, 10, 15, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Eyebrows
+  ctx.strokeStyle = '#1a1a2e';
+  ctx.lineWidth = 3;
+  ctx.lineCap = 'round';
+  // Left eyebrow
+  ctx.beginPath();
+  ctx.moveTo(cx - 30, cy - 22 + eyebrowOffset);
+  ctx.quadraticCurveTo(cx - 20, cy - 28 + eyebrowOffset, cx - 10, cy - 22 + eyebrowOffset);
+  ctx.stroke();
+  // Right eyebrow
+  ctx.beginPath();
+  ctx.moveTo(cx + 10, cy - 22 + eyebrowOffset);
+  ctx.quadraticCurveTo(cx + 20, cy - 28 + eyebrowOffset, cx + 30, cy - 22 + eyebrowOffset);
+  ctx.stroke();
+
+  // Eyes
+  const eyeY = cy - 10;
+  const eyeOpenAmount = isBlinking ? 0.1 : 1;
+
+  // Left eye white
+  ctx.fillStyle = '#fff';
+  ctx.beginPath();
+  ctx.ellipse(cx - 20, eyeY, 12, 8 * eyeOpenAmount, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Right eye white
+  ctx.beginPath();
+  ctx.ellipse(cx + 20, eyeY, 12, 8 * eyeOpenAmount, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  if (!isBlinking) {
+    // Pupils
+    ctx.fillStyle = '#2d3748';
+    ctx.beginPath();
+    ctx.ellipse(cx - 19 + headOffsetX * 0.3, eyeY, 5, 6, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(cx + 21 + headOffsetX * 0.3, eyeY, 5, 6, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Eye highlights
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(cx - 17 + headOffsetX * 0.3, eyeY - 2, 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(cx + 23 + headOffsetX * 0.3, eyeY - 2, 2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Nose
+  ctx.strokeStyle = '#c89b73';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy + 2);
+  ctx.lineTo(cx - 5, cy + 15);
+  ctx.lineTo(cx + 2, cy + 15);
+  ctx.stroke();
+
+  // Mouth
+  const mouthY = cy + 28;
+  if (mouthOpen > 0.05) {
+    // Open mouth
+    ctx.fillStyle = '#8b4513';
+    ctx.beginPath();
+    ctx.ellipse(cx, mouthY, 15, 6 + mouthOpen * 14, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Teeth
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(cx - 10, mouthY - 3, 20, 4);
+    // Tongue hint
+    ctx.fillStyle = '#d4685a';
+    ctx.beginPath();
+    ctx.ellipse(cx, mouthY + 4 + mouthOpen * 4, 8, 4 + mouthOpen * 4, 0, 0, Math.PI);
+    ctx.fill();
+  } else {
+    // Closed mouth - slight smile
+    ctx.strokeStyle = '#a0522d';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(cx - 14, mouthY);
+    ctx.quadraticCurveTo(cx, mouthY + 8, cx + 14, mouthY);
+    ctx.stroke();
+  }
+
+  // Thinking indicator (dots)
+  if (avatarState === 'thinking') {
+    const dotY = cy - 85;
+    for (let i = 0; i < 3; i++) {
+      const alpha = 0.3 + 0.7 * Math.abs(Math.sin(frameCount * 0.08 + i * 1.2));
+      ctx.fillStyle = 'rgba(99, 102, 241, ' + alpha + ')';
+      ctx.beginPath();
+      ctx.arc(cx - 15 + i * 15, dotY + Math.sin(frameCount * 0.1 + i) * 3, 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  // Listening indicator (sound waves)
+  if (avatarState === 'listening') {
+    ctx.strokeStyle = 'rgba(59, 130, 246, 0.5)';
+    ctx.lineWidth = 2;
+    for (let i = 1; i <= 3; i++) {
+      const alpha = Math.max(0, 1 - (frameCount % 60) / 60) * (i === ((Math.floor(frameCount / 20) % 3) + 1) ? 1 : 0.2);
+      ctx.strokeStyle = 'rgba(59, 130, 246, ' + alpha + ')';
+      ctx.beginPath();
+      ctx.arc(cx, cy, 80 + i * 20, -0.5, 0.5);
+      ctx.stroke();
+    }
+  }
+
+  requestAnimationFrame(drawAvatar);
+}
+
+// ===================== TTS PLAYBACK =====================
+function playQuestionAudio(url) {
+  const audio = document.getElementById('ai-audio');
+  audio.src = url;
+  audio.onended = () => {
+    setAvatarState('listening');
+    socket.emit('speak-done');
+  };
+  audio.onerror = () => {
+    setAvatarState('idle');
+  };
+  audio.play().catch(() => {
+    setAvatarState('idle');
+  });
+}
+
+function speakQuestion(qId) {
+  socket.emit('speak-question', { questionId: qId });
 }
 
 function replayQuestion() {
   if (currentQuestionId) speakQuestion(currentQuestionId);
 }
 
-// =========== VOICE RECORDING (MediaRecorder) ===========
+// ===================== CAMERA + MIC =====================
+async function initMedia() {
+  try {
+    mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    document.getElementById('camera-feed').srcObject = mediaStream;
+    initMicLevels();
+  } catch (err) {
+    showToast('Camera/mic access failed: ' + err.message, 'error');
+  }
+}
+
+function initMicLevels() {
+  try {
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const source = audioContext.createMediaStreamSource(mediaStream);
+    analyser = audioContext.createAnalyser();
+    analyser.fftSize = 32;
+    source.connect(analyser);
+    updateMicLevels();
+  } catch {}
+}
+
+function updateMicLevels() {
+  if (!analyser) return;
+  const data = new Uint8Array(analyser.frequencyBinCount);
+  analyser.getByteFrequencyData(data);
+  const bars = document.getElementById('mic-levels').children;
+  for (let i = 0; i < bars.length; i++) {
+    const val = data[i * 2] || 0;
+    bars[i].style.height = Math.max(2, val / 8) + 'px';
+  }
+  requestAnimationFrame(updateMicLevels);
+}
+
+// ===================== RECORDING =====================
 function toggleRecording() {
   if (isRecording) stopRecording();
   else startRecording();
@@ -200,33 +541,25 @@ function toggleRecording() {
 
 function startRecording() {
   if (!mediaStream) { showToast('Microphone not available', 'error'); return; }
-
   audioChunks = [];
   recordedBlob = null;
 
-  // Use audio tracks from the existing stream
   const audioStream = new MediaStream(mediaStream.getAudioTracks());
   mediaRecorder = new MediaRecorder(audioStream, { mimeType: 'audio/webm;codecs=opus' });
-
   mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunks.push(e.data); };
   mediaRecorder.onstop = () => {
     recordedBlob = new Blob(audioChunks, { type: 'audio/webm' });
-    document.getElementById('transcribe-btn').classList.remove('hidden');
-    document.getElementById('rec-hint').textContent = 'Recording saved. Click "Convert to Text" or record again.';
+    autoTranscribe();
   };
-
   mediaRecorder.start(1000);
   isRecording = true;
   answerStartTime = Date.now();
 
-  // UI
   const btn = document.getElementById('rec-btn');
-  btn.classList.add('border-red-500', 'bg-red-50', 'text-red-600');
-  btn.classList.remove('border-gray-300');
+  btn.classList.add('border-red-500', 'bg-red-50', 'dark:bg-red-900/20', 'text-red-600');
+  btn.classList.remove('border-gray-300', 'dark:border-gray-600');
   document.getElementById('rec-dot').className = 'w-4 h-4 rounded-full bg-red-500 animate-pulse';
-  document.getElementById('rec-label').textContent = 'Recording... Click to Stop';
-  document.getElementById('rec-status').textContent = 'Recording';
-  document.getElementById('transcribe-btn').classList.add('hidden');
+  document.getElementById('rec-label').textContent = 'Recording...';
 
   recTimer = setInterval(() => {
     const s = Math.floor((Date.now() - answerStartTime) / 1000);
@@ -241,153 +574,158 @@ function stopRecording() {
   clearInterval(recTimer);
 
   const btn = document.getElementById('rec-btn');
-  btn.classList.remove('border-red-500', 'bg-red-50', 'text-red-600');
-  btn.classList.add('border-gray-300');
+  btn.classList.remove('border-red-500', 'bg-red-50', 'dark:bg-red-900/20', 'text-red-600');
+  btn.classList.add('border-gray-300', 'dark:border-gray-600');
   document.getElementById('rec-dot').className = 'w-4 h-4 rounded-full bg-gray-400';
   document.getElementById('rec-label').textContent = 'Record Again';
-  document.getElementById('rec-status').textContent = 'Stopped';
 }
 
-// =========== WHISPER TRANSCRIPTION ===========
-async function transcribeAudio() {
-  if (!recordedBlob) { showToast('No recording to transcribe', 'error'); return; }
+// ===================== AUTO TRANSCRIBE =====================
+async function autoTranscribe() {
+  if (!recordedBlob) return;
+  document.getElementById('transcribe-status').textContent = 'Transcribing with AI...';
 
-  const btn = document.getElementById('transcribe-btn');
-  const statusEl = document.getElementById('transcribe-status');
-  btn.disabled = true;
-  btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Transcribing...';
-  statusEl.textContent = 'Sending to AI Whisper...';
+  const reader = new FileReader();
+  reader.onloadend = () => {
+    socket.emit('transcribe', { audio: reader.result });
+  };
+  reader.readAsArrayBuffer(recordedBlob);
+}
 
-  const formData = new FormData();
-  formData.append('audio', recordedBlob, 'recording.webm');
+// ===================== TRANSCRIPT BUBBLES =====================
+function addTranscriptBubble(who, text) {
+  const area = document.getElementById('transcript-area');
+  const placeholder = document.getElementById('transcript-placeholder');
+  if (placeholder) placeholder.remove();
 
-  try {
-    const res = await fetch('/interview/' + interviewId + '/transcribe', { method: 'POST', body: formData });
-    const data = await res.json();
-
-    if (data.success && data.text) {
-      const textarea = document.getElementById('answer-text');
-      const existing = textarea.value.trim();
-      textarea.value = existing ? existing + ' ' + data.text : data.text;
-      textarea.dispatchEvent(new Event('input'));
-      statusEl.textContent = 'Transcription complete';
-      showToast('Voice transcribed successfully', 'success');
-    } else {
-      statusEl.textContent = 'Transcription failed';
-      showToast(data.error || 'Transcription failed', 'error');
-    }
-  } catch (err) {
-    statusEl.textContent = 'Network error';
-    showToast('Failed to transcribe', 'error');
+  const bubble = document.createElement('div');
+  if (who === 'ai') {
+    bubble.className = 'flex items-start gap-2';
+    bubble.innerHTML = '<div class="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0 mt-0.5"><i class="fas fa-robot text-white text-xs"></i></div>' +
+      '<div class="bg-blue-50 dark:bg-blue-900/30 text-sm rounded-lg px-3 py-2 max-w-[85%]">' + escapeHtml(text) + '</div>';
+  } else {
+    bubble.className = 'flex items-start gap-2 justify-end';
+    bubble.innerHTML = '<div class="bg-gray-100 dark:bg-gray-800 text-sm rounded-lg px-3 py-2 max-w-[85%]">' + escapeHtml(text) + '</div>' +
+      '<div class="w-6 h-6 rounded-full bg-gray-400 flex items-center justify-center flex-shrink-0 mt-0.5"><i class="fas fa-user text-white text-xs"></i></div>';
   }
-
-  btn.disabled = false;
-  btn.innerHTML = '<i class="fas fa-wand-magic-sparkles mr-1"></i>Convert to Text';
+  area.appendChild(bubble);
+  area.scrollTop = area.scrollHeight;
 }
 
-// =========== SUBMIT ANSWER ===========
+function escapeHtml(str) {
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+// ===================== SUBMIT ANSWER =====================
 async function submitCurrentAnswer() {
   if (isRecording) stopRecording();
 
   const textarea = document.getElementById('answer-text');
   let answerText = textarea.value.trim();
 
-  // If no text but has recording, auto-transcribe first
+  // If no text but has a recording that hasn't been transcribed yet, wait a moment
   if (!answerText && recordedBlob) {
-    await transcribeAudio();
-    answerText = textarea.value.trim();
+    showToast('Transcribing your recording...', 'success');
+    return;
   }
-
   if (!answerText) return showToast('Please record or type your answer first', 'error');
 
   const duration = Math.floor((Date.now() - answerStartTime) / 1000);
   const btn = document.getElementById('submit-btn');
   btn.disabled = true;
-  btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Saving...';
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Processing...';
 
-  try {
-    const res = await fetch('/interview/' + interviewId + '/answer', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ questionId: currentQuestionId, answerText, answerDuration: duration }),
-    });
-    const data = await res.json();
-
-    if (data.success) {
-      if (data.isComplete || !data.question) {
-        showComplete();
-      } else {
-        loadQuestion(data.question, data.progress);
-      }
-    } else {
-      showToast(data.error || 'Failed to save', 'error');
-    }
-  } catch (err) { showToast('Network error', 'error'); }
-
-  btn.disabled = false;
-  btn.innerHTML = '<i class="fas fa-arrow-right mr-1"></i>Next Question';
+  socket.emit('submit-answer', {
+    questionId: currentQuestionId,
+    answerText: answerText,
+    answerDuration: duration,
+  });
 }
 
-// =========== LOAD NEXT QUESTION ===========
+// ===================== LOAD QUESTION =====================
 function loadQuestion(q, progress) {
   currentQuestionId = q.id;
   recordedBlob = null;
   audioChunks = [];
 
   document.getElementById('q-number').textContent = q.question_order;
-  document.getElementById('q-type').textContent = q.is_follow_up ? 'Follow-up Question' : 'Question';
+  document.getElementById('q-type').textContent = q.is_follow_up ? 'Follow-up' : 'Question';
   document.getElementById('q-text').textContent = q.question;
   document.getElementById('answer-text').value = '';
   document.getElementById('word-count').textContent = '0';
   document.getElementById('answer-time').textContent = '0';
-  document.getElementById('rec-time').textContent = '0:00';
-  document.getElementById('transcribe-btn').classList.add('hidden');
+  document.getElementById('rec-time').textContent = '';
+  document.getElementById('rec-label').textContent = 'Record Answer';
   document.getElementById('transcribe-status').textContent = '';
-  document.getElementById('rec-hint').textContent = 'Records your voice and uses AI (Whisper) for accurate transcription';
-  document.getElementById('rec-label').textContent = 'Hold to Record Answer';
+
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = false;
+  btn.innerHTML = '<i class="fas fa-paper-plane mr-1"></i><span>Submit</span>';
+
+  addTranscriptBubble('ai', q.question);
 
   if (progress) {
     const pct = Math.round((progress.answered / progress.total) * 100);
     document.getElementById('progress-bar').style.width = pct + '%';
-    document.getElementById('progress-text').textContent = progress.answered + ' / ' + progress.total + ' questions answered';
+    document.getElementById('progress-text').textContent = progress.answered + ' / ' + progress.total + ' questions';
   }
 
   answerStartTime = Date.now();
   speakQuestion(q.id);
 }
 
-// =========== COMPLETE / END ===========
+// ===================== COMPLETE / END =====================
 function showComplete() {
   document.getElementById('question-card').classList.add('hidden');
-  document.getElementById('answer-card').classList.add('hidden');
+  document.getElementById('controls-bar').classList.add('hidden');
   document.getElementById('complete-section').classList.remove('hidden');
   document.getElementById('progress-bar').style.width = '100%';
-  document.getElementById('ai-status').textContent = 'Interview complete!';
-  document.getElementById('ai-speaking-indicator').classList.add('hidden');
+  setAvatarState('idle');
   clearInterval(interviewTimer);
   if (isRecording) stopRecording();
 }
 
-async function endInterview() {
+function endInterview() {
   if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
-
   const btn = document.getElementById('end-btn');
   btn.disabled = true;
-  btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Generating AI Report...';
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Generating Report...';
+  socket.emit('end-interview', { userId });
+}
 
-  try {
-    const res = await fetch('/interview/' + interviewId + '/end', { method: 'POST' });
-    const data = await res.json();
-    if (data.success) window.location.href = '/interview/' + interviewId + '/report';
-    else showToast(data.error || 'Failed', 'error');
-  } catch (err) { showToast('Failed to generate report', 'error'); }
-  btn.disabled = false;
-  btn.innerHTML = '<i class="fas fa-chart-bar mr-2"></i>Get Interview Report';
+// ===================== TIMER =====================
+function startTimer() {
+  interviewTimer = setInterval(() => {
+    const s = Math.floor((Date.now() - interviewStartTime) / 1000);
+    document.getElementById('timer').textContent =
+      Math.floor(s/60).toString().padStart(2,'0') + ':' + (s%60).toString().padStart(2,'0');
+  }, 1000);
+}
+
+// ===================== WORD COUNT =====================
+function initWordCount() {
+  document.getElementById('answer-text').addEventListener('input', () => {
+    const t = document.getElementById('answer-text').value.trim();
+    document.getElementById('word-count').textContent = t ? t.split(/\s+/).length : 0;
+  });
+}
+
+// ===================== INIT =====================
+async function init() {
+  drawAvatar();
+  await initMedia();
+  startTimer();
+  initWordCount();
+  if (!currentQuestionId) showComplete();
+  else addTranscriptBubble('ai', document.getElementById('q-text').textContent);
 }
 
 window.addEventListener('beforeunload', () => {
   if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
   if (isRecording) stopRecording();
+  if (audioContext) audioContext.close();
 });
 
 init();
