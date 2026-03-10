@@ -1,0 +1,16 @@
+services:
+  app:
+    image: ghcr.io/${GITHUB_REPOSITORY}:${IMAGE}
+    network_mode: host
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - uploads:/app/public/uploads
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  uploads:
