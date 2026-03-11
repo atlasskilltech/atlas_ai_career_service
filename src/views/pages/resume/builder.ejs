@@ -35,6 +35,7 @@
         <option value="ats" <%= resume?.template === 'ats' ? 'selected' : '' %>>ATS Friendly</option>
       </select>
       <input type="color" id="theme-color" value="<%= resume?.theme_color || '#0a1a4a' %>" onchange="changeTemplate()" class="w-7 h-7 rounded cursor-pointer border-0 hidden sm:block" title="Theme Color">
+      <button onclick="showUploadModal()" class="text-xs px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 transition hidden sm:flex items-center gap-1" title="Upload existing resume"><i class="fas fa-upload"></i><span class="hidden md:inline">Upload</span></button>
       <% if (resume) { %>
         <button onclick="exportPDF()" class="text-xs px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 transition hidden sm:flex items-center gap-1"><i class="fas fa-file-pdf"></i><span class="hidden md:inline">PDF</span></button>
       <% } %>
@@ -61,6 +62,7 @@
           <% if (resume) { %>
             <button onclick="exportPDF();document.getElementById('mobile-more-menu').classList.add('hidden')" class="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"><i class="fas fa-file-pdf w-4 text-center text-gray-400"></i>Export PDF</button>
           <% } %>
+          <button onclick="showUploadModal();document.getElementById('mobile-more-menu').classList.add('hidden')" class="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"><i class="fas fa-upload w-4 text-center text-blue-400"></i>Upload Resume</button>
           <button onclick="showATSModal();document.getElementById('mobile-more-menu').classList.add('hidden')" class="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"><i class="fas fa-chart-bar w-4 text-center text-purple-400"></i>ATS Analyzer</button>
         </div>
       </div>
@@ -388,6 +390,39 @@
       <button onclick="runATSAnalysis()" id="ats-run-btn" class="btn-primary w-full"><i class="fas fa-chart-bar mr-2"></i>Analyze Resume</button>
     </div>
     <div id="ats-results" class="hidden"></div>
+  </div>
+</div>
+
+<!-- Upload Resume Modal -->
+<div id="upload-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-sm">
+  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md mx-4 p-6">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-bold text-lg flex items-center gap-2"><i class="fas fa-upload text-blue-500"></i>Upload Resume</h3>
+      <button onclick="closeUploadModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+    </div>
+    <p class="text-sm text-gray-500 mb-4">Upload an existing resume (PDF or DOCX) and we'll auto-fill the form with extracted data.</p>
+    <div id="upload-dropzone" class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-8 text-center cursor-pointer hover:border-blue-400 hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition" onclick="document.getElementById('resume-file-input').click()">
+      <input type="file" id="resume-file-input" accept=".pdf,.doc,.docx" class="hidden" onchange="handleResumeUpload(this)">
+      <i class="fas fa-cloud-upload-alt text-3xl text-gray-300 dark:text-gray-600 mb-3"></i>
+      <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Click to upload or drag & drop</p>
+      <p class="text-xs text-gray-400 mt-1">PDF or DOCX (max 10MB)</p>
+    </div>
+    <div id="upload-progress" class="hidden mt-4">
+      <div class="flex items-center gap-3 mb-2">
+        <div class="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
+          <i class="fas fa-file-alt text-blue-500"></i>
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-medium truncate" id="upload-filename">resume.pdf</p>
+          <p class="text-xs text-gray-400" id="upload-status-text">Uploading...</p>
+        </div>
+        <i id="upload-spinner" class="fas fa-spinner fa-spin text-blue-500"></i>
+      </div>
+      <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+        <div id="upload-bar" class="bg-blue-500 h-1.5 rounded-full transition-all duration-300" style="width:0%"></div>
+      </div>
+    </div>
+    <div id="upload-error" class="hidden mt-4 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg text-sm text-red-600 dark:text-red-400"></div>
   </div>
 </div>
 
@@ -824,4 +859,224 @@ async function restoreVersion(versionId) {
     if (res.ok) { showToast('Version restored!', 'success'); setTimeout(function() { location.reload(); }, 500); }
   } catch(err) { showToast('Failed to restore', 'error'); }
 }
+
+// =================== UPLOAD RESUME ===================
+function showUploadModal() {
+  document.getElementById('upload-modal').classList.remove('hidden');
+  document.getElementById('upload-modal').classList.add('flex');
+  document.getElementById('upload-progress').classList.add('hidden');
+  document.getElementById('upload-error').classList.add('hidden');
+  document.getElementById('resume-file-input').value = '';
+}
+
+function closeUploadModal() {
+  document.getElementById('upload-modal').classList.add('hidden');
+  document.getElementById('upload-modal').classList.remove('flex');
+}
+
+async function handleResumeUpload(input) {
+  var file = input.files[0];
+  if (!file) return;
+
+  var maxSize = 10 * 1024 * 1024;
+  if (file.size > maxSize) {
+    document.getElementById('upload-error').classList.remove('hidden');
+    document.getElementById('upload-error').textContent = 'File too large. Maximum size is 10MB.';
+    return;
+  }
+
+  var allowed = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+  if (!allowed.includes(file.type) && !file.name.match(/\.(pdf|doc|docx)$/i)) {
+    document.getElementById('upload-error').classList.remove('hidden');
+    document.getElementById('upload-error').textContent = 'Invalid file type. Please upload a PDF or DOCX file.';
+    return;
+  }
+
+  // Show progress
+  document.getElementById('upload-error').classList.add('hidden');
+  document.getElementById('upload-progress').classList.remove('hidden');
+  document.getElementById('upload-filename').textContent = file.name;
+  document.getElementById('upload-status-text').textContent = 'Uploading & parsing with AI...';
+  document.getElementById('upload-bar').style.width = '30%';
+  document.getElementById('upload-spinner').classList.remove('hidden');
+
+  var formData = new FormData();
+  formData.append('resume', file);
+
+  try {
+    document.getElementById('upload-bar').style.width = '60%';
+    var res = await fetch('/resume/upload-parse', { method: 'POST', body: formData });
+    document.getElementById('upload-bar').style.width = '90%';
+    var result = await res.json();
+
+    if (result.success && result.data) {
+      document.getElementById('upload-bar').style.width = '100%';
+      document.getElementById('upload-status-text').textContent = 'Data extracted! Filling form...';
+      document.getElementById('upload-spinner').classList.add('hidden');
+
+      // Fill the form with parsed data
+      fillFormWithParsedData(result.data);
+
+      setTimeout(function() {
+        closeUploadModal();
+        showToast('Resume data imported successfully!', 'success');
+        triggerAutoSave();
+      }, 800);
+    } else {
+      document.getElementById('upload-spinner').classList.add('hidden');
+      document.getElementById('upload-error').classList.remove('hidden');
+      document.getElementById('upload-error').textContent = result.error || 'Failed to parse resume. Please try again.';
+      document.getElementById('upload-status-text').textContent = 'Failed';
+    }
+  } catch(err) {
+    document.getElementById('upload-spinner').classList.add('hidden');
+    document.getElementById('upload-error').classList.remove('hidden');
+    document.getElementById('upload-error').textContent = 'Upload failed. Please try again.';
+    document.getElementById('upload-status-text').textContent = 'Failed';
+  }
+}
+
+function fillFormWithParsedData(data) {
+  // Profile
+  var p = data.profile_data || {};
+  if (p.name) document.getElementById('profile-name').value = p.name;
+  if (p.headline) document.getElementById('profile-headline').value = p.headline;
+  if (p.email) document.getElementById('profile-email').value = p.email;
+  if (p.phone) document.getElementById('profile-phone').value = p.phone;
+  if (p.linkedin) document.getElementById('profile-linkedin').value = p.linkedin;
+  if (p.github) document.getElementById('profile-github').value = p.github;
+  if (p.website) document.getElementById('profile-website').value = p.website;
+  if (p.location) document.getElementById('profile-location').value = p.location;
+  if (p.summary) document.getElementById('profile-summary').value = p.summary;
+
+  // Update title with name
+  if (p.name) document.getElementById('resume-title').value = p.name + ' - Resume';
+
+  // Education
+  var eduList = document.getElementById('education-list');
+  if (data.education_data && data.education_data.length && eduList) {
+    eduList.innerHTML = '';
+    data.education_data.forEach(function(edu) {
+      addEntry('education');
+      var entries = eduList.querySelectorAll(':scope > div');
+      var last = entries[entries.length - 1];
+      if (!last) return;
+      var inst = last.querySelector('.edu-institution'); if (inst) inst.value = edu.institution || '';
+      var deg = last.querySelector('.edu-degree'); if (deg) deg.value = edu.degree || '';
+      var field = last.querySelector('.edu-field'); if (field) field.value = edu.field || '';
+      var year = last.querySelector('.edu-year'); if (year) year.value = edu.year || '';
+      var gpa = last.querySelector('.edu-gpa'); if (gpa) gpa.value = edu.gpa || '';
+    });
+  }
+
+  // Experience
+  var expList = document.getElementById('experience-list');
+  if (data.experience_data && data.experience_data.length && expList) {
+    expList.innerHTML = '';
+    data.experience_data.forEach(function(exp) {
+      addEntry('experience');
+      var entries = expList.querySelectorAll(':scope > div');
+      var last = entries[entries.length - 1];
+      if (!last) return;
+      var title = last.querySelector('.exp-title'); if (title) title.value = exp.title || '';
+      var company = last.querySelector('.exp-company'); if (company) company.value = exp.company || '';
+      var loc = last.querySelector('.exp-location'); if (loc) loc.value = exp.location || '';
+      var start = last.querySelector('.exp-start'); if (start) start.value = exp.startDate || '';
+      var end = last.querySelector('.exp-end'); if (end) end.value = exp.endDate || '';
+      var desc = last.querySelector('.exp-desc'); if (desc) desc.value = exp.description || '';
+    });
+  }
+
+  // Projects
+  var projList = document.getElementById('projects-list');
+  if (data.projects_data && data.projects_data.length && projList) {
+    projList.innerHTML = '';
+    data.projects_data.forEach(function(proj) {
+      addEntry('projects');
+      var entries = projList.querySelectorAll(':scope > div');
+      var last = entries[entries.length - 1];
+      if (!last) return;
+      var name = last.querySelector('.proj-name'); if (name) name.value = proj.name || '';
+      var tech = last.querySelector('.proj-tech'); if (tech) tech.value = proj.technologies || '';
+      var desc = last.querySelector('.proj-desc'); if (desc) desc.value = proj.description || '';
+      var url = last.querySelector('.proj-url'); if (url) url.value = proj.url || '';
+    });
+  }
+
+  // Skills
+  var s = data.skills_data || {};
+  if (s.technical) document.getElementById('skills-technical').value = s.technical;
+  if (s.soft) document.getElementById('skills-soft').value = s.soft;
+  if (s.tools) document.getElementById('skills-tools').value = s.tools;
+  if (s.languages) document.getElementById('skills-languages').value = s.languages;
+
+  // Achievements
+  var achList = document.getElementById('achievements-list');
+  if (data.achievements_data && data.achievements_data.length && achList) {
+    achList.innerHTML = '';
+    data.achievements_data.forEach(function(ach) {
+      addEntry('achievements');
+      var entries = achList.querySelectorAll('.ach-text');
+      var last = entries[entries.length - 1];
+      if (last) last.value = typeof ach === 'string' ? ach : ach.achievement_text || '';
+    });
+  }
+
+  // Certifications
+  var certList = document.getElementById('certifications-list');
+  if (data.certifications_data && data.certifications_data.length && certList) {
+    certList.innerHTML = '';
+    data.certifications_data.forEach(function(cert) {
+      addEntry('certifications');
+      var entries = certList.querySelectorAll(':scope > div');
+      var last = entries[entries.length - 1];
+      if (!last) return;
+      var name = last.querySelector('.cert-name'); if (name) name.value = cert.name || '';
+      var org = last.querySelector('.cert-org'); if (org) org.value = cert.organization || '';
+      var date = last.querySelector('.cert-date'); if (date) date.value = cert.date || '';
+    });
+  }
+
+  // Languages
+  var langList = document.getElementById('languages-list');
+  if (data.languages_data && data.languages_data.length && langList) {
+    langList.innerHTML = '';
+    data.languages_data.forEach(function(lang) {
+      addEntry('languages');
+      var entries = langList.querySelectorAll(':scope > div, :scope > .flex');
+      var last = entries[entries.length - 1];
+      if (!last) return;
+      var name = last.querySelector('.lang-name'); if (name) name.value = lang.language || '';
+      var level = last.querySelector('.lang-level'); if (level) level.value = lang.proficiency || 'Intermediate';
+    });
+  }
+
+  // Interests
+  if (data.interests_data && data.interests_data.length) {
+    var interestsText = data.interests_data.map(function(i) { return typeof i === 'string' ? i : i.name || ''; }).join(', ');
+    document.getElementById('interests-text').value = interestsText;
+  }
+
+  // Update preview
+  updatePreview();
+}
+
+// Drag and drop support for upload dropzone
+document.addEventListener('DOMContentLoaded', function() {
+  var dropzone = document.getElementById('upload-dropzone');
+  if (dropzone) {
+    dropzone.addEventListener('dragover', function(e) { e.preventDefault(); dropzone.classList.add('border-blue-400', 'bg-blue-50/50'); });
+    dropzone.addEventListener('dragleave', function(e) { e.preventDefault(); dropzone.classList.remove('border-blue-400', 'bg-blue-50/50'); });
+    dropzone.addEventListener('drop', function(e) {
+      e.preventDefault();
+      dropzone.classList.remove('border-blue-400', 'bg-blue-50/50');
+      var files = e.dataTransfer.files;
+      if (files.length > 0) {
+        var input = document.getElementById('resume-file-input');
+        input.files = files;
+        handleResumeUpload(input);
+      }
+    });
+  }
+});
 </script>
