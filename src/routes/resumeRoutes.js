@@ -51,8 +51,11 @@ router.post('/ai/skills', resumeController.suggestSkills);
 router.post('/ai/analyze', resumeController.analyzeATS);
 router.post('/:id/analyze', resumeController.analyzeATS);
 
-// ATS Module
-router.get('/ats', atsController.index);
-router.post('/api/analyze', atsController.analyze);
+// ATS Module (legacy simple endpoint kept for backward compatibility)
+router.get('/ats-legacy', atsController.index);
+router.post('/api/analyze-legacy', atsController.analyze);
+
+// Advanced ATS Analyzer Module
+router.use('/ats', require('../modules/resume-analyzer/routes/analyzerRoutes'));
 
 module.exports = router;

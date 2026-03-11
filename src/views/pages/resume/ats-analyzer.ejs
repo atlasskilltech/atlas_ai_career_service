@@ -1,0 +1,559 @@
+<div class="space-y-6">
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-white">AI Resume ATS Analyzer</h1>
+      <p class="text-gray-500 dark:text-gray-400 mt-1">Analyze your resume against a job description for ATS compatibility</p>
+    </div>
+    <% if (averages && averages.total_analyses > 0) { %>
+      <div class="flex items-center gap-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2">
+        <span class="text-sm text-gray-500">Avg Score:</span>
+        <span class="text-lg font-bold <%= (averages.avg_ats_score || 0) >= 70 ? 'text-green-600' : (averages.avg_ats_score || 0) >= 40 ? 'text-yellow-600' : 'text-red-600' %>"><%= averages.avg_ats_score || 0 %>%</span>
+        <span class="text-xs text-gray-400">(<%= averages.total_analyses %> analyses)</span>
+      </div>
+    <% } %>
+  </div>
+
+  <!-- Input Section -->
+  <div class="grid lg:grid-cols-12 gap-6">
+    <div class="lg:col-span-5">
+      <div class="card h-full">
+        <h3 class="font-semibold text-gray-900 dark:text-white mb-4"><i class="fas fa-upload mr-2 text-indigo-500"></i>Resume Input</h3>
+        <div class="space-y-4">
+          <!-- Resume Source Selection -->
+          <div>
+            <label class="label-field">Resume Source</label>
+            <div class="flex gap-2 mb-3">
+              <button onclick="setResumeSource('select')" id="src-select-btn" class="flex-1 px-3 py-2 text-sm rounded-lg border-2 border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-medium transition">
+                <i class="fas fa-file-alt mr-1"></i> My Resumes
+              </button>
+              <button onclick="setResumeSource('upload')" id="src-upload-btn" class="flex-1 px-3 py-2 text-sm rounded-lg border-2 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 font-medium transition hover:border-indigo-300">
+                <i class="fas fa-cloud-upload-alt mr-1"></i> Upload
+              </button>
+              <button onclick="setResumeSource('paste')" id="src-paste-btn" class="flex-1 px-3 py-2 text-sm rounded-lg border-2 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 font-medium transition hover:border-indigo-300">
+                <i class="fas fa-paste mr-1"></i> Paste
+              </button>
+            </div>
+          </div>
+
+          <!-- Resume Select -->
+          <div id="resume-select-section">
+            <label class="label-field">Select Resume</label>
+            <select id="resume-select" class="input-field">
+              <option value="">-- Choose a resume --</option>
+              <% if (resumes && resumes.length) { resumes.forEach(r => { %>
+                <option value="<%= r.id %>"><%= r.title || 'Untitled Resume' %> <% if (r.ats_score) { %>(Score: <%= r.ats_score %>%)<% } %></option>
+              <% }); } %>
+            </select>
+          </div>
+
+          <!-- File Upload -->
+          <div id="resume-upload-section" class="hidden">
+            <label class="label-field">Upload Resume (PDF/DOCX)</label>
+            <div class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-6 text-center cursor-pointer hover:border-indigo-400 transition" onclick="document.getElementById('resume-file').click()">
+              <i class="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-2"></i>
+              <p class="text-sm text-gray-500" id="upload-label">Click to upload or drag and drop</p>
+              <p class="text-xs text-gray-400 mt-1">PDF, DOCX (Max 10MB)</p>
+              <input type="file" id="resume-file" accept=".pdf,.docx,.doc" class="hidden" onchange="handleFileSelect(this)">
+            </div>
+          </div>
+
+          <!-- Paste Text -->
+          <div id="resume-paste-section" class="hidden">
+            <label class="label-field">Paste Resume Text</label>
+            <textarea id="resume-text" rows="8" class="input-field text-sm" placeholder="Paste your resume content here..."></textarea>
+          </div>
+
+          <!-- Job Description -->
+          <div>
+            <label class="label-field">Job Description <span class="text-red-500">*</span></label>
+            <textarea id="job-description" rows="8" class="input-field text-sm" placeholder="Paste the complete job description here including requirements, responsibilities, and qualifications..."></textarea>
+          </div>
+
+          <!-- Analyze Button -->
+          <button onclick="runAnalysis()" id="analyze-btn" class="btn-primary w-full py-3 text-base">
+            <i class="fas fa-search-plus mr-2"></i>Analyze Resume
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Results Section -->
+    <div class="lg:col-span-7">
+      <!-- Initial State -->
+      <div id="results-empty" class="card h-full flex items-center justify-center">
+        <div class="text-center py-12">
+          <div class="w-20 h-20 bg-indigo-50 dark:bg-indigo-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+            <i class="fas fa-clipboard-check text-3xl text-indigo-400"></i>
+          </div>
+          <h3 class="font-semibold text-gray-700 dark:text-gray-300 mb-2">Ready to Analyze</h3>
+          <p class="text-sm text-gray-400 max-w-sm">Select or upload your resume and paste a job description to get a detailed ATS compatibility analysis</p>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div id="results-loading" class="card h-full hidden">
+        <div class="flex flex-col items-center justify-center py-16">
+          <div class="relative w-24 h-24 mb-6">
+            <div class="absolute inset-0 rounded-full border-4 border-gray-200 dark:border-gray-700"></div>
+            <div class="absolute inset-0 rounded-full border-4 border-indigo-500 border-t-transparent animate-spin"></div>
+            <div class="absolute inset-3 rounded-full border-4 border-purple-400 border-b-transparent animate-spin" style="animation-direction: reverse; animation-duration: 1.5s"></div>
+          </div>
+          <h3 class="font-semibold text-gray-700 dark:text-gray-300 mb-2">Analyzing Your Resume</h3>
+          <p class="text-sm text-gray-400" id="loading-status">Running keyword analysis...</p>
+          <div class="w-64 bg-gray-200 dark:bg-gray-700 rounded-full h-2 mt-4">
+            <div id="loading-bar" class="bg-gradient-to-r from-indigo-500 to-purple-500 h-2 rounded-full transition-all duration-1000" style="width: 10%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Results Dashboard -->
+      <div id="results-dashboard" class="space-y-4 hidden">
+        <!-- Score Cards Row -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <!-- ATS Score (Main) -->
+          <div class="col-span-2 sm:col-span-1 card text-center">
+            <div class="relative w-28 h-28 mx-auto mb-2">
+              <svg class="w-28 h-28 transform -rotate-90" viewBox="0 0 120 120">
+                <circle cx="60" cy="60" r="52" fill="none" stroke-width="8" class="stroke-gray-200 dark:stroke-gray-700"/>
+                <circle id="score-circle" cx="60" cy="60" r="52" fill="none" stroke-width="8" stroke-linecap="round" stroke-dasharray="326.73" stroke-dashoffset="326.73" class="transition-all duration-2000"/>
+              </svg>
+              <div class="absolute inset-0 flex items-center justify-center">
+                <span id="ats-score-num" class="text-3xl font-bold">0</span>
+              </div>
+            </div>
+            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">ATS Score</p>
+            <p id="score-label" class="text-xs text-gray-400 mt-1"></p>
+          </div>
+
+          <!-- Keyword Match -->
+          <div class="card text-center">
+            <div class="w-12 h-12 bg-blue-50 dark:bg-blue-900/30 rounded-xl flex items-center justify-center mx-auto mb-2">
+              <i class="fas fa-key text-blue-500"></i>
+            </div>
+            <p id="keyword-score" class="text-2xl font-bold text-blue-600">0%</p>
+            <p class="text-xs text-gray-500">Keyword Match</p>
+            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 mt-2">
+              <div id="keyword-bar" class="bg-blue-500 h-1.5 rounded-full transition-all duration-1000" style="width: 0%"></div>
+            </div>
+          </div>
+
+          <!-- Skills Match -->
+          <div class="card text-center">
+            <div class="w-12 h-12 bg-purple-50 dark:bg-purple-900/30 rounded-xl flex items-center justify-center mx-auto mb-2">
+              <i class="fas fa-cogs text-purple-500"></i>
+            </div>
+            <p id="skills-score" class="text-2xl font-bold text-purple-600">0%</p>
+            <p class="text-xs text-gray-500">Skills Match</p>
+            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 mt-2">
+              <div id="skills-bar" class="bg-purple-500 h-1.5 rounded-full transition-all duration-1000" style="width: 0%"></div>
+            </div>
+          </div>
+
+          <!-- Formatting -->
+          <div class="card text-center">
+            <div class="w-12 h-12 bg-amber-50 dark:bg-amber-900/30 rounded-xl flex items-center justify-center mx-auto mb-2">
+              <i class="fas fa-align-left text-amber-500"></i>
+            </div>
+            <p id="format-score" class="text-2xl font-bold text-amber-600">0%</p>
+            <p class="text-xs text-gray-500">Formatting</p>
+            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 mt-2">
+              <div id="format-bar" class="bg-amber-500 h-1.5 rounded-full transition-all duration-1000" style="width: 0%"></div>
+            </div>
+          </div>
+
+          <!-- Content Quality -->
+          <div class="card text-center">
+            <div class="w-12 h-12 bg-green-50 dark:bg-green-900/30 rounded-xl flex items-center justify-center mx-auto mb-2">
+              <i class="fas fa-file-signature text-green-500"></i>
+            </div>
+            <p id="content-score" class="text-2xl font-bold text-green-600">0%</p>
+            <p class="text-xs text-gray-500">Content Quality</p>
+            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 mt-2">
+              <div id="content-bar" class="bg-green-500 h-1.5 rounded-full transition-all duration-1000" style="width: 0%"></div>
+            </div>
+          </div>
+
+          <!-- Experience -->
+          <div class="card text-center">
+            <div class="w-12 h-12 bg-rose-50 dark:bg-rose-900/30 rounded-xl flex items-center justify-center mx-auto mb-2">
+              <i class="fas fa-briefcase text-rose-500"></i>
+            </div>
+            <p id="exp-score" class="text-2xl font-bold text-rose-600">0%</p>
+            <p class="text-xs text-gray-500">Experience</p>
+            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 mt-2">
+              <div id="exp-bar" class="bg-rose-500 h-1.5 rounded-full transition-all duration-1000" style="width: 0%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Keyword Analysis -->
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div class="card">
+            <h4 class="font-semibold text-green-700 dark:text-green-400 mb-3 flex items-center">
+              <i class="fas fa-check-circle mr-2"></i>Matched Keywords <span id="matched-count" class="ml-auto text-sm bg-green-100 dark:bg-green-900/40 text-green-600 px-2 py-0.5 rounded-full">0</span>
+            </h4>
+            <div id="matched-keywords" class="flex flex-wrap gap-2 max-h-48 overflow-y-auto"></div>
+          </div>
+          <div class="card">
+            <h4 class="font-semibold text-red-700 dark:text-red-400 mb-3 flex items-center">
+              <i class="fas fa-times-circle mr-2"></i>Missing Keywords <span id="missing-count" class="ml-auto text-sm bg-red-100 dark:bg-red-900/40 text-red-600 px-2 py-0.5 rounded-full">0</span>
+            </h4>
+            <div id="missing-keywords" class="flex flex-wrap gap-2 max-h-48 overflow-y-auto"></div>
+          </div>
+        </div>
+
+        <!-- Skills Gap Panel -->
+        <div class="card">
+          <h4 class="font-semibold text-gray-900 dark:text-white mb-3"><i class="fas fa-puzzle-piece mr-2 text-purple-500"></i>Skill Gap Analysis</h4>
+          <div class="grid sm:grid-cols-3 gap-4">
+            <div>
+              <p class="text-sm font-medium text-green-600 mb-2"><i class="fas fa-check mr-1"></i>Your Skills</p>
+              <div id="existing-skills" class="space-y-1 max-h-40 overflow-y-auto"></div>
+            </div>
+            <div>
+              <p class="text-sm font-medium text-red-600 mb-2"><i class="fas fa-exclamation-triangle mr-1"></i>Missing Skills</p>
+              <div id="missing-skills" class="space-y-1 max-h-40 overflow-y-auto"></div>
+            </div>
+            <div>
+              <p class="text-sm font-medium text-blue-600 mb-2"><i class="fas fa-star mr-1"></i>Recommended</p>
+              <div id="recommended-skills" class="space-y-1 max-h-40 overflow-y-auto"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Formatting Issues -->
+        <div class="card">
+          <h4 class="font-semibold text-gray-900 dark:text-white mb-3"><i class="fas fa-exclamation-circle mr-2 text-amber-500"></i>Formatting Issues</h4>
+          <div id="format-issues" class="space-y-2"></div>
+          <div id="format-issues-empty" class="text-center py-4 text-sm text-green-600 hidden">
+            <i class="fas fa-check-circle mr-1"></i> No formatting issues detected
+          </div>
+        </div>
+
+        <!-- Content Quality -->
+        <div class="card">
+          <h4 class="font-semibold text-gray-900 dark:text-white mb-3"><i class="fas fa-magic mr-2 text-green-500"></i>Content Quality Improvements</h4>
+          <div id="weak-statements" class="space-y-3"></div>
+          <div id="weak-statements-empty" class="text-center py-4 text-sm text-green-600 hidden">
+            <i class="fas fa-check-circle mr-1"></i> Content quality looks good
+          </div>
+        </div>
+
+        <!-- Suggestions Panel -->
+        <div class="card">
+          <h4 class="font-semibold text-gray-900 dark:text-white mb-3"><i class="fas fa-lightbulb mr-2 text-indigo-500"></i>Improvement Suggestions</h4>
+          <div id="suggestions-list" class="space-y-2"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Analysis History -->
+  <% if (history && history.length > 0) { %>
+  <div class="card">
+    <h3 class="font-semibold text-gray-900 dark:text-white mb-4"><i class="fas fa-history mr-2 text-gray-400"></i>Analysis History</h3>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-gray-200 dark:border-gray-700">
+            <th class="text-left py-3 px-3 font-medium text-gray-500">Date</th>
+            <th class="text-center py-3 px-3 font-medium text-gray-500">ATS Score</th>
+            <th class="text-center py-3 px-3 font-medium text-gray-500">Keywords</th>
+            <th class="text-center py-3 px-3 font-medium text-gray-500">Skills</th>
+            <th class="text-center py-3 px-3 font-medium text-gray-500">Format</th>
+            <th class="text-center py-3 px-3 font-medium text-gray-500">Content</th>
+            <th class="text-center py-3 px-3 font-medium text-gray-500">Experience</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% history.forEach(h => { %>
+          <tr class="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer" onclick="loadAnalysis(<%= h.id %>)">
+            <td class="py-3 px-3 text-gray-600 dark:text-gray-400"><%= new Date(h.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) %></td>
+            <td class="py-3 px-3 text-center">
+              <span class="inline-flex items-center justify-center w-10 h-10 rounded-full text-sm font-bold
+                <%= h.ats_score >= 70 ? 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400' : h.ats_score >= 40 ? 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-400' : 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-400' %>">
+                <%= h.ats_score %>
+              </span>
+            </td>
+            <td class="py-3 px-3 text-center text-gray-600 dark:text-gray-400"><%= h.keyword_match_score || 0 %>%</td>
+            <td class="py-3 px-3 text-center text-gray-600 dark:text-gray-400"><%= h.skills_match_score || 0 %>%</td>
+            <td class="py-3 px-3 text-center text-gray-600 dark:text-gray-400"><%= h.formatting_score || 0 %>%</td>
+            <td class="py-3 px-3 text-center text-gray-600 dark:text-gray-400"><%= h.content_score || 0 %>%</td>
+            <td class="py-3 px-3 text-center text-gray-600 dark:text-gray-400"><%= h.experience_score || 0 %>%</td>
+          </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <% } %>
+</div>
+
+<script>
+let resumeSource = 'select';
+let selectedFile = null;
+
+function setResumeSource(source) {
+  resumeSource = source;
+  // Update button styles
+  ['select', 'upload', 'paste'].forEach(s => {
+    const btn = document.getElementById('src-' + s + '-btn');
+    const section = document.getElementById('resume-' + s + '-section');
+    if (s === source) {
+      btn.classList.add('border-indigo-500', 'bg-indigo-50', 'dark:bg-indigo-900/30', 'text-indigo-700', 'dark:text-indigo-300');
+      btn.classList.remove('border-gray-200', 'dark:border-gray-700', 'text-gray-600', 'dark:text-gray-400');
+      if (section) section.classList.remove('hidden');
+    } else {
+      btn.classList.remove('border-indigo-500', 'bg-indigo-50', 'dark:bg-indigo-900/30', 'text-indigo-700', 'dark:text-indigo-300');
+      btn.classList.add('border-gray-200', 'dark:border-gray-700', 'text-gray-600', 'dark:text-gray-400');
+      if (section) section.classList.add('hidden');
+    }
+  });
+}
+
+function handleFileSelect(input) {
+  if (input.files.length > 0) {
+    selectedFile = input.files[0];
+    document.getElementById('upload-label').textContent = selectedFile.name;
+  }
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+async function runAnalysis() {
+  const btn = document.getElementById('analyze-btn');
+  const jd = document.getElementById('job-description').value.trim();
+  if (!jd || jd.length < 20) return showToast('Please enter a valid job description (minimum 20 characters)', 'error');
+
+  let body;
+  let headers = {};
+
+  if (resumeSource === 'select') {
+    const resumeId = document.getElementById('resume-select').value;
+    if (!resumeId) return showToast('Please select a resume', 'error');
+    body = JSON.stringify({ resume_id: parseInt(resumeId), job_description: jd });
+    headers['Content-Type'] = 'application/json';
+  } else if (resumeSource === 'upload') {
+    if (!selectedFile) return showToast('Please upload a resume file', 'error');
+    body = new FormData();
+    body.append('resume', selectedFile);
+    body.append('job_description', jd);
+  } else {
+    const text = document.getElementById('resume-text').value.trim();
+    if (!text || text.length < 50) return showToast('Please enter your resume text (minimum 50 characters)', 'error');
+    body = JSON.stringify({ resumeText: text, job_description: jd });
+    headers['Content-Type'] = 'application/json';
+  }
+
+  // Show loading state
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Analyzing...';
+  document.getElementById('results-empty').classList.add('hidden');
+  document.getElementById('results-dashboard').classList.add('hidden');
+  document.getElementById('results-loading').classList.remove('hidden');
+
+  // Animate loading bar
+  const loadingMessages = [
+    'Extracting resume content...',
+    'Running keyword analysis...',
+    'Analyzing skill gaps...',
+    'Checking formatting...',
+    'Evaluating content quality...',
+    'Generating suggestions...',
+    'Finalizing results...',
+  ];
+  let msgIdx = 0;
+  const loadingInterval = setInterval(() => {
+    msgIdx = Math.min(msgIdx + 1, loadingMessages.length - 1);
+    document.getElementById('loading-status').textContent = loadingMessages[msgIdx];
+    document.getElementById('loading-bar').style.width = Math.min(10 + msgIdx * 14, 90) + '%';
+  }, 2000);
+
+  try {
+    const fetchOpts = { method: 'POST', body };
+    if (headers['Content-Type']) fetchOpts.headers = headers;
+
+    const res = await fetch('/resume/ats/api/analyze', fetchOpts);
+    const data = await res.json();
+
+    clearInterval(loadingInterval);
+    document.getElementById('loading-bar').style.width = '100%';
+
+    if (data.success) {
+      setTimeout(() => renderResults(data.analysis), 500);
+    } else {
+      throw new Error(data.error || 'Analysis failed');
+    }
+  } catch (err) {
+    clearInterval(loadingInterval);
+    showToast(err.message || 'Analysis failed', 'error');
+    document.getElementById('results-loading').classList.add('hidden');
+    document.getElementById('results-empty').classList.remove('hidden');
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '<i class="fas fa-search-plus mr-2"></i>Analyze Resume';
+}
+
+function renderResults(a) {
+  document.getElementById('results-loading').classList.add('hidden');
+  document.getElementById('results-dashboard').classList.remove('hidden');
+
+  // Animate ATS score circle
+  const score = a.ats_score || 0;
+  const circle = document.getElementById('score-circle');
+  const circumference = 326.73;
+  const offset = circumference - (score / 100) * circumference;
+  circle.style.strokeDashoffset = offset;
+  circle.classList.remove('stroke-green-500', 'stroke-yellow-500', 'stroke-red-500');
+  circle.classList.add(score >= 70 ? 'stroke-green-500' : score >= 40 ? 'stroke-yellow-500' : 'stroke-red-500');
+
+  // Animate score number
+  animateNumber('ats-score-num', score);
+
+  // Score label
+  const labels = { high: 'Excellent - ATS Ready', mid: 'Good - Needs Improvement', low: 'Low - Significant Changes Needed' };
+  document.getElementById('score-label').textContent = score >= 70 ? labels.high : score >= 40 ? labels.mid : labels.low;
+
+  // Sub-scores
+  document.getElementById('keyword-score').textContent = (a.keyword_match || 0) + '%';
+  document.getElementById('keyword-bar').style.width = (a.keyword_match || 0) + '%';
+  document.getElementById('skills-score').textContent = (a.skills_match || 0) + '%';
+  document.getElementById('skills-bar').style.width = (a.skills_match || 0) + '%';
+  document.getElementById('format-score').textContent = (a.formatting_score || 0) + '%';
+  document.getElementById('format-bar').style.width = (a.formatting_score || 0) + '%';
+  document.getElementById('content-score').textContent = (a.content_score || 0) + '%';
+  document.getElementById('content-bar').style.width = (a.content_score || 0) + '%';
+  document.getElementById('exp-score').textContent = (a.experience_score || 0) + '%';
+  document.getElementById('exp-bar').style.width = (a.experience_score || 0) + '%';
+
+  // Matched keywords
+  const matched = a.matched_keywords || [];
+  document.getElementById('matched-count').textContent = matched.length;
+  document.getElementById('matched-keywords').innerHTML = matched.map(k =>
+    '<span class="inline-block px-2.5 py-1 bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 rounded-full text-xs font-medium">' + escapeHtml(k.keyword || k) + '</span>'
+  ).join('') || '<p class="text-sm text-gray-400">No keywords matched</p>';
+
+  // Missing keywords
+  const missing = a.missing_keywords || [];
+  document.getElementById('missing-count').textContent = missing.length;
+  document.getElementById('missing-keywords').innerHTML = missing.map(k =>
+    '<span class="inline-block px-2.5 py-1 bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-400 rounded-full text-xs font-medium">' + escapeHtml(k.keyword || k) + '</span>'
+  ).join('') || '<p class="text-sm text-gray-400">All keywords present</p>';
+
+  // Skills gap
+  const existing = a.existing_skills || [];
+  document.getElementById('existing-skills').innerHTML = existing.map(s =>
+    '<div class="flex items-center gap-2 text-xs"><i class="fas fa-check text-green-500"></i><span class="text-gray-700 dark:text-gray-300">' + escapeHtml(s.skill || s) + '</span>' +
+    (s.proficiency ? '<span class="ml-auto text-gray-400">' + escapeHtml(s.proficiency) + '</span>' : '') + '</div>'
+  ).join('') || '<p class="text-xs text-gray-400">No skills detected</p>';
+
+  const missingSkills = a.missing_skills || [];
+  document.getElementById('missing-skills').innerHTML = missingSkills.map(s =>
+    '<div class="flex items-center gap-2 text-xs"><i class="fas fa-times text-red-500"></i><span class="text-gray-700 dark:text-gray-300">' + escapeHtml(typeof s === 'string' ? s : s.skill || s.skill_name) + '</span></div>'
+  ).join('') || '<p class="text-xs text-gray-400">No skills missing</p>';
+
+  const recommended = a.recommended_skills || [];
+  document.getElementById('recommended-skills').innerHTML = recommended.map(s =>
+    '<div class="flex items-center gap-2 text-xs"><i class="fas fa-star text-blue-500"></i><span class="text-gray-700 dark:text-gray-300">' + escapeHtml(s.skill || s) + '</span></div>'
+  ).join('') || '<p class="text-xs text-gray-400">No recommendations</p>';
+
+  // Formatting issues
+  const issues = a.formatting_issues || [];
+  const formatIssuesEl = document.getElementById('format-issues');
+  const formatEmptyEl = document.getElementById('format-issues-empty');
+  if (issues.length === 0) {
+    formatIssuesEl.classList.add('hidden');
+    formatEmptyEl.classList.remove('hidden');
+  } else {
+    formatIssuesEl.classList.remove('hidden');
+    formatEmptyEl.classList.add('hidden');
+    formatIssuesEl.innerHTML = issues.map(issue => {
+      const text = typeof issue === 'string' ? issue : issue.description || issue;
+      return '<div class="flex items-start gap-3 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg">' +
+        '<i class="fas fa-exclamation-triangle text-amber-500 mt-0.5"></i>' +
+        '<p class="text-sm text-gray-700 dark:text-gray-300">' + escapeHtml(text) + '</p></div>';
+    }).join('');
+  }
+
+  // Content quality - weak statements
+  const weakStatements = (a.content_quality && a.content_quality.weak_statements) || [];
+  const weakEl = document.getElementById('weak-statements');
+  const weakEmptyEl = document.getElementById('weak-statements-empty');
+  if (weakStatements.length === 0) {
+    weakEl.classList.add('hidden');
+    weakEmptyEl.classList.remove('hidden');
+  } else {
+    weakEl.classList.remove('hidden');
+    weakEmptyEl.classList.add('hidden');
+    weakEl.innerHTML = weakStatements.slice(0, 5).map(w =>
+      '<div class="p-3 border border-gray-200 dark:border-gray-700 rounded-lg">' +
+      '<div class="flex items-center gap-2 mb-1"><span class="text-xs font-medium text-red-500 bg-red-100 dark:bg-red-900/40 px-2 py-0.5 rounded">Weak</span><p class="text-sm text-gray-500 line-through">' + escapeHtml(w.original) + '</p></div>' +
+      '<div class="flex items-center gap-2"><span class="text-xs font-medium text-green-500 bg-green-100 dark:bg-green-900/40 px-2 py-0.5 rounded">Strong</span><p class="text-sm text-gray-700 dark:text-gray-300 font-medium">' + escapeHtml(w.improved) + '</p></div>' +
+      '</div>'
+    ).join('');
+  }
+
+  // Suggestions
+  const suggestions = a.suggestions || [];
+  document.getElementById('suggestions-list').innerHTML = suggestions.map((s, i) => {
+    const text = typeof s === 'string' ? s : s.suggestion || s.suggestion_text;
+    return '<div class="flex items-start gap-3 p-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg">' +
+      '<span class="flex-shrink-0 w-6 h-6 bg-indigo-500 text-white rounded-full flex items-center justify-center text-xs font-bold">' + (i + 1) + '</span>' +
+      '<p class="text-sm text-gray-700 dark:text-gray-300">' + escapeHtml(text) + '</p></div>';
+  }).join('') || '<p class="text-sm text-gray-400 text-center py-4">No suggestions available</p>';
+
+  // Scroll to results
+  document.getElementById('results-dashboard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function animateNumber(elementId, target) {
+  const el = document.getElementById(elementId);
+  let current = 0;
+  const step = Math.max(1, Math.floor(target / 40));
+  const interval = setInterval(() => {
+    current += step;
+    if (current >= target) {
+      current = target;
+      clearInterval(interval);
+    }
+    el.textContent = current;
+  }, 30);
+}
+
+async function loadAnalysis(id) {
+  try {
+    const res = await fetch('/resume/ats/api/analyze/' + id);
+    const data = await res.json();
+    if (data.success && data.analysis) {
+      const a = data.analysis;
+      // Map stored data to expected format
+      const mapped = {
+        ats_score: a.ats_score,
+        keyword_match: a.keyword_match_score,
+        skills_match: a.skills_match_score,
+        formatting_score: a.formatting_score,
+        content_score: a.content_score,
+        experience_score: a.experience_score,
+        matched_keywords: (a.keywords || []).filter(k => k.is_present).map(k => ({ keyword: k.keyword, category: k.category })),
+        missing_keywords: (a.keywords || []).filter(k => !k.is_present).map(k => ({ keyword: k.keyword, category: k.category })),
+        existing_skills: [],
+        missing_skills: (a.missing_skills || []).map(s => s.skill_name),
+        recommended_skills: [],
+        formatting_issues: (a.format_issues || []).map(i => i.description),
+        content_quality: { weak_statements: [] },
+        suggestions: (a.suggestions || []).map(s => s.suggestion_text),
+      };
+      document.getElementById('results-empty').classList.add('hidden');
+      renderResults(mapped);
+    }
+  } catch (err) {
+    showToast('Failed to load analysis', 'error');
+  }
+}
+</script>
