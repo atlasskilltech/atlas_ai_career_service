@@ -3,15 +3,15 @@ const router = express.Router();
 const resumeController = require('../controllers/resumeController');
 const atsController = require('../controllers/atsController');
 const { isAuthenticated } = require('../middleware/auth');
-const { resumeUpload } = require('../config/multer');
+const { resumeUpload, resumeMemoryUpload } = require('../config/multer');
 
 router.use(isAuthenticated);
 
-// Upload & Parse Resume (must be before /:id routes)
+// Upload & Parse Resume - uses MEMORY storage (no disk writes)
 router.post('/upload-parse', (req, res, next) => {
-  resumeUpload.single('resume')(req, res, (err) => {
+  resumeMemoryUpload.single('resume')(req, res, (err) => {
     if (err) {
-      console.error('Multer upload error:', err.message);
+      console.error('Multer upload error:', err.message, err.code);
       return res.status(400).json({ error: err.message || 'File upload failed' });
     }
     next();
