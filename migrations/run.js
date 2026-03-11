@@ -260,15 +260,7 @@ const tables = [
     FOREIGN KEY (cover_letter_id) REFERENCES aicp_cover_letters(id) ON DELETE CASCADE
   )`,
 
-  `CREATE TABLE IF NOT EXISTS aicp_cover_letter_jobs (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    cover_letter_id INT NOT NULL,
-    job_description TEXT,
-    company_name VARCHAR(255),
-    job_role VARCHAR(255),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (cover_letter_id) REFERENCES aicp_cover_letters(id) ON DELETE CASCADE
-  // ATS Resume Analyzer Module Tables
+ 
   `CREATE TABLE IF NOT EXISTS aicp_resume_analysis (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
