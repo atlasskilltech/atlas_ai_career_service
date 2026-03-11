@@ -20,12 +20,30 @@ function createUploader(destFolder, allowedTypes) {
     if (allowedTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error('Invalid file type'), false);
+      cb(new Error('Invalid file type. Allowed: ' + allowedTypes.join(', ')), false);
     }
   };
 
   return multer({ storage, fileFilter, limits: { fileSize: 10 * 1024 * 1024 } });
 }
+
+// Resume upload uses MEMORY storage (no disk writes needed, avoids permission issues)
+const resumeMemoryUpload = multer({
+  storage: multer.memoryStorage(),
+  fileFilter: (req, file, cb) => {
+    const allowed = [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    ];
+    if (allowed.includes(file.mimetype) || file.originalname.match(/\.(pdf|doc|docx)$/i)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid file type. Please upload a PDF or DOCX file.'), false);
+    }
+  },
+  limits: { fileSize: 10 * 1024 * 1024 },
+});
 
 const resumeUpload = createUploader('resumes', [
   'application/pdf',
@@ -43,4 +61,4 @@ const documentUpload = createUploader('documents', [
 
 const profileUpload = createUploader('profiles', ['image/jpeg', 'image/png', 'image/webp']);
 
-module.exports = { resumeUpload, documentUpload, profileUpload };
+module.exports = { resumeUpload, resumeMemoryUpload, documentUpload, profileUpload };

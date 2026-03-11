@@ -198,19 +198,19 @@ class ResumeController {
   async uploadAndParse(req, res) {
     try {
       if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
-      console.log('Upload received:', req.file.originalname, req.file.size, 'bytes, path:', req.file.path);
+      console.log('Upload received:', req.file.originalname, req.file.size, 'bytes (memory buffer)');
 
-      // Step 1: Extract text from PDF/DOCX (fast, 1-2s max)
-      const extractResult = await resumeService.extractTextFromResume(req.file.path);
+      // Get file extension from original name
+      const ext = require('path').extname(req.file.originalname).toLowerCase();
 
-      // Step 2: Return regex-extracted data immediately (no AI, no timeout risk)
+      // Extract text from the in-memory buffer (no disk I/O needed)
+      const extractResult = await resumeService.extractTextFromResume(req.file.buffer, ext);
+
+      // Return regex-extracted data immediately (no AI, no timeout risk)
       const fallback = resumeService.extractResumeFromText(extractResult.text);
       return res.json({ success: true, data: fallback, text: extractResult.text });
     } catch (err) {
       console.error('Upload parse error:', err.message, err.stack);
-      if (req.file && req.file.path) {
-        try { require('fs').unlinkSync(req.file.path); } catch(e) {}
-      }
       res.status(500).json({ error: err.message || 'Failed to parse resume' });
     }
   }

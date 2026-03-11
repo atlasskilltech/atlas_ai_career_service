@@ -64,44 +64,49 @@ class ResumeService {
     });
   }
 
-  // Step 1: Extract text from file (fast, no AI)
-  async extractTextFromResume(filePath) {
-    var ext = path.extname(filePath).toLowerCase();
+  // Step 1: Extract text from buffer or file (fast, no AI)
+  async extractTextFromResume(bufferOrPath, ext) {
     var text = '';
+    var dataBuffer;
 
-    try {
-      if (ext === '.pdf') {
-        var dataBuffer = fs.readFileSync(filePath);
-        var pdfData = await Promise.race([
-          pdfParse(dataBuffer),
-          new Promise(function(_, reject) {
-            setTimeout(function() { reject(new Error('PDF parsing timed out')); }, 10000);
-          })
-        ]);
-        text = pdfData.text;
-      } else if (ext === '.docx') {
-        var AdmZip = require('adm-zip');
-        var zip = new AdmZip(filePath);
-        var docEntry = zip.getEntry('word/document.xml');
-        if (docEntry) {
-          var xmlContent = docEntry.getData().toString('utf8');
-          text = xmlContent.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-        }
-        if (!text || text.length < 20) {
-          throw new Error('Could not extract text from DOCX file.');
-        }
-      } else if (ext === '.doc') {
-        var dataBuffer = fs.readFileSync(filePath);
-        var content = dataBuffer.toString('utf8');
-        text = content.replace(/[\x00-\x1f]/g, ' ').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-        if (!text || text.length < 20) {
-          throw new Error('Legacy .doc format not fully supported. Please convert to PDF or DOCX.');
-        }
-      } else {
-        throw new Error('Unsupported file format. Please upload a PDF or DOCX file.');
+    // Support both Buffer (memory upload) and file path (legacy)
+    if (Buffer.isBuffer(bufferOrPath)) {
+      dataBuffer = bufferOrPath;
+    } else {
+      dataBuffer = fs.readFileSync(bufferOrPath);
+      ext = ext || path.extname(bufferOrPath).toLowerCase();
+      // Clean up file after reading
+      try { fs.unlinkSync(bufferOrPath); } catch(e) {}
+    }
+    ext = (ext || '').toLowerCase();
+
+    if (ext === '.pdf') {
+      var pdfData = await Promise.race([
+        pdfParse(dataBuffer),
+        new Promise(function(_, reject) {
+          setTimeout(function() { reject(new Error('PDF parsing timed out')); }, 10000);
+        })
+      ]);
+      text = pdfData.text;
+    } else if (ext === '.docx') {
+      var AdmZip = require('adm-zip');
+      var zip = new AdmZip(dataBuffer);
+      var docEntry = zip.getEntry('word/document.xml');
+      if (docEntry) {
+        var xmlContent = docEntry.getData().toString('utf8');
+        text = xmlContent.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
       }
-    } finally {
-      try { fs.unlinkSync(filePath); } catch(e) {}
+      if (!text || text.length < 20) {
+        throw new Error('Could not extract text from DOCX file.');
+      }
+    } else if (ext === '.doc') {
+      var content = dataBuffer.toString('utf8');
+      text = content.replace(/[\x00-\x1f]/g, ' ').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+      if (!text || text.length < 20) {
+        throw new Error('Legacy .doc format not fully supported. Please convert to PDF or DOCX.');
+      }
+    } else {
+      throw new Error('Unsupported file format. Please upload a PDF or DOCX file.');
     }
 
     if (!text || text.trim().length < 20) {
