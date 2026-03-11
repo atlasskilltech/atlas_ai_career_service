@@ -96,12 +96,18 @@ app.use(errorHandler);
 const setupInterviewSocket = require('./sockets/interviewSocket');
 setupInterviewSocket(io);
 
+// Job Aggregator - Auto-fetch scheduler (runs every 5 minutes)
+const jobScheduler = require('./scrapers/jobScheduler');
+app.set('jobScheduler', jobScheduler);
+
 const PORT = process.env.PORT || 3000;
 // Increase server timeout to 60s for long AI operations (upload-parse, etc.)
 server.keepAliveTimeout = 65000;
 server.headersTimeout = 66000;
 server.listen(PORT, () => {
   console.log(`Atlas Career Platform running on http://localhost:${PORT}`);
+  // Start job auto-fetcher after server is ready
+  jobScheduler.start();
 });
 
 module.exports = app;

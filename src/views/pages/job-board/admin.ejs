@@ -33,6 +33,47 @@
     <% }); %>
   </div>
 
+  <!-- Auto-Fetch Scheduler Status -->
+  <div class="card p-4" id="scheduler-card">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+          <i class="fas fa-robot text-green-600" id="sched-icon"></i>
+        </div>
+        <div>
+          <h3 class="font-semibold text-sm">Auto-Fetch Scheduler</h3>
+          <p class="text-xs text-gray-500" id="sched-status">Loading...</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="text-xs text-gray-500" id="sched-next">Next: --</span>
+        <button onclick="triggerFetch()" id="trigger-btn" class="btn-outline text-xs px-3 py-1.5"><i class="fas fa-play mr-1"></i> Fetch Now</button>
+      </div>
+    </div>
+    <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mt-4 text-center">
+      <div class="p-2 bg-gray-50 dark:bg-gray-800 rounded">
+        <div class="font-bold text-sm" id="sched-runs">0</div>
+        <p class="text-xs text-gray-500">Runs</p>
+      </div>
+      <div class="p-2 bg-gray-50 dark:bg-gray-800 rounded">
+        <div class="font-bold text-sm text-green-600" id="sched-added">0</div>
+        <p class="text-xs text-gray-500">Total Added</p>
+      </div>
+      <div class="p-2 bg-gray-50 dark:bg-gray-800 rounded">
+        <div class="font-bold text-sm text-blue-600" id="sched-updated">0</div>
+        <p class="text-xs text-gray-500">Total Updated</p>
+      </div>
+      <div class="p-2 bg-gray-50 dark:bg-gray-800 rounded">
+        <div class="font-bold text-sm" id="sched-last-found">0</div>
+        <p class="text-xs text-gray-500">Last Found</p>
+      </div>
+      <div class="p-2 bg-gray-50 dark:bg-gray-800 rounded">
+        <div class="font-bold text-sm" id="sched-last-time">--</div>
+        <p class="text-xs text-gray-500">Last Run</p>
+      </div>
+    </div>
+  </div>
+
   <!-- Source Filter -->
   <div class="flex flex-wrap gap-2">
     <a href="/job-board/admin" class="<%= !source ? 'btn-primary' : 'btn-outline' %> text-xs px-3 py-1.5">All</a>
@@ -269,4 +310,52 @@ async function bulkImport() {
   } catch (e) { showToast('Invalid JSON or import failed: ' + e.message, 'error'); }
   btn.disabled = false; btn.innerHTML = 'Import Jobs';
 }
+
+// ─── Scheduler Live Status ────────────────────────────────────
+async function loadSchedulerStatus() {
+  try {
+    const res = await fetch('/job-board/admin/api/scheduler');
+    const data = await res.json();
+    if (!data.success || !data.scheduler) return;
+    const s = data.scheduler;
+    var icon = document.getElementById('sched-icon');
+    var statusEl = document.getElementById('sched-status');
+    if (s.currentlyFetching) {
+      icon.className = 'fas fa-spinner fa-spin text-yellow-600';
+      statusEl.textContent = 'Fetching jobs right now...';
+    } else if (s.running) {
+      icon.className = 'fas fa-robot text-green-600';
+      statusEl.textContent = 'Running - auto-fetches every 5 minutes';
+    } else {
+      icon.className = 'fas fa-robot text-gray-400';
+      statusEl.textContent = 'Stopped';
+    }
+    document.getElementById('sched-runs').textContent = s.runCount || 0;
+    document.getElementById('sched-added').textContent = s.totalImported ? s.totalImported.added : 0;
+    document.getElementById('sched-updated').textContent = s.totalImported ? s.totalImported.updated : 0;
+    if (s.lastResult) {
+      document.getElementById('sched-last-found').textContent = s.lastResult.found || 0;
+    }
+    if (s.lastRun) {
+      document.getElementById('sched-last-time').textContent = new Date(s.lastRun).toLocaleTimeString();
+    }
+    if (s.nextSources) {
+      document.getElementById('sched-next').textContent = 'Next: ' + s.nextSources.join(', ');
+    }
+  } catch (e) { /* ignore */ }
+}
+
+async function triggerFetch() {
+  var btn = document.getElementById('trigger-btn');
+  btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Fetching...';
+  try {
+    await fetch('/job-board/admin/api/scheduler/trigger', { method: 'POST' });
+    showToast('Fetch cycle triggered! Refresh in a minute to see results.', 'success');
+  } catch { showToast('Failed to trigger', 'error'); }
+  setTimeout(function() { btn.disabled = false; btn.innerHTML = '<i class="fas fa-play mr-1"></i> Fetch Now'; loadSchedulerStatus(); }, 5000);
+}
+
+// Load status on page load and refresh every 30 seconds
+loadSchedulerStatus();
+setInterval(loadSchedulerStatus, 30000);
 </script>

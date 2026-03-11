@@ -28,4 +28,19 @@ router.patch('/admin/jobs/:id/verify', isAdmin, controller.adminVerifyJob.bind(c
 router.post('/admin/bulk-import', isAdmin, controller.adminBulkImport.bind(controller));
 router.get('/admin/api/stats', isAdmin, controller.adminStats.bind(controller));
 
+// ─── Scheduler Status & Control ──────────────────────────────
+router.get('/admin/api/scheduler', isAdmin, (req, res) => {
+  const scheduler = req.app.get('jobScheduler');
+  res.json({ success: true, scheduler: scheduler ? scheduler.getStatus() : null });
+});
+
+router.post('/admin/api/scheduler/trigger', isAdmin, async (req, res) => {
+  const scheduler = req.app.get('jobScheduler');
+  if (!scheduler) return res.status(500).json({ error: 'Scheduler not available' });
+  if (scheduler.isRunning) return res.json({ success: false, message: 'A cycle is already running' });
+  // Run a cycle immediately (don't await - return right away)
+  scheduler.runCycle();
+  res.json({ success: true, message: 'Fetch cycle triggered' });
+});
+
 module.exports = router;
