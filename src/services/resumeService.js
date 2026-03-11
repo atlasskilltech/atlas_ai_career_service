@@ -405,6 +405,11 @@ Return JSON:
 
     const esc = (s) => String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
+    // Two-column template
+    if (template === 'two-column') return this._renderTwoColumn(resume, color, profile, education, experience, projects, skills, achievements, certifications, languages, interests, esc);
+    // Bold template
+    if (template === 'bold') return this._renderBold(resume, color, profile, education, experience, projects, skills, achievements, certifications, languages, interests, sectionOrder, esc);
+
     function h2(title) { return '<h2 style="color:' + color + '">' + title + '</h2>'; }
 
     const renderSection = (key) => {
@@ -499,6 +504,158 @@ Return JSON:
       summaryHtml +
       sectionsHTML +
       '</body></html>';
+  }
+
+  _renderTwoColumn(resume, color, profile, education, experience, projects, skills, achievements, certifications, languages, interests, esc) {
+    const contactParts = [profile.phone, profile.email, profile.location, profile.linkedin, profile.github, profile.website || profile.portfolio].filter(Boolean);
+
+    // Left sidebar: summary, contact, skills, tools, certifications, achievements, languages, interests
+    let leftHTML = '';
+    if (profile.summary) leftHTML += '<div class="sec"><div class="sh">Personal Profile</div><div class="sd">' + esc(profile.summary) + '</div></div>';
+    if (contactParts.length) leftHTML += '<div class="sec"><div class="sh">Contact Details</div><div class="sd">' + contactParts.map(c => esc(c)).join('<br>') + '</div></div>';
+    const skillItems = [];
+    if (skills.technical) skills.technical.split(',').forEach(s => { if (s.trim()) skillItems.push(esc(s.trim())); });
+    if (skills.soft) skills.soft.split(',').forEach(s => { if (s.trim()) skillItems.push(esc(s.trim())); });
+    if (skillItems.length) leftHTML += '<div class="sec"><div class="sh">Skills & Abilities</div><ul>' + skillItems.map(s => '<li>' + s + '</li>').join('') + '</ul></div>';
+    if (skills.tools) {
+      const toolItems = skills.tools.split(',').map(s => s.trim()).filter(Boolean);
+      if (toolItems.length) leftHTML += '<div class="sec"><div class="sh">Software / Tools</div><ul>' + toolItems.map(t => '<li>' + esc(t) + '</li>').join('') + '</ul></div>';
+    }
+    if (certifications.length) leftHTML += '<div class="sec"><div class="sh">Certifications</div><ul>' + certifications.map(c => '<li>' + esc(c.name || c.cert_name || '') + '</li>').join('') + '</ul></div>';
+    if (achievements.length) leftHTML += '<div class="sec"><div class="sh">Achievements</div><ul>' + achievements.map(a => '<li>' + esc(typeof a === 'string' ? a : (a.achievement_text || '')) + '</li>').join('') + '</ul></div>';
+    if (languages.length) leftHTML += '<div class="sec"><div class="sh">Languages</div><ul>' + languages.map(l => '<li>' + esc(l.language || l.name || '') + ' (' + esc(l.proficiency || l.level || '') + ')</li>').join('') + '</ul></div>';
+    if (interests.length) leftHTML += '<div class="sec"><div class="sh">Interests</div><div class="sd">' + interests.map(i => esc(typeof i === 'string' ? i : (i.name || ''))).join(', ') + '</div></div>';
+
+    // Right main: experience, education, projects
+    let rightHTML = '';
+    if (experience.length) {
+      rightHTML += '<div class="sec"><div class="sh">Experience</div>' + experience.map(e => {
+        return '<div class="entry"><div class="et">' + esc(e.title || e.role || '') + '</div>' +
+          '<div class="em">' + esc(e.company || '') + ' | ' + esc(e.startDate || e.start_date || '') + ' - ' + esc(e.endDate || e.end_date || 'Present') + '</div>' +
+          '<div class="ed">' + esc(e.description || '') + '</div></div>';
+      }).join('') + '</div>';
+    }
+    if (education.length) {
+      rightHTML += '<div class="sec"><div class="sh">Academic Profile</div>' + education.map(e => {
+        const yr = e.year || (e.start_year && e.end_year ? e.start_year + ' - ' + e.end_year : '');
+        return '<div class="entry"><div class="et">' + esc(e.institution || '') + '</div>' +
+          '<div class="em">' + esc(e.degree || '') + (e.field ? ' in ' + esc(e.field) : '') + (yr ? ' | ' + esc(yr) : '') + (e.gpa || e.cgpa ? ' | GPA: ' + esc(e.gpa || e.cgpa) : '') + '</div></div>';
+      }).join('') + '</div>';
+    }
+    if (projects.length) {
+      rightHTML += '<div class="sec"><div class="sh">Projects</div>' + projects.map(p => {
+        return '<div class="entry"><div class="et">' + esc(p.name || p.project_name || '') + (p.technologies ? ' (' + esc(p.technologies) + ')' : '') + '</div>' +
+          '<div class="ed">' + esc(p.description || '') + '</div></div>';
+      }).join('') + '</div>';
+    }
+
+    return '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>' +
+      '*{margin:0;padding:0;box-sizing:border-box}' +
+      'body{font-family:"Calibri","Segoe UI",sans-serif;color:#333;line-height:1.5;font-size:12px}' +
+      '.header{background:' + color + ';color:white;padding:28px 32px;text-align:center}' +
+      '.header h1{font-size:30px;font-weight:700;letter-spacing:1px;color:white;margin:0}' +
+      '.header .hl{font-size:14px;opacity:0.85;margin-top:4px}' +
+      '.main{display:flex;min-height:900px}' +
+      '.sidebar{width:38%;background:#f8f9fa;padding:18px 20px;border-right:1px solid #e5e7eb}' +
+      '.content{width:62%;padding:18px 22px}' +
+      '.sh{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:' + color + ';border-bottom:2px solid ' + color + ';padding-bottom:3px;margin-bottom:8px}' +
+      '.sec{margin-bottom:16px}' +
+      '.sd{font-size:11.5px;color:#555}' +
+      '.entry{margin-bottom:10px}' +
+      '.et{font-weight:600;font-size:13px}' +
+      '.em{font-size:10.5px;color:#666;font-style:italic;margin-bottom:2px}' +
+      '.ed{font-size:11.5px;color:#444;white-space:pre-line;margin-top:2px}' +
+      'ul{padding-left:16px;font-size:11.5px}li{margin-bottom:3px}' +
+      '@media print{.main{min-height:auto}}' +
+      '</style></head><body>' +
+      '<div class="header"><h1>' + esc(profile.name || profile.full_name || 'Your Name') + '</h1>' +
+      (profile.headline ? '<div class="hl">' + esc(profile.headline) + '</div>' : '') +
+      '</div>' +
+      '<div class="main">' +
+      '<div class="sidebar">' + leftHTML + '</div>' +
+      '<div class="content">' + rightHTML + '</div>' +
+      '</div></body></html>';
+  }
+
+  _renderBold(resume, color, profile, education, experience, projects, skills, achievements, certifications, languages, interests, sectionOrder, esc) {
+    const contactParts = [profile.email, profile.phone, profile.location, profile.linkedin, profile.website || profile.portfolio || profile.github].filter(Boolean);
+
+    function h2(title) { return '<h2>' + title + '</h2>'; }
+
+    const renderSection = (key) => {
+      switch (key) {
+        case 'profile': return '';
+        case 'education':
+          if (!education.length) return '';
+          return h2('EDUCATION') + education.map(function(e) {
+            var yr = e.year || (e.start_year && e.end_year ? e.start_year + ' - ' + e.end_year : '');
+            return '<div class="entry"><div class="entry-header"><span>' + esc(e.institution) + '</span><span>' + esc(yr) + '</span></div><div class="entry-sub">' + esc(e.degree) + (e.field ? ' in ' + esc(e.field) : '') + (e.gpa || e.cgpa ? ' | GPA: ' + esc(e.gpa || e.cgpa) : '') + '</div></div>';
+          }).join('');
+        case 'experience':
+          if (!experience.length) return '';
+          return h2('EXPERIENCE') + experience.map(function(e) {
+            return '<div class="entry"><div class="entry-header"><span>' + esc(e.title || e.role) + ' — ' + esc(e.company) + '</span><span>' + esc(e.startDate || e.start_date || '') + ' - ' + esc(e.endDate || e.end_date || 'Present') + '</span></div><div class="entry-desc">' + esc(e.description) + '</div></div>';
+          }).join('');
+        case 'projects':
+          if (!projects.length) return '';
+          return h2('PROJECTS') + projects.map(function(p) {
+            return '<div class="entry"><div class="entry-header"><span>' + esc(p.name || p.project_name) + '</span><span>' + esc(p.technologies) + '</span></div><div class="entry-desc">' + esc(p.description) + '</div></div>';
+          }).join('');
+        case 'skills':
+          if (!(skills.technical || skills.soft || skills.tools || skills.languages)) return '';
+          var sg = '';
+          if (skills.technical) sg += '<div><span class="skill-cat">Technical:</span> ' + esc(skills.technical) + '</div>';
+          if (skills.tools) sg += '<div><span class="skill-cat">Tools:</span> ' + esc(skills.tools) + '</div>';
+          if (skills.soft) sg += '<div><span class="skill-cat">Soft Skills:</span> ' + esc(skills.soft) + '</div>';
+          if (skills.languages) sg += '<div><span class="skill-cat">Languages:</span> ' + esc(skills.languages) + '</div>';
+          return h2('SKILLS') + '<div class="skills-grid">' + sg + '</div>';
+        case 'achievements':
+          if (!achievements.length) return '';
+          return h2('ACHIEVEMENTS') + '<ul>' + achievements.map(function(a) {
+            return '<li>' + esc(typeof a === 'string' ? a : (a.achievement_text || '')) + '</li>';
+          }).join('') + '</ul>';
+        case 'certifications':
+          if (!certifications.length) return '';
+          return h2('CERTIFICATIONS') + '<ul>' + certifications.map(function(c) {
+            return '<li><strong>' + esc(c.name || c.cert_name) + '</strong>' + (c.organization ? ' — ' + esc(c.organization) : '') + '</li>';
+          }).join('') + '</ul>';
+        case 'languages':
+          if (!languages.length) return '';
+          return h2('LANGUAGES') + '<div class="skills-grid">' + languages.map(function(l) {
+            return '<div>' + esc(l.language || l.name) + ' — ' + esc(l.proficiency || l.level || '') + '</div>';
+          }).join('') + '</div>';
+        case 'interests':
+          if (!interests.length) return '';
+          return h2('INTERESTS') + '<p>' + interests.map(function(i) { return esc(typeof i === 'string' ? i : (i.name || '')); }).join(', ') + '</p>';
+        default: return '';
+      }
+    };
+
+    const sectionsHTML = sectionOrder.map(renderSection).filter(Boolean).join('');
+
+    return '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>' +
+      '*{margin:0;padding:0;box-sizing:border-box}' +
+      'body{font-family:"Calibri","Segoe UI",sans-serif;color:#333;line-height:1.5;font-size:13px}' +
+      '.hdr{background:' + color + ';color:white;padding:28px 36px}' +
+      '.hdr h1{font-size:28px;font-weight:700;letter-spacing:1px;color:white;margin:0}' +
+      '.hdr .hl{font-size:14px;opacity:0.9;margin-top:3px}' +
+      '.hdr .ct{font-size:11px;opacity:0.75;margin-top:6px}' +
+      '.body-content{padding:24px 36px}' +
+      '.summary{font-size:12px;color:#444;margin-bottom:14px}' +
+      'h2{font-size:12px;text-transform:uppercase;letter-spacing:1.5px;border-bottom:2px solid ' + color + ';padding-bottom:3px;margin:14px 0 8px;color:' + color + ';font-weight:700}' +
+      '.entry{margin-bottom:10px}.entry-header{display:flex;justify-content:space-between;font-weight:600;font-size:13px}' +
+      '.entry-sub{font-style:italic;font-size:11px;color:#555}.entry-desc{font-size:12px;margin-top:2px;white-space:pre-line}' +
+      '.skills-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;font-size:12px}.skill-cat{font-weight:600}' +
+      'ul{padding-left:18px;font-size:12px}li{margin-bottom:3px}p{font-size:12px}' +
+      '@media print{.body-content{padding:15px 20px}}' +
+      '</style></head><body>' +
+      '<div class="hdr"><h1>' + esc(profile.name || profile.full_name || 'Your Name') + '</h1>' +
+      (profile.headline ? '<div class="hl">' + esc(profile.headline) + '</div>' : '') +
+      '<div class="ct">' + contactParts.join(' | ') + '</div></div>' +
+      '<div class="body-content">' +
+      (profile.summary ? '<div class="summary">' + esc(profile.summary) + '</div>' : '') +
+      sectionsHTML +
+      '</div></body></html>';
   }
 }
 

@@ -12,7 +12,16 @@ class ResumeController {
   }
 
   async create(req, res) {
-    res.render('pages/resume/builder', { title: 'New Resume', layout: 'layouts/app', resume: null });
+    // If template query param is provided, go directly to builder with that template
+    if (req.query.template) {
+      return res.render('pages/resume/builder', {
+        title: 'New Resume',
+        layout: 'layouts/app',
+        resume: { template: req.query.template, theme_color: req.query.color || '#0a1a4a' },
+      });
+    }
+    // Otherwise show template chooser
+    res.render('pages/resume/choose-template', { title: 'Choose Template', layout: 'layouts/app' });
   }
 
   async store(req, res) {
