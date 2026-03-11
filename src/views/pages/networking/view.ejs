@@ -11,7 +11,7 @@
           </div>
           <span class="badge-info capitalize"><%= contact.contact_type ? contact.contact_type.replace('_', ' ') : '' %></span>
         </div>
-        <div class="grid grid-cols-2 gap-4 mt-4 text-sm">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mt-4 text-sm">
           <% if (contact.email) { %><div><span class="text-gray-500">Email:</span> <%= contact.email %></div><% } %>
           <% if (contact.phone) { %><div><span class="text-gray-500">Phone:</span> <%= contact.phone %></div><% } %>
           <% if (contact.linkedin_url) { %><div><span class="text-gray-500">LinkedIn:</span> <a href="<%= contact.linkedin_url %>" target="_blank" class="text-accent"><%= contact.linkedin_url %></a></div><% } %>

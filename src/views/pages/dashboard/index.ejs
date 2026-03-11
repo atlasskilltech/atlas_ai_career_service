@@ -1,11 +1,11 @@
 <div class="space-y-6">
   <!-- Welcome -->
-  <div class="flex items-center justify-between">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
     <div>
-      <h1 class="text-2xl font-bold">Welcome back, <%= user.name %>!</h1>
-      <p class="text-gray-500 mt-1">Here's your career progress overview</p>
+      <h1 class="text-xl sm:text-2xl font-bold">Welcome back, <%= user.name %>!</h1>
+      <p class="text-gray-500 mt-1 text-sm sm:text-base">Here's your career progress overview</p>
     </div>
-    <a href="/resume/new" class="btn-primary"><i class="fas fa-plus mr-2"></i> New Resume</a>
+    <a href="/resume/new" class="btn-primary text-sm flex-shrink-0 self-start sm:self-auto"><i class="fas fa-plus mr-2"></i> New Resume</a>
   </div>
 
   <!-- Stats Grid -->
