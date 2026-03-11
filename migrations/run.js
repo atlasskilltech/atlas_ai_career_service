@@ -247,6 +247,9 @@ const tables = [
     FOREIGN KEY (resume_id) REFERENCES aicp_resumes(id) ON DELETE CASCADE
   )`,
 
+  // S3 storage column for documents
+  `ALTER TABLE aicp_documents ADD COLUMN IF NOT EXISTS s3_key VARCHAR(500) AFTER notes`,
+
   // ATS Resume Analyzer Module Tables
   `CREATE TABLE IF NOT EXISTS aicp_resume_analysis (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -307,8 +310,8 @@ async function runMigrations() {
   for (const sql of tables) {
     try {
       await pool.execute(sql);
-      const tableName = sql.match(/CREATE TABLE IF NOT EXISTS (\w+)/)?.[1];
-      console.log(`  ✓ Table "${tableName}" ready`);
+      const tableName = sql.match(/CREATE TABLE IF NOT EXISTS (\w+)/)?.[1] || sql.match(/ALTER TABLE (\w+)/)?.[1];
+      console.log(`  ✓ ${tableName ? `Table "${tableName}"` : 'Statement'} ready`);
     } catch (err) {
       console.error('  ✗ Migration error:', err.message);
     }
