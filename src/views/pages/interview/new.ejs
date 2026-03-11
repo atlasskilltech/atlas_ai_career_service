@@ -20,7 +20,7 @@
     <!-- Interview Type -->
     <div>
       <label class="label-field">Interview Type</label>
-      <div class="grid grid-cols-2 gap-3" id="type-options">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="type-options">
         <% [
           {val:'technical', icon:'fa-code', label:'Technical', desc:'Coding, system design & concepts'},
           {val:'behavioral', icon:'fa-users', label:'Behavioral', desc:'STAR method & situational questions'},
@@ -45,7 +45,7 @@
     <!-- Difficulty -->
     <div>
       <label class="label-field">Difficulty Level</label>
-      <div class="grid grid-cols-3 gap-3" id="diff-options">
+      <div class="grid grid-cols-3 sm:grid-cols-3 gap-2 sm:gap-3" id="diff-options">
         <% [
           {val:'easy', icon:'fa-seedling', label:'Easy', desc:'8 questions'},
           {val:'medium', icon:'fa-fire', label:'Medium', desc:'10 questions'},

@@ -260,15 +260,7 @@ const tables = [
     FOREIGN KEY (cover_letter_id) REFERENCES aicp_cover_letters(id) ON DELETE CASCADE
   )`,
 
-  `CREATE TABLE IF NOT EXISTS aicp_cover_letter_jobs (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    cover_letter_id INT NOT NULL,
-    job_description TEXT,
-    company_name VARCHAR(255),
-    job_role VARCHAR(255),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (cover_letter_id) REFERENCES aicp_cover_letters(id) ON DELETE CASCADE
-  // ATS Resume Analyzer Module Tables
+ 
   `CREATE TABLE IF NOT EXISTS aicp_resume_analysis (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
@@ -328,8 +320,8 @@ async function runMigrations() {
   for (const sql of tables) {
     try {
       await pool.execute(sql);
-      const tableName = sql.match(/CREATE TABLE IF NOT EXISTS (\w+)/)?.[1];
-      console.log(`  ✓ Table "${tableName}" ready`);
+      const tableName = sql.match(/CREATE TABLE IF NOT EXISTS (\w+)/)?.[1] || sql.match(/ALTER TABLE (\w+)/)?.[1];
+      console.log(`  ✓ ${tableName ? `Table "${tableName}"` : 'Statement'} ready`);
     } catch (err) {
       console.error('  ✗ Migration error:', err.message);
     }

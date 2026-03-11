@@ -1,9 +1,9 @@
 <div class="space-y-6">
-  <div class="flex items-center justify-between">
-    <h1 class="text-2xl font-bold">Interview Performance History</h1>
-    <div class="flex gap-2">
-      <a href="/interview/new" class="btn-primary"><i class="fas fa-video mr-2"></i>New Interview</a>
-      <a href="/interview" class="btn-outline"><i class="fas fa-arrow-left mr-2"></i>Back</a>
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <h1 class="text-xl sm:text-2xl font-bold">Interview Performance History</h1>
+    <div class="flex gap-2 flex-shrink-0">
+      <a href="/interview/new" class="btn-primary text-sm"><i class="fas fa-video mr-1 sm:mr-2"></i><span class="hidden sm:inline">New </span>Interview</a>
+      <a href="/interview" class="btn-outline text-sm"><i class="fas fa-arrow-left mr-1 sm:mr-2"></i>Back</a>
     </div>
   </div>
 
@@ -46,7 +46,7 @@
               <p class="text-xs text-gray-500">Overall</p>
             </div>
           </div>
-          <div class="grid grid-cols-4 gap-2 mt-3">
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3">
             <div class="text-center p-2 bg-gray-50 dark:bg-gray-800 rounded"><div class="font-semibold text-sm"><%= r.technical_score %>%</div><p class="text-xs text-gray-500">Technical</p></div>
             <div class="text-center p-2 bg-gray-50 dark:bg-gray-800 rounded"><div class="font-semibold text-sm"><%= r.communication_score %>%</div><p class="text-xs text-gray-500">Comm</p></div>
             <div class="text-center p-2 bg-gray-50 dark:bg-gray-800 rounded"><div class="font-semibold text-sm"><%= r.confidence_score %>%</div><p class="text-xs text-gray-500">Confidence</p></div>
