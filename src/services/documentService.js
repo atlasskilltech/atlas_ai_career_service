@@ -1,6 +1,5 @@
 const documentRepository = require('../repositories/documentRepository');
-const path = require('path');
-const fs = require('fs');
+const s3 = require('../config/s3');
 
 class DocumentService {
   async getAll(userId) {
@@ -16,15 +15,18 @@ class DocumentService {
   }
 
   async upload(userId, file, data) {
+    const { key, url } = await s3.upload(file.buffer, file.originalname, 'documents', file.mimetype);
+
     return documentRepository.create({
       userId,
       title: data.title || file.originalname,
       docType: data.docType || 'other',
-      filePath: `/uploads/documents/${file.filename}`,
+      filePath: url,
       fileName: file.originalname,
       fileSize: file.size,
       mimeType: file.mimetype,
       notes: data.notes || null,
+      s3Key: key,
     });
   }
 
@@ -35,8 +37,10 @@ class DocumentService {
   async delete(id) {
     const doc = await documentRepository.findById(id);
     if (doc) {
-      const filePath = path.join(__dirname, '../../public', doc.file_path);
-      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+      // Delete from S3 if s3_key exists
+      if (doc.s3_key) {
+        try { await s3.remove(doc.s3_key); } catch (e) { console.error('S3 delete error:', e.message); }
+      }
       await documentRepository.delete(id);
     }
   }

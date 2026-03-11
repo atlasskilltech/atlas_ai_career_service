@@ -320,8 +320,8 @@ async function runMigrations() {
   for (const sql of tables) {
     try {
       await pool.execute(sql);
-      const tableName = sql.match(/CREATE TABLE IF NOT EXISTS (\w+)/)?.[1];
-      console.log(`  ✓ Table "${tableName}" ready`);
+      const tableName = sql.match(/CREATE TABLE IF NOT EXISTS (\w+)/)?.[1] || sql.match(/ALTER TABLE (\w+)/)?.[1];
+      console.log(`  ✓ ${tableName ? `Table "${tableName}"` : 'Statement'} ready`);
     } catch (err) {
       console.error('  ✗ Migration error:', err.message);
     }

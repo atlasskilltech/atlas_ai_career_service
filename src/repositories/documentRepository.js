@@ -18,8 +18,8 @@ class DocumentRepository {
 
   async create(data) {
     const [result] = await pool.execute(
-      'INSERT INTO aicp_documents (user_id, title, doc_type, file_path, file_name, file_size, mime_type, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [data.userId, data.title, data.docType || 'other', data.filePath, data.fileName, data.fileSize || 0, data.mimeType || '', data.notes || null]
+      'INSERT INTO aicp_documents (user_id, title, doc_type, file_path, file_name, file_size, mime_type, notes, s3_key) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [data.userId, data.title, data.docType || 'other', data.filePath, data.fileName, data.fileSize || 0, data.mimeType || '', data.notes || null, data.s3Key || null]
     );
     return { id: result.insertId, ...data };
   }
