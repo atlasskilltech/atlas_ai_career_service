@@ -1,60 +1,246 @@
 <div class="space-y-6">
-  <h1 class="text-2xl font-bold">Generate Cover Letter</h1>
+  <div class="flex items-center justify-between">
+    <div>
+      <a href="/cover-letter" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-sm"><i class="fas fa-arrow-left mr-1"></i>Back to Cover Letters</a>
+      <h1 class="text-2xl font-bold mt-2">Generate Cover Letter</h1>
+      <p class="text-gray-500 text-sm mt-1">Fill in the details and let AI create a personalized cover letter</p>
+    </div>
+  </div>
 
-  <div class="grid lg:grid-cols-2 gap-6">
-    <div class="card">
-      <h3 class="font-semibold mb-4">Details</h3>
-      <div class="space-y-4">
-        <div><label class="label-field">Company Name</label><input type="text" id="cl-company" class="input-field" placeholder="Google, Microsoft, etc."></div>
-        <div><label class="label-field">Job Title</label><input type="text" id="cl-job-title" class="input-field" placeholder="Software Engineer"></div>
-        <div><label class="label-field">Job Description</label><textarea id="cl-jd" rows="5" class="input-field" placeholder="Paste the job description..."></textarea></div>
-        <div><label class="label-field">Your Resume / Background</label><textarea id="cl-resume" rows="5" class="input-field" placeholder="Paste your resume or key details..."></textarea></div>
-        <button onclick="generateCoverLetter()" id="cl-btn" class="btn-primary w-full"><i class="fas fa-magic mr-2"></i>Generate Cover Letter</button>
+  <div class="grid grid-cols-12 gap-6">
+    <!-- Input Panel - col-span-7 -->
+    <div class="col-span-12 lg:col-span-7 space-y-4">
+      <div class="card">
+        <h3 class="font-semibold mb-4"><i class="fas fa-info-circle text-blue-500 mr-2"></i>Job Details</h3>
+        <div class="space-y-4">
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="label-field">Company Name <span class="text-red-400">*</span></label>
+              <input type="text" id="cl-company" class="input-field" placeholder="e.g. Google, Microsoft">
+            </div>
+            <div>
+              <label class="label-field">Job Title <span class="text-red-400">*</span></label>
+              <input type="text" id="cl-job-title" class="input-field" placeholder="e.g. Software Engineer">
+            </div>
+          </div>
+
+          <div>
+            <label class="label-field">Job Description</label>
+            <textarea id="cl-jd" rows="5" class="input-field" placeholder="Paste the job description here for better personalization..."></textarea>
+          </div>
+        </div>
       </div>
+
+      <div class="card">
+        <h3 class="font-semibold mb-4"><i class="fas fa-file-alt text-green-500 mr-2"></i>Resume / Background</h3>
+        <div class="space-y-4">
+          <% if (typeof resumes !== 'undefined' && resumes.length > 0) { %>
+            <div>
+              <label class="label-field">Select a Resume</label>
+              <select id="cl-resume-select" class="input-field" onchange="handleResumeSelect()">
+                <option value="">-- Select a saved resume --</option>
+                <% resumes.forEach(r => { %>
+                  <option value="<%= r.id %>" <% if (r.is_primary) { %>selected<% } %>><%= r.title %><% if (r.is_primary) { %> (Primary)<% } %></option>
+                <% }); %>
+              </select>
+              <p class="text-xs text-gray-400 mt-1">Or paste your resume text below</p>
+            </div>
+          <% } %>
+          <div>
+            <label class="label-field">Resume Text (Optional if resume selected)</label>
+            <textarea id="cl-resume" rows="5" class="input-field" placeholder="Paste your resume summary, key skills, and experience..."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="font-semibold mb-4"><i class="fas fa-sliders-h text-purple-500 mr-2"></i>Writing Style</h3>
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-3" id="tone-selector">
+          <button onclick="selectTone('professional')" class="tone-btn active px-3 py-2.5 rounded-lg border-2 text-sm font-medium transition-all text-center" data-tone="professional">
+            <i class="fas fa-user-tie block text-lg mb-1"></i>
+            Professional
+          </button>
+          <button onclick="selectTone('confident')" class="tone-btn px-3 py-2.5 rounded-lg border-2 text-sm font-medium transition-all text-center" data-tone="confident">
+            <i class="fas fa-crown block text-lg mb-1"></i>
+            Confident
+          </button>
+          <button onclick="selectTone('enthusiastic')" class="tone-btn px-3 py-2.5 rounded-lg border-2 text-sm font-medium transition-all text-center" data-tone="enthusiastic">
+            <i class="fas fa-star block text-lg mb-1"></i>
+            Enthusiastic
+          </button>
+          <button onclick="selectTone('formal')" class="tone-btn px-3 py-2.5 rounded-lg border-2 text-sm font-medium transition-all text-center" data-tone="formal">
+            <i class="fas fa-stamp block text-lg mb-1"></i>
+            Formal
+          </button>
+          <button onclick="selectTone('concise')" class="tone-btn px-3 py-2.5 rounded-lg border-2 text-sm font-medium transition-all text-center" data-tone="concise">
+            <i class="fas fa-compress-alt block text-lg mb-1"></i>
+            Concise
+          </button>
+        </div>
+      </div>
+
+      <button onclick="generateCoverLetter()" id="cl-btn" class="btn-primary w-full py-3 text-base">
+        <i class="fas fa-magic mr-2"></i>Generate Cover Letter
+      </button>
     </div>
 
-    <div class="card">
-      <h3 class="font-semibold mb-4">Generated Cover Letter</h3>
-      <div id="cl-result" class="text-center py-12 text-gray-400">
-        <i class="fas fa-envelope text-5xl mb-4"></i>
-        <p>Fill in the details and generate your cover letter</p>
+    <!-- Preview Panel - col-span-5 -->
+    <div class="col-span-12 lg:col-span-5">
+      <div class="card sticky top-6">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-semibold"><i class="fas fa-eye text-blue-500 mr-2"></i>Preview</h3>
+          <div id="cl-actions" class="hidden flex gap-2">
+            <button onclick="copyCoverLetter()" class="text-gray-400 hover:text-blue-500 transition-colors" title="Copy text">
+              <i class="fas fa-copy"></i>
+            </button>
+          </div>
+        </div>
+
+        <div id="cl-result" class="min-h-[400px] flex items-center justify-center">
+          <div class="text-center text-gray-400">
+            <i class="fas fa-envelope text-5xl mb-4 block"></i>
+            <p class="font-medium">Your cover letter will appear here</p>
+            <p class="text-sm mt-1">Fill in the details on the left and click Generate</p>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
+<style>
+  .tone-btn {
+    border-color: #e5e7eb;
+    color: #6b7280;
+    background: white;
+  }
+  .dark .tone-btn {
+    border-color: #374151;
+    color: #9ca3af;
+    background: #1f2937;
+  }
+  .tone-btn:hover {
+    border-color: #93c5fd;
+    color: #3b82f6;
+  }
+  .tone-btn.active {
+    border-color: #3b82f6;
+    color: #3b82f6;
+    background: #eff6ff;
+  }
+  .dark .tone-btn.active {
+    border-color: #3b82f6;
+    color: #60a5fa;
+    background: rgba(59, 130, 246, 0.1);
+  }
+  .cover-letter-preview {
+    font-family: 'Georgia', 'Times New Roman', serif;
+    line-height: 1.8;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+</style>
+
 <script>
+var selectedTone = 'professional';
+var generatedLetter = null;
+
+function selectTone(tone) {
+  selectedTone = tone;
+  document.querySelectorAll('.tone-btn').forEach(function(btn) {
+    btn.classList.toggle('active', btn.getAttribute('data-tone') === tone);
+  });
+}
+
+function handleResumeSelect() {
+  var sel = document.getElementById('cl-resume-select');
+  if (sel && sel.value) {
+    document.getElementById('cl-resume').placeholder = 'Using selected resume. You can still add additional context here...';
+  } else {
+    document.getElementById('cl-resume').placeholder = 'Paste your resume summary, key skills, and experience...';
+  }
+}
+
 async function generateCoverLetter() {
-  const btn = document.getElementById('cl-btn');
-  const data = {
-    companyName: document.getElementById('cl-company').value,
-    jobTitle: document.getElementById('cl-job-title').value,
-    jobDescription: document.getElementById('cl-jd').value,
-    resumeText: document.getElementById('cl-resume').value,
-  };
-  if (!data.companyName || !data.jobTitle) return showToast('Please fill required fields', 'error');
+  var btn = document.getElementById('cl-btn');
+  var company = document.getElementById('cl-company').value.trim();
+  var jobTitle = document.getElementById('cl-job-title').value.trim();
+  var jd = document.getElementById('cl-jd').value.trim();
+  var resumeText = document.getElementById('cl-resume').value.trim();
+  var resumeSelect = document.getElementById('cl-resume-select');
+  var resumeId = resumeSelect ? resumeSelect.value : '';
+
+  if (!company || !jobTitle) {
+    showToast('Please fill in Company Name and Job Title', 'error');
+    return;
+  }
 
   btn.disabled = true;
-  btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Generating...';
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Generating your cover letter...';
+
+  document.getElementById('cl-result').innerHTML = '<div class="text-center py-12"><i class="fas fa-spinner fa-spin text-4xl text-blue-400 mb-4 block"></i><p class="text-gray-500 font-medium">AI is crafting your cover letter...</p><p class="text-sm text-gray-400 mt-1">This may take a few seconds</p></div>';
 
   try {
-    const res = await fetch('/cover-letter/generate', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data),
+    var payload = {
+      companyName: company,
+      jobTitle: jobTitle,
+      jobDescription: jd,
+      resumeText: resumeText,
+      tone: selectedTone
+    };
+    if (resumeId) payload.resumeId = parseInt(resumeId);
+
+    var res = await fetch('/cover-letter/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
     });
-    const result = await res.json();
+    var result = await res.json();
+
     if (result.success) {
-      document.getElementById('cl-result').innerHTML = `
-        <div class="text-left">
-          <div class="flex items-center justify-between mb-4">
-            <h4 class="font-medium">${result.letter.title}</h4>
-            <a href="/cover-letter/${result.letter.id}" class="text-accent text-sm hover:underline">Edit & Save</a>
-          </div>
-          <div class="prose prose-sm max-w-none whitespace-pre-wrap bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">${result.letter.content}</div>
-        </div>
-      `;
+      generatedLetter = result.letter;
+      document.getElementById('cl-actions').classList.remove('hidden');
+      document.getElementById('cl-result').innerHTML =
+        '<div>' +
+          '<div class="flex items-center justify-between mb-4 pb-3 border-b border-gray-100 dark:border-gray-700">' +
+            '<div>' +
+              '<h4 class="font-semibold text-sm">' + escapeHtml(result.letter.title || '') + '</h4>' +
+              '<span class="text-xs text-gray-400 capitalize">' + escapeHtml(selectedTone) + ' tone</span>' +
+            '</div>' +
+            '<a href="/cover-letter/' + result.letter.id + '" class="btn-primary text-sm px-3 py-1.5"><i class="fas fa-edit mr-1"></i>Edit & Save</a>' +
+          '</div>' +
+          '<div class="cover-letter-preview text-sm text-gray-700 dark:text-gray-300">' + escapeHtml(result.letter.content || '') + '</div>' +
+        '</div>';
+      showToast('Cover letter generated!', 'success');
+    } else {
+      document.getElementById('cl-result').innerHTML = '<div class="text-center py-12 text-red-400"><i class="fas fa-exclamation-triangle text-4xl mb-4 block"></i><p>' + escapeHtml(result.error || 'Generation failed') + '</p></div>';
+      showToast('Generation failed', 'error');
     }
-  } catch (err) { showToast('Generation failed', 'error'); }
+  } catch (err) {
+    document.getElementById('cl-result').innerHTML = '<div class="text-center py-12 text-red-400"><i class="fas fa-exclamation-triangle text-4xl mb-4 block"></i><p>Failed to generate cover letter</p></div>';
+    showToast('Generation failed', 'error');
+  }
+
   btn.disabled = false;
   btn.innerHTML = '<i class="fas fa-magic mr-2"></i>Generate Cover Letter';
 }
+
+function copyCoverLetter() {
+  if (generatedLetter && generatedLetter.content) {
+    navigator.clipboard.writeText(generatedLetter.content).then(function() {
+      showToast('Copied to clipboard!', 'success');
+    });
+  }
+}
+
+function escapeHtml(str) {
+  var div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// Auto-select primary resume
+document.addEventListener('DOMContentLoaded', function() {
+  handleResumeSelect();
+});
 </script>

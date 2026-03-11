@@ -1,29 +1,345 @@
 <div class="space-y-6">
-  <div class="flex items-center justify-between">
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
     <div>
-      <a href="/cover-letter" class="text-gray-500 hover:text-gray-700 text-sm"><i class="fas fa-arrow-left mr-1"></i>Back</a>
+      <a href="/cover-letter" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-sm"><i class="fas fa-arrow-left mr-1"></i>Back to Cover Letters</a>
       <h1 class="text-2xl font-bold mt-2"><%= letter.title %></h1>
-      <p class="text-gray-500"><%= letter.company_name %> - <%= letter.job_title %></p>
+      <div class="flex items-center gap-3 mt-1">
+        <span class="text-gray-500 text-sm"><i class="fas fa-building mr-1"></i><%= letter.company_name %></span>
+        <span class="text-gray-500 text-sm"><i class="fas fa-briefcase mr-1"></i><%= letter.job_title %></span>
+        <% if (letter.tone) { %>
+          <span class="text-xs px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 capitalize"><%= letter.tone %></span>
+        <% } %>
+      </div>
     </div>
-    <div class="flex gap-2">
-      <button onclick="saveCoverLetter()" class="btn-accent"><i class="fas fa-save mr-1"></i>Save</button>
-      <button onclick="window.print()" class="btn-outline"><i class="fas fa-download mr-1"></i>Download</button>
+    <div class="flex gap-2 flex-wrap">
+      <button onclick="saveCoverLetter()" id="save-btn" class="btn-accent text-sm"><i class="fas fa-save mr-1"></i>Save</button>
+      <button onclick="saveVersion()" class="btn-outline text-sm"><i class="fas fa-code-branch mr-1"></i>Save Version</button>
+      <button onclick="exportPDF()" id="export-btn" class="btn-outline text-sm"><i class="fas fa-file-pdf mr-1"></i>Download PDF</button>
+      <button onclick="copyCoverLetter()" class="btn-outline text-sm"><i class="fas fa-copy mr-1"></i>Copy</button>
     </div>
   </div>
 
-  <div class="card">
-    <textarea id="cl-content" rows="20" class="w-full bg-transparent border-none outline-none resize-none text-sm leading-relaxed"><%= letter.content %></textarea>
+  <div class="grid grid-cols-12 gap-6">
+    <!-- Editor Panel - col-span-7 -->
+    <div class="col-span-12 lg:col-span-7 space-y-4">
+      <!-- Editor -->
+      <div class="card">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-semibold text-sm"><i class="fas fa-edit text-blue-500 mr-2"></i>Editor</h3>
+          <span class="text-xs text-gray-400" id="char-count">0 characters</span>
+        </div>
+        <textarea id="cl-content" rows="22" class="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 outline-none resize-none text-sm leading-relaxed focus:ring-2 focus:ring-blue-300 dark:focus:ring-blue-800 transition-all" oninput="handleEditorInput()"><%= letter.content %></textarea>
+        <div class="flex items-center justify-between mt-2">
+          <span class="text-xs text-gray-400" id="autosave-status"></span>
+          <span class="text-xs text-gray-400">Version: <%= letter.version || 1 %></span>
+        </div>
+      </div>
+
+      <!-- Regenerate Section -->
+      <div class="card">
+        <h3 class="font-semibold text-sm mb-3"><i class="fas fa-redo text-purple-500 mr-2"></i>Regenerate with Different Tone</h3>
+        <div class="flex flex-wrap gap-2 mb-3" id="regen-tone-selector">
+          <button onclick="selectRegenTone('professional')" class="regen-tone-btn text-xs px-3 py-1.5 rounded-full border transition-all" data-tone="professional">Professional</button>
+          <button onclick="selectRegenTone('confident')" class="regen-tone-btn text-xs px-3 py-1.5 rounded-full border transition-all" data-tone="confident">Confident</button>
+          <button onclick="selectRegenTone('enthusiastic')" class="regen-tone-btn text-xs px-3 py-1.5 rounded-full border transition-all" data-tone="enthusiastic">Enthusiastic</button>
+          <button onclick="selectRegenTone('formal')" class="regen-tone-btn text-xs px-3 py-1.5 rounded-full border transition-all" data-tone="formal">Formal</button>
+          <button onclick="selectRegenTone('concise')" class="regen-tone-btn text-xs px-3 py-1.5 rounded-full border transition-all" data-tone="concise">Concise</button>
+        </div>
+        <button onclick="regenerateLetter()" id="regen-btn" class="btn-primary text-sm w-full">
+          <i class="fas fa-magic mr-1"></i>Regenerate Cover Letter
+        </button>
+      </div>
+
+      <!-- Version History -->
+      <div class="card">
+        <h3 class="font-semibold text-sm mb-3"><i class="fas fa-history text-green-500 mr-2"></i>Version History</h3>
+        <div id="version-list">
+          <% if (typeof versions !== 'undefined' && versions.length > 0) { %>
+            <div class="space-y-2 max-h-60 overflow-y-auto">
+              <% versions.forEach(function(v) { %>
+                <div class="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                  <div>
+                    <span class="text-sm font-medium">Version <%= v.version_number %></span>
+                    <span class="text-xs text-gray-400 ml-2"><%= new Date(v.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) %></span>
+                  </div>
+                  <div class="flex gap-2">
+                    <button onclick="previewVersion(<%= v.id %>, '<%= v.content_snapshot ? v.content_snapshot.substring(0, 100).replace(/'/g, "\\'").replace(/\n/g, ' ') : '' %>')" class="text-xs text-blue-500 hover:text-blue-700">Preview</button>
+                    <button onclick="restoreVersion(<%= v.id %>)" class="text-xs text-green-500 hover:text-green-700">Restore</button>
+                  </div>
+                </div>
+              <% }); %>
+            </div>
+          <% } else { %>
+            <p class="text-sm text-gray-400 text-center py-4">No versions saved yet. Click "Save Version" to create a snapshot.</p>
+          <% } %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Preview Panel - col-span-5 -->
+    <div class="col-span-12 lg:col-span-5">
+      <div class="card sticky top-6">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-semibold text-sm"><i class="fas fa-eye text-blue-500 mr-2"></i>Live Preview</h3>
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-gray-400">Template:</span>
+            <select id="pdf-template" class="text-xs border rounded px-2 py-1 bg-white dark:bg-gray-800 dark:border-gray-700">
+              <option value="professional">Professional</option>
+              <option value="modern">Modern</option>
+              <option value="minimal">Minimal</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Live Preview Container -->
+        <div id="cl-preview" class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 min-h-[500px] shadow-inner">
+          <div class="cover-letter-preview">
+            <div class="cl-preview-header mb-4 pb-3 border-b-2 border-gray-800 dark:border-gray-300">
+              <div class="text-xs text-gray-500 mb-1" id="preview-date"><%= new Date(letter.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) %></div>
+              <div class="font-semibold text-gray-800 dark:text-gray-200" id="preview-company"><%= letter.company_name %></div>
+              <div class="text-xs text-gray-500 italic" id="preview-position">Re: <%= letter.job_title %></div>
+            </div>
+            <div id="preview-content" class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap"><%= letter.content %></div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
+<style>
+  .cover-letter-preview {
+    font-family: 'Georgia', 'Times New Roman', serif;
+    line-height: 1.8;
+  }
+  .regen-tone-btn {
+    border-color: #e5e7eb;
+    color: #6b7280;
+    background: white;
+  }
+  .dark .regen-tone-btn {
+    border-color: #374151;
+    color: #9ca3af;
+    background: #1f2937;
+  }
+  .regen-tone-btn:hover, .regen-tone-btn.active {
+    border-color: #8b5cf6;
+    color: #8b5cf6;
+    background: #f5f3ff;
+  }
+  .dark .regen-tone-btn:hover, .dark .regen-tone-btn.active {
+    border-color: #8b5cf6;
+    color: #a78bfa;
+    background: rgba(139, 92, 246, 0.1);
+  }
+</style>
+
 <script>
-async function saveCoverLetter() {
-  try {
-    const res = await fetch('/cover-letter/<%= letter.id %>', {
-      method: 'PUT', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content: document.getElementById('cl-content').value }),
-    });
-    if (res.ok) showToast('Saved!', 'success');
-  } catch (err) { showToast('Save failed', 'error'); }
+var letterId = <%= letter.id %>;
+var autoSaveTimer = null;
+var selectedRegenTone = '<%= letter.tone || "professional" %>';
+var hasUnsavedChanges = false;
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+  updateCharCount();
+  updatePreview();
+  // Highlight current tone
+  document.querySelectorAll('.regen-tone-btn').forEach(function(btn) {
+    if (btn.getAttribute('data-tone') === selectedRegenTone) btn.classList.add('active');
+  });
+});
+
+function handleEditorInput() {
+  updateCharCount();
+  updatePreview();
+  hasUnsavedChanges = true;
+  // Auto-save every 5 seconds
+  if (autoSaveTimer) clearTimeout(autoSaveTimer);
+  autoSaveTimer = setTimeout(function() {
+    autoSave();
+  }, 5000);
 }
+
+function updateCharCount() {
+  var content = document.getElementById('cl-content').value;
+  document.getElementById('char-count').textContent = content.length + ' characters';
+}
+
+function updatePreview() {
+  var content = document.getElementById('cl-content').value;
+  var previewEl = document.getElementById('preview-content');
+  previewEl.textContent = content;
+}
+
+async function autoSave() {
+  if (!hasUnsavedChanges) return;
+  var statusEl = document.getElementById('autosave-status');
+  statusEl.textContent = 'Saving...';
+  try {
+    var res = await fetch('/cover-letter/' + letterId, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: document.getElementById('cl-content').value })
+    });
+    if (res.ok) {
+      hasUnsavedChanges = false;
+      statusEl.textContent = 'Auto-saved at ' + new Date().toLocaleTimeString();
+    } else {
+      statusEl.textContent = 'Auto-save failed';
+    }
+  } catch (err) {
+    statusEl.textContent = 'Auto-save failed';
+  }
+}
+
+async function saveCoverLetter() {
+  var btn = document.getElementById('save-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Saving...';
+  try {
+    var res = await fetch('/cover-letter/' + letterId, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: document.getElementById('cl-content').value })
+    });
+    if (res.ok) {
+      hasUnsavedChanges = false;
+      showToast('Saved successfully!', 'success');
+    } else {
+      showToast('Save failed', 'error');
+    }
+  } catch (err) {
+    showToast('Save failed', 'error');
+  }
+  btn.disabled = false;
+  btn.innerHTML = '<i class="fas fa-save mr-1"></i>Save';
+}
+
+async function saveVersion() {
+  try {
+    // First save current content
+    await fetch('/cover-letter/' + letterId, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: document.getElementById('cl-content').value })
+    });
+    var res = await fetch('/cover-letter/' + letterId + '/version', { method: 'POST' });
+    var data = await res.json();
+    if (data.success) {
+      showToast('Version saved!', 'success');
+      // Reload to show updated version list
+      location.reload();
+    } else {
+      showToast('Failed to save version', 'error');
+    }
+  } catch (err) {
+    showToast('Failed to save version', 'error');
+  }
+}
+
+async function restoreVersion(versionId) {
+  if (!confirm('Restore this version? Current content will be replaced.')) return;
+  try {
+    var res = await fetch('/cover-letter/' + letterId + '/restore/' + versionId, { method: 'POST' });
+    var data = await res.json();
+    if (data.success) {
+      document.getElementById('cl-content').value = data.content;
+      updatePreview();
+      updateCharCount();
+      showToast('Version restored!', 'success');
+    } else {
+      showToast('Restore failed', 'error');
+    }
+  } catch (err) {
+    showToast('Restore failed', 'error');
+  }
+}
+
+function previewVersion(versionId, snippet) {
+  showToast('Preview: ' + snippet + '...', 'success');
+}
+
+async function exportPDF() {
+  var btn = document.getElementById('export-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Exporting...';
+  try {
+    var template = document.getElementById('pdf-template').value;
+    var res = await fetch('/cover-letter/' + letterId + '/export', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ template: template })
+    });
+    if (res.ok) {
+      var blob = await res.blob();
+      var url = window.URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'cover-letter.pdf';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      showToast('PDF downloaded!', 'success');
+    } else {
+      var err = await res.json();
+      showToast(err.error || 'Export failed', 'error');
+    }
+  } catch (err) {
+    showToast('Export failed', 'error');
+  }
+  btn.disabled = false;
+  btn.innerHTML = '<i class="fas fa-file-pdf mr-1"></i>Download PDF';
+}
+
+function copyCoverLetter() {
+  var content = document.getElementById('cl-content').value;
+  navigator.clipboard.writeText(content).then(function() {
+    showToast('Copied to clipboard!', 'success');
+  });
+}
+
+function selectRegenTone(tone) {
+  selectedRegenTone = tone;
+  document.querySelectorAll('.regen-tone-btn').forEach(function(btn) {
+    btn.classList.toggle('active', btn.getAttribute('data-tone') === tone);
+  });
+}
+
+async function regenerateLetter() {
+  if (!confirm('Regenerate with ' + selectedRegenTone + ' tone? Current version will be saved first.')) return;
+  var btn = document.getElementById('regen-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Regenerating...';
+  try {
+    var res = await fetch('/cover-letter/' + letterId + '/regenerate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tone: selectedRegenTone })
+    });
+    var data = await res.json();
+    if (data.success) {
+      document.getElementById('cl-content').value = data.letter.content;
+      updatePreview();
+      updateCharCount();
+      showToast('Regenerated with ' + selectedRegenTone + ' tone!', 'success');
+    } else {
+      showToast(data.error || 'Regeneration failed', 'error');
+    }
+  } catch (err) {
+    showToast('Regeneration failed', 'error');
+  }
+  btn.disabled = false;
+  btn.innerHTML = '<i class="fas fa-magic mr-1"></i>Regenerate Cover Letter';
+}
+
+// Warn on unsaved changes
+window.addEventListener('beforeunload', function(e) {
+  if (hasUnsavedChanges) {
+    e.preventDefault();
+    e.returnValue = '';
+  }
+});
 </script>

@@ -1,29 +1,81 @@
 <div class="space-y-6">
-  <div class="flex items-center justify-between">
-    <h1 class="text-2xl font-bold">Cover Letters</h1>
-    <a href="/cover-letter/new" class="btn-primary"><i class="fas fa-plus mr-2"></i>Generate New</a>
+  <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold">Cover Letters</h1>
+      <p class="text-gray-500 text-sm mt-1">AI-powered cover letters tailored to your target roles</p>
+    </div>
+    <a href="/cover-letter/new" class="btn-primary">
+      <i class="fas fa-plus mr-2"></i>Generate New
+    </a>
   </div>
 
   <% if (letters.length === 0) { %>
     <div class="card text-center py-16">
-      <i class="fas fa-envelope-open-text text-6xl text-gray-300 mb-4"></i>
-      <h3 class="text-xl font-semibold text-gray-600">No cover letters yet</h3>
-      <p class="text-gray-400 mt-2">Generate your first AI-powered cover letter</p>
-      <a href="/cover-letter/new" class="btn-accent mt-6 inline-block">Generate Cover Letter</a>
+      <div class="w-20 h-20 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center mx-auto mb-6">
+        <i class="fas fa-envelope-open-text text-4xl text-blue-400"></i>
+      </div>
+      <h3 class="text-xl font-semibold text-gray-600 dark:text-gray-300">No cover letters yet</h3>
+      <p class="text-gray-400 mt-2 max-w-md mx-auto">Generate your first AI-powered cover letter tailored to a specific job role and company</p>
+      <a href="/cover-letter/new" class="btn-accent mt-6 inline-block">
+        <i class="fas fa-magic mr-2"></i>Generate Cover Letter
+      </a>
     </div>
   <% } else { %>
+    <!-- Stats bar -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="card py-3 px-4 text-center">
+        <div class="text-2xl font-bold text-blue-600"><%= letters.length %></div>
+        <div class="text-xs text-gray-500">Total Letters</div>
+      </div>
+      <div class="card py-3 px-4 text-center">
+        <% const companies = [...new Set(letters.map(l => l.company_name).filter(Boolean))]; %>
+        <div class="text-2xl font-bold text-green-600"><%= companies.length %></div>
+        <div class="text-xs text-gray-500">Companies</div>
+      </div>
+      <div class="card py-3 px-4 text-center">
+        <% const thisMonth = letters.filter(l => { const d = new Date(l.created_at); const now = new Date(); return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear(); }).length; %>
+        <div class="text-2xl font-bold text-purple-600"><%= thisMonth %></div>
+        <div class="text-xs text-gray-500">This Month</div>
+      </div>
+      <div class="card py-3 px-4 text-center">
+        <% const latest = letters.length > 0 ? new Date(letters[0].updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '-'; %>
+        <div class="text-lg font-bold text-orange-600"><%= latest %></div>
+        <div class="text-xs text-gray-500">Last Updated</div>
+      </div>
+    </div>
+
     <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
       <% letters.forEach(letter => { %>
-        <div class="card hover:shadow-md transition-shadow">
-          <h3 class="font-semibold text-lg mb-1"><%= letter.title %></h3>
-          <p class="text-sm text-gray-500 mb-1"><%= letter.company_name %> - <%= letter.job_title %></p>
-          <p class="text-xs text-gray-400 mb-4"><%= new Date(letter.updated_at).toLocaleDateString() %></p>
-          <p class="text-sm text-gray-600 line-clamp-3 mb-4"><%= letter.content ? letter.content.substring(0, 150) + '...' : '' %></p>
-          <div class="flex gap-2">
-            <a href="/cover-letter/<%= letter.id %>" class="btn-primary text-sm flex-1">View</a>
-            <form action="/cover-letter/<%= letter.id %>?_method=DELETE" method="POST" class="inline">
-              <button class="btn-danger text-sm" onclick="return confirm('Delete?')"><i class="fas fa-trash"></i></button>
-            </form>
+        <div class="card hover:shadow-md transition-shadow group">
+          <div class="flex items-start justify-between mb-3">
+            <div class="flex-1 min-w-0">
+              <h3 class="font-semibold text-lg truncate"><%= letter.title %></h3>
+              <div class="flex items-center gap-2 mt-1">
+                <span class="text-sm text-gray-500"><i class="fas fa-building mr-1"></i><%= letter.company_name %></span>
+              </div>
+              <div class="flex items-center gap-2 mt-1">
+                <span class="text-sm text-gray-500"><i class="fas fa-briefcase mr-1"></i><%= letter.job_title %></span>
+              </div>
+            </div>
+            <% if (letter.tone) { %>
+              <span class="text-xs px-2 py-1 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 capitalize shrink-0"><%= letter.tone %></span>
+            <% } %>
+          </div>
+
+          <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-3 mb-4"><%= letter.content ? letter.content.substring(0, 180) + '...' : '' %></p>
+
+          <div class="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-gray-800">
+            <span class="text-xs text-gray-400"><%= new Date(letter.updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %></span>
+            <div class="flex gap-2">
+              <a href="/cover-letter/<%= letter.id %>" class="btn-primary text-sm px-3 py-1.5">
+                <i class="fas fa-edit mr-1"></i>Edit
+              </a>
+              <form action="/cover-letter/<%= letter.id %>?_method=DELETE" method="POST" class="inline">
+                <button class="text-gray-400 hover:text-red-500 transition-colors p-1.5" onclick="return confirm('Delete this cover letter?')" title="Delete">
+                  <i class="fas fa-trash text-sm"></i>
+                </button>
+              </form>
+            </div>
           </div>
         </div>
       <% }); %>

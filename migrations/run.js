@@ -247,10 +247,20 @@ const tables = [
     FOREIGN KEY (resume_id) REFERENCES aicp_resumes(id) ON DELETE CASCADE
   )`,
 
-  // S3 storage column for documents
-  `ALTER TABLE aicp_documents ADD COLUMN IF NOT EXISTS s3_key VARCHAR(500) AFTER notes`,
+  `ALTER TABLE aicp_cover_letters
+    ADD COLUMN IF NOT EXISTS resume_id INT AFTER user_id,
+    ADD COLUMN IF NOT EXISTS tone VARCHAR(50) DEFAULT 'professional' AFTER content`,
 
-  // ATS Resume Analyzer Module Tables
+  `CREATE TABLE IF NOT EXISTS aicp_cover_letter_versions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    cover_letter_id INT NOT NULL,
+    version_number INT DEFAULT 1,
+    content_snapshot TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (cover_letter_id) REFERENCES aicp_cover_letters(id) ON DELETE CASCADE
+  )`,
+
+ 
   `CREATE TABLE IF NOT EXISTS aicp_resume_analysis (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
