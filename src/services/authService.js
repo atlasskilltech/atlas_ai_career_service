@@ -21,9 +21,9 @@ class AuthService {
     try {
       await sendMail({
         to: data.email,
-        subject: 'Verify Your Email - Atlas Career Platform',
+        subject: 'Verify Your Email - ATLAS Career Platform',
         html: `
-          <h2>Welcome to Atlas Career Platform!</h2>
+          <h2>Welcome to ATLAS Career Platform!</h2>
           <p>Please verify your email by clicking the link below:</p>
           <a href="${process.env.APP_URL}/auth/verify/${verificationToken}" style="background:#0a1a4a;color:white;padding:12px 24px;text-decoration:none;border-radius:8px;display:inline-block;">Verify Email</a>
           <p>If you didn't create this account, please ignore this email.</p>
@@ -78,7 +78,7 @@ class AuthService {
     try {
       await sendMail({
         to: email,
-        subject: 'Reset Password - Atlas Career Platform',
+        subject: 'Reset Password - ATLAS Career Platform',
         html: `
           <h2>Password Reset</h2>
           <p>Click the link below to reset your password:</p>
