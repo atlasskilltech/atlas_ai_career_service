@@ -200,7 +200,8 @@ class ResumeController {
       const parsed = await resumeService.parseUploadedResume(req.file.path);
       res.json({ success: true, data: parsed });
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      console.error('Upload parse error:', err.message);
+      res.status(500).json({ error: err.message || 'Failed to parse resume' });
     }
   }
 

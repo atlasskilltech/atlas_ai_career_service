@@ -109,15 +109,15 @@ class ResumeService {
     // Truncate to prevent token overflow
     text = text.substring(0, 8000);
 
-    // Use AI to parse the resume text into structured data
-    var systemPrompt = 'You are a resume parser. Extract structured data from the resume text provided. Return ONLY valid JSON with no markdown formatting, no code blocks, no extra text. The JSON must have this exact structure:\n{\n  "name": "string",\n  "headline": "string (job title/role)",\n  "email": "string",\n  "phone": "string",\n  "linkedin": "string",\n  "github": "string",\n  "website": "string",\n  "location": "string",\n  "summary": "string (professional summary)",\n  "education": [{"institution":"string","degree":"string","field":"string","year":"string","gpa":"string"}],\n  "experience": [{"title":"string","company":"string","location":"string","startDate":"string","endDate":"string","description":"string"}],\n  "projects": [{"name":"string","technologies":"string","description":"string","url":"string"}],\n  "skills": {"technical":"comma separated string","soft":"comma separated string","tools":"comma separated string","languages":"comma separated string"},\n  "achievements": ["string"],\n  "certifications": [{"name":"string","organization":"string","date":"string"}],\n  "languages": [{"language":"string","proficiency":"string"}],\n  "interests": ["string"]\n}\nExtract as much data as possible. For missing fields use empty strings or empty arrays. Return ONLY the JSON object.';
-
-    var result = await chatCompletion(systemPrompt, 'Parse this resume:\n\n' + text, { maxTokens: 3000, temperature: 0.3 });
-
-    // Clean the response - remove markdown code blocks if present
-    result = result.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
-
+    // Try AI parsing first, fall back to regex-based extraction
     try {
+      var systemPrompt = 'You are a resume parser. Extract structured data from the resume text provided. Return ONLY valid JSON with no markdown formatting, no code blocks, no extra text. The JSON must have this exact structure:\n{\n  "name": "string",\n  "headline": "string (job title/role)",\n  "email": "string",\n  "phone": "string",\n  "linkedin": "string",\n  "github": "string",\n  "website": "string",\n  "location": "string",\n  "summary": "string (professional summary)",\n  "education": [{"institution":"string","degree":"string","field":"string","year":"string","gpa":"string"}],\n  "experience": [{"title":"string","company":"string","location":"string","startDate":"string","endDate":"string","description":"string"}],\n  "projects": [{"name":"string","technologies":"string","description":"string","url":"string"}],\n  "skills": {"technical":"comma separated string","soft":"comma separated string","tools":"comma separated string","languages":"comma separated string"},\n  "achievements": ["string"],\n  "certifications": [{"name":"string","organization":"string","date":"string"}],\n  "languages": [{"language":"string","proficiency":"string"}],\n  "interests": ["string"]\n}\nExtract as much data as possible. For missing fields use empty strings or empty arrays. Return ONLY the JSON object.';
+
+      var result = await chatCompletion(systemPrompt, 'Parse this resume:\n\n' + text, { maxTokens: 3000, temperature: 0.3 });
+
+      // Clean the response - remove markdown code blocks if present
+      result = result.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+
       var parsed = JSON.parse(result);
       return {
         profile_data: {
@@ -140,9 +140,56 @@ class ResumeService {
         languages_data: parsed.languages || [],
         interests_data: parsed.interests || [],
       };
-    } catch(e) {
-      throw new Error('Failed to parse resume data. Please try again.');
+    } catch(aiError) {
+      console.error('AI parsing failed, using regex fallback:', aiError.message);
+      // Fallback: basic regex extraction from raw text
+      return this._extractResumeFromText(text);
     }
+  }
+
+  _extractResumeFromText(text) {
+    var emailMatch = text.match(/[\w.+-]+@[\w-]+\.[\w.]+/);
+    var phoneMatch = text.match(/(?:\+?\d{1,3}[\s-]?)?\(?\d{2,4}\)?[\s.-]?\d{3,4}[\s.-]?\d{3,5}/);
+    var linkedinMatch = text.match(/linkedin\.com\/in\/[\w-]+/i);
+    var githubMatch = text.match(/github\.com\/[\w-]+/i);
+    var websiteMatch = text.match(/(?:https?:\/\/)?(?:www\.)?[\w-]+\.(?:com|io|dev|org|net)(?:\/[\w-]*)?/i);
+
+    // Try to get name from first line
+    var lines = text.split('\n').map(function(l) { return l.trim(); }).filter(function(l) { return l.length > 0; });
+    var name = '';
+    for (var i = 0; i < Math.min(5, lines.length); i++) {
+      var line = lines[i];
+      // Name is usually short (2-4 words), no special chars, near the top
+      if (line.length > 2 && line.length < 60 && /^[A-Za-z\s.]+$/.test(line) && line.split(/\s+/).length <= 5) {
+        // Skip if it looks like a section header
+        if (!/^(profile|summary|education|experience|skills|projects|objective|contact|address)/i.test(line)) {
+          name = line;
+          break;
+        }
+      }
+    }
+
+    return {
+      profile_data: {
+        name: name,
+        headline: '',
+        email: emailMatch ? emailMatch[0] : '',
+        phone: phoneMatch ? phoneMatch[0] : '',
+        linkedin: linkedinMatch ? linkedinMatch[0] : '',
+        github: githubMatch ? githubMatch[0] : '',
+        website: (!linkedinMatch || websiteMatch && websiteMatch[0] !== linkedinMatch[0]) && (!githubMatch || websiteMatch && websiteMatch[0] !== githubMatch[0]) ? (websiteMatch ? websiteMatch[0] : '') : '',
+        location: '',
+        summary: '',
+      },
+      education_data: [],
+      experience_data: [],
+      projects_data: [],
+      skills_data: { technical: '', soft: '', tools: '', languages: '' },
+      achievements_data: [],
+      certifications_data: [],
+      languages_data: [],
+      interests_data: [],
+    };
   }
 
   // Version History
