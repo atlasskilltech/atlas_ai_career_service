@@ -7,6 +7,17 @@ const { resumeUpload } = require('../config/multer');
 
 router.use(isAuthenticated);
 
+// Upload & Parse Resume (must be before /:id routes)
+router.post('/upload-parse', (req, res, next) => {
+  resumeUpload.single('resume')(req, res, (err) => {
+    if (err) {
+      console.error('Multer upload error:', err.message);
+      return res.status(400).json({ error: err.message || 'File upload failed' });
+    }
+    next();
+  });
+}, resumeController.uploadAndParse);
+
 // Resume CRUD
 router.get('/', resumeController.index);
 router.get('/new', resumeController.create);
@@ -27,9 +38,6 @@ router.get('/:id/export', resumeController.exportPDF);
 router.post('/:id/version', resumeController.saveVersion);
 router.get('/:id/versions', resumeController.getVersions);
 router.post('/:id/version/:versionId/restore', resumeController.restoreVersion);
-
-// Upload & Parse Resume
-router.post('/upload-parse', resumeUpload.single('resume'), resumeController.uploadAndParse);
 
 // AI Tools
 router.post('/ai/bullets', resumeController.generateBullets);

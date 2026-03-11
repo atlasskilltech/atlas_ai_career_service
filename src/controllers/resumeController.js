@@ -197,10 +197,11 @@ class ResumeController {
   async uploadAndParse(req, res) {
     try {
       if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+      console.log('Upload received:', req.file.originalname, req.file.size, 'bytes, path:', req.file.path);
       const parsed = await resumeService.parseUploadedResume(req.file.path);
       res.json({ success: true, data: parsed });
     } catch (err) {
-      console.error('Upload parse error:', err.message);
+      console.error('Upload parse error:', err.message, err.stack);
       res.status(500).json({ error: err.message || 'Failed to parse resume' });
     }
   }
