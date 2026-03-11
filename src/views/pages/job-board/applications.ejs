@@ -1,0 +1,46 @@
+<div class="space-y-6">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <div>
+      <h1 class="text-xl sm:text-2xl font-bold">My Applications</h1>
+      <p class="text-sm text-gray-500 mt-1"><%= applications.length %> application<%= applications.length !== 1 ? 's' : '' %></p>
+    </div>
+    <a href="/job-board" class="btn-outline text-sm"><i class="fas fa-arrow-left mr-1"></i> Back to Job Board</a>
+  </div>
+
+  <!-- Status Overview -->
+  <div class="grid grid-cols-3 sm:grid-cols-6 gap-2">
+    <% ['applied','reviewed','shortlisted','interview','offered','rejected'].forEach(status => { %>
+      <div class="card text-center p-3">
+        <div class="text-lg font-bold"><%= applications.filter(a => a.status === status).length %></div>
+        <p class="text-xs text-gray-500 capitalize"><%= status %></p>
+      </div>
+    <% }); %>
+  </div>
+
+  <% if (applications.length === 0) { %>
+    <div class="card p-8 text-center">
+      <i class="fas fa-paper-plane text-4xl text-gray-300 mb-3"></i>
+      <h3 class="text-lg font-semibold text-gray-500">No applications yet</h3>
+      <p class="text-sm text-gray-400 mt-1">Start applying to jobs from the <a href="/job-board" class="text-accent hover:underline">Job Board</a></p>
+    </div>
+  <% } %>
+
+  <% applications.forEach(app => { %>
+    <div class="card p-4">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <a href="/job-board/view/<%= app.job_id %>" class="font-semibold hover:text-accent"><%= app.title %></a>
+          <p class="text-sm text-gray-500"><%= app.company %><% if (app.location) { %> &bull; <%= app.location %><% } %></p>
+          <p class="text-xs text-gray-400 mt-1">Applied <%= new Date(app.applied_at).toLocaleDateString('en-IN', {day: 'numeric', month: 'short', year: 'numeric'}) %></p>
+        </div>
+        <div class="flex items-center gap-2">
+          <% const statusColors = {applied: 'blue', reviewed: 'yellow', shortlisted: 'purple', interview: 'indigo', offered: 'green', rejected: 'red'}; %>
+          <span class="px-3 py-1 rounded-full text-xs font-medium bg-<%= statusColors[app.status] || 'gray' %>-100 text-<%= statusColors[app.status] || 'gray' %>-700 dark:bg-<%= statusColors[app.status] || 'gray' %>-900/30 dark:text-<%= statusColors[app.status] || 'gray' %>-300 capitalize"><%= app.status %></span>
+          <% if (app.apply_url) { %>
+            <a href="<%= app.apply_url %>" target="_blank" rel="noopener noreferrer" class="btn-outline text-xs px-2 py-1"><i class="fas fa-external-link-alt"></i></a>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  <% }); %>
+</div>

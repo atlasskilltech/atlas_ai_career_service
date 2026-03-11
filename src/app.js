@@ -70,6 +70,7 @@ app.use('/resume', require('./routes/resumeRoutes'));
 app.use('/cover-letter', require('./routes/coverLetterRoutes'));
 app.use('/linkedin', require('./routes/linkedinRoutes'));
 app.use('/jobs', require('./routes/jobRoutes'));
+app.use('/job-board', require('./routes/jobAggregatorRoutes'));
 app.use('/networking', require('./routes/contactRoutes'));
 app.use('/interview', require('./routes/interviewRoutes'));
 app.use('/skills', require('./routes/skillRoutes'));

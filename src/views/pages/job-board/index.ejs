@@ -1,0 +1,197 @@
+<div class="space-y-6">
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <div>
+      <h1 class="text-xl sm:text-2xl font-bold">Job Board</h1>
+      <p class="text-sm text-gray-500 mt-1"><%= total %> jobs from LinkedIn, Naukri & more</p>
+    </div>
+    <div class="flex gap-2 flex-shrink-0">
+      <a href="/job-board/saved" class="btn-outline text-sm"><i class="fas fa-bookmark mr-1"></i><span class="hidden sm:inline">Saved</span></a>
+      <a href="/job-board/applications" class="btn-outline text-sm"><i class="fas fa-paper-plane mr-1"></i><span class="hidden sm:inline">My Applications</span></a>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
+    <div class="card p-3 sm:p-4 text-center">
+      <div class="text-xl sm:text-2xl font-bold text-accent"><%= stats.totalJobs || 0 %></div>
+      <p class="text-xs text-gray-500">Total Jobs</p>
+    </div>
+    <div class="card p-3 sm:p-4 text-center">
+      <div class="text-xl sm:text-2xl font-bold text-green-600"><%= stats.newToday || 0 %></div>
+      <p class="text-xs text-gray-500">New Today</p>
+    </div>
+    <div class="card p-3 sm:p-4 text-center">
+      <div class="text-xl sm:text-2xl font-bold text-blue-600"><%= stats.totalApplications || 0 %></div>
+      <p class="text-xs text-gray-500">Applications</p>
+    </div>
+    <div class="card p-3 sm:p-4 text-center">
+      <div class="text-xl sm:text-2xl font-bold text-purple-600"><%= Object.keys(stats.bySource || {}).length %></div>
+      <p class="text-xs text-gray-500">Sources</p>
+    </div>
+  </div>
+
+  <!-- Search & Filters -->
+  <div class="card p-4">
+    <form method="GET" action="/job-board" id="search-form">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div class="sm:col-span-2">
+          <div class="relative">
+            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+            <input type="text" name="q" value="<%= filters.query %>" class="input-field pl-10" placeholder="Search jobs by title, company, or keyword...">
+          </div>
+        </div>
+        <div>
+          <select name="location" class="input-field">
+            <option value="">All Locations</option>
+            <% locations.forEach(loc => { %>
+              <option value="<%= loc %>" <%= filters.location === loc ? 'selected' : '' %>><%= loc %></option>
+            <% }); %>
+          </select>
+        </div>
+        <div>
+          <select name="category" class="input-field">
+            <option value="">All Categories</option>
+            <% categories.forEach(cat => { %>
+              <option value="<%= cat %>" <%= filters.category === cat ? 'selected' : '' %>><%= cat %></option>
+            <% }); %>
+          </select>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-3">
+        <select name="jobType" class="input-field">
+          <option value="">All Types</option>
+          <option value="full_time" <%= filters.jobType === 'full_time' ? 'selected' : '' %>>Full Time</option>
+          <option value="part_time" <%= filters.jobType === 'part_time' ? 'selected' : '' %>>Part Time</option>
+          <option value="internship" <%= filters.jobType === 'internship' ? 'selected' : '' %>>Internship</option>
+          <option value="contract" <%= filters.jobType === 'contract' ? 'selected' : '' %>>Contract</option>
+          <option value="freelance" <%= filters.jobType === 'freelance' ? 'selected' : '' %>>Freelance</option>
+        </select>
+        <select name="workMode" class="input-field">
+          <option value="">All Modes</option>
+          <option value="onsite" <%= filters.workMode === 'onsite' ? 'selected' : '' %>>Onsite</option>
+          <option value="remote" <%= filters.workMode === 'remote' ? 'selected' : '' %>>Remote</option>
+          <option value="hybrid" <%= filters.workMode === 'hybrid' ? 'selected' : '' %>>Hybrid</option>
+        </select>
+        <select name="source" class="input-field">
+          <option value="">All Sources</option>
+          <option value="linkedin" <%= filters.source === 'linkedin' ? 'selected' : '' %>>LinkedIn</option>
+          <option value="naukri" <%= filters.source === 'naukri' ? 'selected' : '' %>>Naukri</option>
+          <option value="company" <%= filters.source === 'company' ? 'selected' : '' %>>Company</option>
+          <option value="api" <%= filters.source === 'api' ? 'selected' : '' %>>External API</option>
+          <option value="manual" <%= filters.source === 'manual' ? 'selected' : '' %>>Manual</option>
+        </select>
+        <button type="submit" class="btn-primary text-sm"><i class="fas fa-search mr-1"></i> Search</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Source Tags -->
+  <% if (stats.bySource && Object.keys(stats.bySource).length > 0) { %>
+    <div class="flex flex-wrap gap-2">
+      <% Object.entries(stats.bySource).forEach(([src, count]) => { %>
+        <% const srcColors = {linkedin: 'blue', naukri: 'purple', company: 'green', api: 'yellow', manual: 'gray'}; %>
+        <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-<%= srcColors[src] || 'gray' %>-100 text-<%= srcColors[src] || 'gray' %>-700 dark:bg-<%= srcColors[src] || 'gray' %>-900/30 dark:text-<%= srcColors[src] || 'gray' %>-300">
+          <% if (src === 'linkedin') { %><i class="fab fa-linkedin"></i><% } else if (src === 'naukri') { %><i class="fas fa-briefcase"></i><% } else { %><i class="fas fa-globe"></i><% } %>
+          <%= src.charAt(0).toUpperCase() + src.slice(1) %> (<%= count %>)
+        </span>
+      <% }); %>
+    </div>
+  <% } %>
+
+  <!-- Job Listings -->
+  <div class="space-y-3">
+    <% if (jobs.length === 0) { %>
+      <div class="card p-8 text-center">
+        <i class="fas fa-search text-4xl text-gray-300 mb-3"></i>
+        <h3 class="text-lg font-semibold text-gray-500">No jobs found</h3>
+        <p class="text-sm text-gray-400 mt-1">Try adjusting your search filters</p>
+      </div>
+    <% } %>
+
+    <% jobs.forEach(job => { %>
+      <% let skills = []; try { skills = typeof job.skills === 'string' ? JSON.parse(job.skills) : (job.skills || []); } catch(e) { skills = []; } %>
+      <div class="card p-4 hover:shadow-md transition-shadow">
+        <div class="flex flex-col sm:flex-row sm:items-start gap-3">
+          <div class="flex-shrink-0 w-10 h-10 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center">
+            <% if (job.company_logo) { %>
+              <img src="<%= job.company_logo %>" alt="<%= job.company %>" class="w-8 h-8 rounded object-cover">
+            <% } else { %>
+              <span class="text-lg font-bold text-gray-400"><%= job.company.charAt(0) %></span>
+            <% } %>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-start justify-between gap-2">
+              <div>
+                <a href="/job-board/view/<%= job.id %>" class="text-base font-semibold hover:text-accent transition-colors"><%= job.title %></a>
+                <p class="text-sm text-gray-500 mt-0.5"><%= job.company %></p>
+              </div>
+              <div class="flex gap-1 flex-shrink-0">
+                <% const srcIcon = {linkedin: 'fab fa-linkedin text-blue-600', naukri: 'fas fa-briefcase text-purple-600', company: 'fas fa-building text-green-600', api: 'fas fa-globe text-yellow-600', manual: 'fas fa-pen text-gray-600'}; %>
+                <span class="text-sm" title="<%= job.source %>"><i class="<%= srcIcon[job.source] || 'fas fa-globe' %>"></i></span>
+              </div>
+            </div>
+            <div class="flex flex-wrap items-center gap-2 mt-2 text-xs text-gray-500">
+              <% if (job.location) { %><span><i class="fas fa-map-marker-alt mr-1"></i><%= job.location %></span><% } %>
+              <% if (job.salary_min || job.salary_max) { %>
+                <span><i class="fas fa-money-bill-wave mr-1"></i>
+                  <% if (job.salary_min && job.salary_max) { %><%= (job.salary_min/100000).toFixed(0) %>-<%= (job.salary_max/100000).toFixed(0) %> LPA<% } else if (job.salary_max) { %>Up to <%= (job.salary_max/100000).toFixed(0) %> LPA<% } else { %><%= (job.salary_min/100000).toFixed(0) %>+ LPA<% } %>
+                </span>
+              <% } %>
+              <% if (job.experience_min !== null || job.experience_max !== null) { %>
+                <span><i class="fas fa-clock mr-1"></i><%= job.experience_min || 0 %>-<%= job.experience_max || 'Any' %> yrs</span>
+              <% } %>
+              <span class="capitalize"><i class="fas fa-laptop-house mr-1"></i><%= (job.work_mode || 'onsite').replace('_', ' ') %></span>
+              <span class="capitalize"><i class="fas fa-tag mr-1"></i><%= (job.job_type || 'full_time').replace('_', ' ') %></span>
+            </div>
+            <% if (skills.length > 0) { %>
+              <div class="flex flex-wrap gap-1 mt-2">
+                <% skills.slice(0, 6).forEach(skill => { %>
+                  <span class="px-2 py-0.5 bg-accent/10 text-accent rounded text-xs"><%= skill %></span>
+                <% }); %>
+                <% if (skills.length > 6) { %><span class="px-2 py-0.5 text-gray-400 text-xs">+<%= skills.length - 6 %> more</span><% } %>
+              </div>
+            <% } %>
+            <% if (job.description) { %>
+              <p class="text-xs text-gray-400 mt-2 line-clamp-2"><%= job.description.substring(0, 200) %><%= job.description.length > 200 ? '...' : '' %></p>
+            <% } %>
+          </div>
+          <div class="flex sm:flex-col gap-2 flex-shrink-0">
+            <a href="/job-board/view/<%= job.id %>" class="btn-primary text-xs px-3 py-1.5">View</a>
+            <button onclick="toggleSaveJob(<%= job.id %>, this)" class="btn-outline text-xs px-3 py-1.5"><i class="far fa-bookmark"></i></button>
+          </div>
+        </div>
+        <% if (job.posted_date) { %>
+          <p class="text-xs text-gray-400 mt-2"><%= new Date(job.posted_date).toLocaleDateString('en-IN', {day: 'numeric', month: 'short', year: 'numeric'}) %></p>
+        <% } %>
+      </div>
+    <% }); %>
+  </div>
+
+  <!-- Pagination -->
+  <% if (totalPages > 1) { %>
+    <div class="flex justify-center gap-2">
+      <% if (page > 1) { %>
+        <a href="?<%= new URLSearchParams({...filters, page: page - 1}).toString() %>" class="btn-outline text-sm px-3 py-1.5"><i class="fas fa-chevron-left"></i></a>
+      <% } %>
+      <% for (let i = Math.max(1, page - 2); i <= Math.min(totalPages, page + 2); i++) { %>
+        <a href="?<%= new URLSearchParams({...filters, page: i}).toString() %>" class="<%= i === page ? 'btn-primary' : 'btn-outline' %> text-sm px-3 py-1.5"><%= i %></a>
+      <% } %>
+      <% if (page < totalPages) { %>
+        <a href="?<%= new URLSearchParams({...filters, page: page + 1}).toString() %>" class="btn-outline text-sm px-3 py-1.5"><i class="fas fa-chevron-right"></i></a>
+      <% } %>
+    </div>
+  <% } %>
+</div>
+
+<script>
+async function toggleSaveJob(jobId, btn) {
+  try {
+    const res = await fetch('/job-board/api/' + jobId + '/save', { method: 'POST' });
+    if (res.ok) {
+      btn.innerHTML = '<i class="fas fa-bookmark"></i>';
+      showToast('Job saved!', 'success');
+    }
+  } catch (err) { showToast('Failed to save', 'error'); }
+}
+</script>

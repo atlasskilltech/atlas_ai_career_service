@@ -313,6 +313,87 @@ const tables = [
     priority INT DEFAULT 0,
     FOREIGN KEY (analysis_id) REFERENCES aicp_resume_analysis(id) ON DELETE CASCADE
   )`,
+
+  // Job Aggregator System
+  `CREATE TABLE IF NOT EXISTS aicp_aggregated_jobs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    external_id VARCHAR(255),
+    title VARCHAR(500) NOT NULL,
+    company VARCHAR(255) NOT NULL,
+    location VARCHAR(255),
+    salary_min INT,
+    salary_max INT,
+    salary_currency VARCHAR(10) DEFAULT 'INR',
+    experience_min INT DEFAULT 0,
+    experience_max INT,
+    description TEXT,
+    skills JSON,
+    category VARCHAR(100),
+    job_type ENUM('full_time','part_time','internship','contract','freelance') DEFAULT 'full_time',
+    work_mode ENUM('onsite','remote','hybrid') DEFAULT 'onsite',
+    source ENUM('linkedin','naukri','company','api','manual') NOT NULL,
+    source_url VARCHAR(1000),
+    apply_url VARCHAR(1000),
+    company_logo VARCHAR(500),
+    is_active TINYINT(1) DEFAULT 1,
+    is_verified TINYINT(1) DEFAULT 0,
+    posted_date DATETIME,
+    expires_at DATETIME,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_source_job (source, external_id)
+  )`,
+
+  `CREATE TABLE IF NOT EXISTS aicp_job_companies (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    logo VARCHAR(500),
+    website VARCHAR(500),
+    industry VARCHAR(100),
+    description TEXT,
+    is_verified TINYINT(1) DEFAULT 0,
+    created_by INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (created_by) REFERENCES aicp_users(id) ON DELETE SET NULL
+  )`,
+
+  `CREATE TABLE IF NOT EXISTS aicp_job_applications (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    job_id INT NOT NULL,
+    status ENUM('applied','reviewed','shortlisted','interview','offered','rejected') DEFAULT 'applied',
+    resume_id INT,
+    cover_letter TEXT,
+    applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES aicp_users(id) ON DELETE CASCADE,
+    FOREIGN KEY (job_id) REFERENCES aicp_aggregated_jobs(id) ON DELETE CASCADE,
+    FOREIGN KEY (resume_id) REFERENCES aicp_resumes(id) ON DELETE SET NULL,
+    UNIQUE KEY unique_application (user_id, job_id)
+  )`,
+
+  `CREATE TABLE IF NOT EXISTS aicp_saved_jobs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    job_id INT NOT NULL,
+    saved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES aicp_users(id) ON DELETE CASCADE,
+    FOREIGN KEY (job_id) REFERENCES aicp_aggregated_jobs(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_saved (user_id, job_id)
+  )`,
+
+  `CREATE TABLE IF NOT EXISTS aicp_scraper_logs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    source VARCHAR(50) NOT NULL,
+    status ENUM('running','completed','failed') DEFAULT 'running',
+    jobs_found INT DEFAULT 0,
+    jobs_added INT DEFAULT 0,
+    jobs_updated INT DEFAULT 0,
+    error_message TEXT,
+    started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    completed_at TIMESTAMP
+  )`,
 ];
 
 async function runMigrations() {

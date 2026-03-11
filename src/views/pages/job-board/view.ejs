@@ -1,0 +1,177 @@
+<div class="max-w-4xl mx-auto space-y-6">
+  <!-- Back -->
+  <a href="/job-board" class="text-sm text-gray-500 hover:text-accent"><i class="fas fa-arrow-left mr-1"></i> Back to Job Board</a>
+
+  <!-- Job Header -->
+  <div class="card p-6">
+    <div class="flex flex-col sm:flex-row gap-4">
+      <div class="flex-shrink-0 w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center">
+        <% if (job.company_logo) { %>
+          <img src="<%= job.company_logo %>" alt="<%= job.company %>" class="w-12 h-12 rounded-lg object-cover">
+        <% } else { %>
+          <span class="text-2xl font-bold text-gray-400"><%= job.company.charAt(0) %></span>
+        <% } %>
+      </div>
+      <div class="flex-1">
+        <h1 class="text-xl sm:text-2xl font-bold"><%= job.title %></h1>
+        <p class="text-base text-gray-500 mt-1"><%= job.company %></p>
+        <div class="flex flex-wrap items-center gap-3 mt-3 text-sm text-gray-500">
+          <% if (job.location) { %><span><i class="fas fa-map-marker-alt mr-1 text-red-400"></i><%= job.location %></span><% } %>
+          <% if (job.salary_min || job.salary_max) { %>
+            <span><i class="fas fa-money-bill-wave mr-1 text-green-400"></i>
+              <% if (job.salary_min && job.salary_max) { %><%= (job.salary_min/100000).toFixed(0) %>-<%= (job.salary_max/100000).toFixed(0) %> LPA<% } else if (job.salary_max) { %>Up to <%= (job.salary_max/100000).toFixed(0) %> LPA<% } else { %><%= (job.salary_min/100000).toFixed(0) %>+ LPA<% } %>
+            </span>
+          <% } %>
+          <% if (job.experience_min !== null) { %>
+            <span><i class="fas fa-clock mr-1 text-blue-400"></i><%= job.experience_min || 0 %>-<%= job.experience_max || 'Any' %> years</span>
+          <% } %>
+        </div>
+        <div class="flex flex-wrap gap-2 mt-3">
+          <% const typeColors = {full_time: 'blue', part_time: 'yellow', internship: 'green', contract: 'purple', freelance: 'orange'}; %>
+          <span class="px-2 py-0.5 rounded text-xs font-medium bg-<%= typeColors[job.job_type] || 'gray' %>-100 text-<%= typeColors[job.job_type] || 'gray' %>-700 dark:bg-<%= typeColors[job.job_type] || 'gray' %>-900/30 dark:text-<%= typeColors[job.job_type] || 'gray' %>-300 capitalize"><%= (job.job_type || 'full_time').replace('_', ' ') %></span>
+          <span class="px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 capitalize"><%= (job.work_mode || 'onsite').replace('_', ' ') %></span>
+          <% const srcLabels = {linkedin: 'LinkedIn', naukri: 'Naukri', company: 'Company Portal', api: 'External API', manual: 'Manual'}; %>
+          <span class="px-2 py-0.5 rounded text-xs font-medium bg-accent/10 text-accent"><%= srcLabels[job.source] || job.source %></span>
+          <% if (job.is_verified) { %><span class="px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"><i class="fas fa-check-circle mr-1"></i>Verified</span><% } %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="flex flex-wrap gap-3 mt-6 pt-4 border-t border-gray-200 dark:border-gray-800">
+      <% if (job.hasApplied) { %>
+        <button disabled class="btn-primary text-sm opacity-60"><i class="fas fa-check mr-1"></i> Applied</button>
+      <% } else if (job.apply_url) { %>
+        <a href="<%= job.apply_url %>" target="_blank" rel="noopener noreferrer" class="btn-primary text-sm"><i class="fas fa-external-link-alt mr-1"></i> Apply on <%= srcLabels[job.source] || 'Source' %></a>
+      <% } %>
+      <% if (!job.hasApplied) { %>
+        <button onclick="openApplyModal()" class="btn-outline text-sm"><i class="fas fa-paper-plane mr-1"></i> Quick Apply</button>
+      <% } %>
+      <button onclick="toggleSave()" id="save-btn" class="btn-outline text-sm">
+        <i class="<%= job.isSaved ? 'fas' : 'far' %> fa-bookmark mr-1"></i> <%= job.isSaved ? 'Saved' : 'Save' %>
+      </button>
+      <button onclick="openMatchModal()" class="btn-outline text-sm"><i class="fas fa-chart-pie mr-1"></i> Match Score</button>
+    </div>
+  </div>
+
+  <!-- Skills -->
+  <% let skills = []; try { skills = typeof job.skills === 'string' ? JSON.parse(job.skills) : (job.skills || []); } catch(e) { skills = []; } %>
+  <% if (skills.length > 0) { %>
+    <div class="card p-4">
+      <h3 class="font-semibold text-sm mb-3"><i class="fas fa-tools mr-2 text-accent"></i>Required Skills</h3>
+      <div class="flex flex-wrap gap-2">
+        <% skills.forEach(skill => { %>
+          <span class="px-3 py-1 bg-accent/10 text-accent rounded-full text-sm"><%= skill %></span>
+        <% }); %>
+      </div>
+    </div>
+  <% } %>
+
+  <!-- Description -->
+  <% if (job.description) { %>
+    <div class="card p-4">
+      <h3 class="font-semibold text-sm mb-3"><i class="fas fa-file-alt mr-2 text-accent"></i>Job Description</h3>
+      <div class="prose dark:prose-invert max-w-none text-sm whitespace-pre-wrap"><%= job.description %></div>
+    </div>
+  <% } %>
+
+  <!-- Job Info -->
+  <div class="card p-4">
+    <h3 class="font-semibold text-sm mb-3"><i class="fas fa-info-circle mr-2 text-accent"></i>Job Details</h3>
+    <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
+      <div><span class="text-gray-500 block text-xs">Category</span><%= job.category || 'N/A' %></div>
+      <div><span class="text-gray-500 block text-xs">Posted</span><%= job.posted_date ? new Date(job.posted_date).toLocaleDateString('en-IN', {day: 'numeric', month: 'short', year: 'numeric'}) : 'N/A' %></div>
+      <div><span class="text-gray-500 block text-xs">Source</span><%= srcLabels[job.source] || job.source %></div>
+      <% if (job.expires_at) { %><div><span class="text-gray-500 block text-xs">Expires</span><%= new Date(job.expires_at).toLocaleDateString('en-IN', {day: 'numeric', month: 'short', year: 'numeric'}) %></div><% } %>
+      <% if (job.source_url) { %><div><span class="text-gray-500 block text-xs">Source URL</span><a href="<%= job.source_url %>" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">View original</a></div><% } %>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Apply Modal -->
+<div id="apply-modal" class="modal-overlay hidden">
+  <div class="modal-content p-6">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-lg font-semibold">Quick Apply - <%= job.title %></h3>
+      <button onclick="closeApplyModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="space-y-3">
+      <div><label class="label-field">Cover Letter (optional)</label><textarea id="apply-cover" rows="4" class="input-field" placeholder="Write a brief cover letter..."></textarea></div>
+      <button onclick="submitApplication()" id="apply-btn" class="btn-primary w-full">Submit Application</button>
+    </div>
+  </div>
+</div>
+
+<!-- Match Score Modal -->
+<div id="match-modal" class="modal-overlay hidden">
+  <div class="modal-content p-6">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-lg font-semibold">AI Job Match Analysis</h3>
+      <button onclick="closeMatchModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="space-y-3">
+      <div><label class="label-field">Your Resume Text</label><textarea id="match-resume" rows="4" class="input-field" placeholder="Paste your resume text..."></textarea></div>
+      <button onclick="analyzeMatch()" id="match-btn" class="btn-primary w-full"><i class="fas fa-robot mr-1"></i> Analyze Match</button>
+      <div id="match-results"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const JOB_ID = <%= job.id %>;
+let isSaved = <%= job.isSaved ? 'true' : 'false' %>;
+
+function openApplyModal() { document.getElementById('apply-modal').classList.remove('hidden'); }
+function closeApplyModal() { document.getElementById('apply-modal').classList.add('hidden'); }
+function openMatchModal() { document.getElementById('match-modal').classList.remove('hidden'); }
+function closeMatchModal() { document.getElementById('match-modal').classList.add('hidden'); }
+
+async function toggleSave() {
+  try {
+    const method = isSaved ? 'DELETE' : 'POST';
+    await fetch('/job-board/api/' + JOB_ID + '/save', { method });
+    isSaved = !isSaved;
+    const btn = document.getElementById('save-btn');
+    btn.innerHTML = '<i class="' + (isSaved ? 'fas' : 'far') + ' fa-bookmark mr-1"></i> ' + (isSaved ? 'Saved' : 'Save');
+    showToast(isSaved ? 'Job saved!' : 'Job unsaved', 'success');
+  } catch { showToast('Failed', 'error'); }
+}
+
+async function submitApplication() {
+  const btn = document.getElementById('apply-btn');
+  btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Applying...';
+  try {
+    const res = await fetch('/job-board/api/' + JOB_ID + '/apply', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ coverLetter: document.getElementById('apply-cover').value }),
+    });
+    const data = await res.json();
+    if (data.success) { showToast('Application submitted!', 'success'); closeApplyModal(); location.reload(); }
+    else showToast(data.error || 'Failed', 'error');
+  } catch { showToast('Failed to apply', 'error'); }
+  btn.disabled = false; btn.innerHTML = 'Submit Application';
+}
+
+async function analyzeMatch() {
+  const btn = document.getElementById('match-btn');
+  btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Analyzing...';
+  try {
+    const res = await fetch('/job-board/api/match', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ resumeText: document.getElementById('match-resume').value, jobDescription: '<%= (job.description || "").replace(/'/g, "\\'").replace(/\n/g, " ") %>' }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      const r = data.result;
+      document.getElementById('match-results').innerHTML =
+        '<div class="mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg space-y-3">' +
+        '<div class="text-center"><span class="text-3xl font-bold ' + (r.matchPercentage >= 70 ? 'text-green-600' : r.matchPercentage >= 40 ? 'text-yellow-600' : 'text-red-600') + '">' + r.matchPercentage + '%</span><p class="text-xs text-gray-500">Match Score</p></div>' +
+        '<div><strong class="text-xs">Matching Skills:</strong><div class="flex flex-wrap gap-1 mt-1">' + (r.matchingSkills||[]).map(function(s){return '<span class="badge-success">'+s+'</span>';}).join('') + '</div></div>' +
+        '<div><strong class="text-xs">Missing Skills:</strong><div class="flex flex-wrap gap-1 mt-1">' + (r.missingSkills||[]).map(function(s){return '<span class="badge-danger">'+s+'</span>';}).join('') + '</div></div>' +
+        '<div><strong class="text-xs">Recommendations:</strong><ul class="text-xs mt-1 space-y-1">' + (r.recommendations||[]).map(function(s){return '<li class="text-gray-600 dark:text-gray-400">• '+s+'</li>';}).join('') + '</ul></div>' +
+        '</div>';
+    }
+  } catch { showToast('Analysis failed', 'error'); }
+  btn.disabled = false; btn.innerHTML = '<i class="fas fa-robot mr-1"></i> Analyze Match';
+}
+</script>
