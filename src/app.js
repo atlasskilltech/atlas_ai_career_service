@@ -8,6 +8,14 @@ const flash = require('connect-flash');
 const cookieParser = require('cookie-parser');
 require('dotenv').config();
 
+// Prevent process crashes from killing the server
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err.message, err.stack);
+});
+process.on('unhandledRejection', (reason) => {
+  console.error('Unhandled Rejection:', reason);
+});
+
 const { notFound, errorHandler } = require('./middleware/errorHandler');
 
 const app = express();

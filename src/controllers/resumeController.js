@@ -194,25 +194,18 @@ class ResumeController {
   }
 
   // Upload & Parse Resume
-  // Step 1: Upload file and extract text (fast, ~1-2s)
+  // Upload file, extract text, return regex-parsed data immediately (no AI = fast = no 502)
   async uploadAndParse(req, res) {
     try {
       if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
       console.log('Upload received:', req.file.originalname, req.file.size, 'bytes, path:', req.file.path);
 
-      // Extract text only (no AI) - this is fast
+      // Step 1: Extract text from PDF/DOCX (fast, 1-2s max)
       const extractResult = await resumeService.extractTextFromResume(req.file.path);
 
-      // Try AI parsing inline but with a short timeout
-      // If AI fails or times out, return regex-extracted data immediately
-      try {
-        const parsed = await resumeService.parseResumeTextWithAI(extractResult.text);
-        return res.json({ success: true, data: parsed });
-      } catch(aiErr) {
-        console.log('AI parse failed, using fallback:', aiErr.message);
-        const fallback = resumeService.extractResumeFromText(extractResult.text);
-        return res.json({ success: true, data: fallback, ai_fallback: true });
-      }
+      // Step 2: Return regex-extracted data immediately (no AI, no timeout risk)
+      const fallback = resumeService.extractResumeFromText(extractResult.text);
+      return res.json({ success: true, data: fallback, text: extractResult.text });
     } catch (err) {
       console.error('Upload parse error:', err.message, err.stack);
       if (req.file && req.file.path) {
@@ -222,7 +215,7 @@ class ResumeController {
     }
   }
 
-  // Step 2: AI-enhance parsed data (called separately from frontend)
+  // Separate endpoint: AI-enhance the extracted text (called from frontend after upload succeeds)
   async aiParseText(req, res) {
     try {
       const { text } = req.body;

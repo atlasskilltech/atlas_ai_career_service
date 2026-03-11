@@ -904,9 +904,9 @@ async function handleResumeUpload(input) {
   formData.append('resume', file);
 
   try {
-    // Step 1: Upload and parse (server tries AI inline, falls back to regex)
+    // Step 1: Upload file + extract text + regex parse (fast, ~2s, no AI)
     document.getElementById('upload-bar').style.width = '40%';
-    document.getElementById('upload-status-text').textContent = 'Extracting data from resume...';
+    document.getElementById('upload-status-text').textContent = 'Uploading and extracting text...';
 
     var res = await fetch('/resume/upload-parse', { method: 'POST', body: formData });
 
@@ -921,25 +921,30 @@ async function handleResumeUpload(input) {
       throw new Error(result.error || 'Failed to parse resume.');
     }
 
-    document.getElementById('upload-bar').style.width = '80%';
+    // Fill form with basic regex-extracted data immediately
+    document.getElementById('upload-bar').style.width = '60%';
+    document.getElementById('upload-status-text').textContent = 'Basic data extracted! Enhancing with AI...';
+    fillFormWithParsedData(result.data);
 
-    // If server used fallback (regex), try AI enhancement in background
-    if (result.ai_fallback && result.data.profile_data) {
-      document.getElementById('upload-status-text').textContent = 'Filling form... (AI enhancing in background)';
-      fillFormWithParsedData(result.data);
-
-      // Try AI parse in a separate request (non-blocking)
-      fetch('/resume/ai/parse-resume', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: '' })
-      }).catch(function() {});
-    } else {
-      fillFormWithParsedData(result.data);
+    // Step 2: AI-enhance in a separate request (if text available)
+    if (result.text) {
+      try {
+        var aiRes = await fetch('/resume/ai/parse-resume', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: result.text })
+        });
+        var aiResult = await aiRes.json();
+        if (aiResult.success && aiResult.data) {
+          fillFormWithParsedData(aiResult.data);
+          document.getElementById('upload-status-text').textContent = 'AI-enhanced data filled!';
+        }
+      } catch(aiErr) {
+        console.log('AI enhancement skipped:', aiErr.message);
+      }
     }
 
     document.getElementById('upload-bar').style.width = '100%';
-    document.getElementById('upload-status-text').textContent = 'Data extracted! Filling form...';
     document.getElementById('upload-spinner').classList.add('hidden');
 
     setTimeout(function() {
