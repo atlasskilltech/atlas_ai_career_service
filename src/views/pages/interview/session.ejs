@@ -380,6 +380,9 @@ function updateMicLevels() {
 }
 
 // ===================== RECORDING =====================
+let autoStopTimer = null;
+const MAX_RECORD_SECONDS = 30; // Auto-stop after 30 seconds to keep chunks manageable
+
 function startRecording() {
   if (!mediaStream) { showToast('No microphone', 'error'); return; }
   audioChunks = []; recordedBlob = null;
@@ -398,9 +401,24 @@ function startRecording() {
     document.getElementById('rec-time').textContent = Math.floor(s / 60) + ':' + (s % 60).toString().padStart(2, '0');
     document.getElementById('answer-time').textContent = s;
   }, 1000);
+
+  // Auto-stop after MAX_RECORD_SECONDS to transcribe in chunks and avoid large payloads
+  clearTimeout(autoStopTimer);
+  autoStopTimer = setTimeout(() => {
+    if (isRecording) {
+      stopRecording(false);
+      // Auto-restart recording after a brief pause so the user can keep speaking
+      setTimeout(() => {
+        if (!isRecording && document.getElementById('avatar-state-badge').textContent.includes('Listening')) {
+          startRecording();
+        }
+      }, 1500);
+    }
+  }, MAX_RECORD_SECONDS * 1000);
 }
 
 function stopRecording(silent) {
+  clearTimeout(autoStopTimer);
   if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
   isRecording = false; clearInterval(recTimer);
   document.getElementById('rec-dot').className = 'w-1.5 h-1.5 rounded-full bg-gray-400';
