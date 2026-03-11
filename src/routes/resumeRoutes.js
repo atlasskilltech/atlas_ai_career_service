@@ -3,6 +3,7 @@ const router = express.Router();
 const resumeController = require('../controllers/resumeController');
 const atsController = require('../controllers/atsController');
 const { isAuthenticated } = require('../middleware/auth');
+const { resumeUpload } = require('../config/multer');
 
 router.use(isAuthenticated);
 
@@ -26,6 +27,9 @@ router.get('/:id/export', resumeController.exportPDF);
 router.post('/:id/version', resumeController.saveVersion);
 router.get('/:id/versions', resumeController.getVersions);
 router.post('/:id/version/:versionId/restore', resumeController.restoreVersion);
+
+// Upload & Parse Resume
+router.post('/upload-parse', resumeUpload.single('resume'), resumeController.uploadAndParse);
 
 // AI Tools
 router.post('/ai/bullets', resumeController.generateBullets);

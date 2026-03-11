@@ -193,6 +193,17 @@ class ResumeController {
     }
   }
 
+  // Upload & Parse Resume
+  async uploadAndParse(req, res) {
+    try {
+      if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+      const parsed = await resumeService.parseUploadedResume(req.file.path);
+      res.json({ success: true, data: parsed });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  }
+
   // Live preview data (AJAX)
   async getResumeData(req, res) {
     try {
