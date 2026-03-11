@@ -18,8 +18,24 @@ class ResumeRepository {
 
   async create(data) {
     const [result] = await pool.execute(
-      'INSERT INTO aicp_resumes (user_id, title, profile_data, education_data, experience_data, projects_data, skills_data, achievements_data, template) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [data.userId, data.title || 'Untitled Resume', JSON.stringify(data.profile || {}), JSON.stringify(data.education || []), JSON.stringify(data.experience || []), JSON.stringify(data.projects || []), JSON.stringify(data.skills || []), JSON.stringify(data.achievements || []), data.template || 'modern']
+      `INSERT INTO aicp_resumes (user_id, title, profile_data, education_data, experience_data, projects_data, skills_data, achievements_data, certifications_data, languages_data, interests_data, section_order, template, theme_color)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        data.userId,
+        data.title || 'Untitled Resume',
+        JSON.stringify(data.profile || {}),
+        JSON.stringify(data.education || []),
+        JSON.stringify(data.experience || []),
+        JSON.stringify(data.projects || []),
+        JSON.stringify(data.skills || {}),
+        JSON.stringify(data.achievements || []),
+        JSON.stringify(data.certifications || []),
+        JSON.stringify(data.languages || []),
+        JSON.stringify(data.interests || []),
+        JSON.stringify(data.section_order || ['profile','education','experience','projects','skills','achievements','certifications','languages','interests']),
+        data.template || 'modern',
+        data.theme_color || '#0a1a4a',
+      ]
     );
     return { id: result.insertId, ...data };
   }
@@ -28,9 +44,11 @@ class ResumeRepository {
     const fields = [];
     const values = [];
     for (const [key, value] of Object.entries(data)) {
+      if (key === 'id' || key === 'user_id' || key === 'created_at') continue;
       fields.push(`${key} = ?`);
       values.push(typeof value === 'object' ? JSON.stringify(value) : value);
     }
+    if (fields.length === 0) return;
     values.push(id);
     await pool.execute(`UPDATE aicp_resumes SET ${fields.join(', ')} WHERE id = ?`, values);
   }
@@ -42,6 +60,34 @@ class ResumeRepository {
   async setPrimary(userId, resumeId) {
     await pool.execute('UPDATE aicp_resumes SET is_primary = 0 WHERE user_id = ?', [userId]);
     await pool.execute('UPDATE aicp_resumes SET is_primary = 1 WHERE id = ? AND user_id = ?', [resumeId, userId]);
+  }
+
+  // Version history
+  async saveVersion(resumeId, snapshotJson) {
+    const [countRows] = await pool.execute('SELECT COUNT(*) as cnt FROM aicp_resume_versions WHERE resume_id = ?', [resumeId]);
+    const versionNumber = (countRows[0]?.cnt || 0) + 1;
+    const [result] = await pool.execute(
+      'INSERT INTO aicp_resume_versions (resume_id, version_number, snapshot_json) VALUES (?, ?, ?)',
+      [resumeId, versionNumber, JSON.stringify(snapshotJson)]
+    );
+    return { id: result.insertId, version_number: versionNumber };
+  }
+
+  async getVersions(resumeId) {
+    const [rows] = await pool.execute(
+      'SELECT id, version_number, created_at FROM aicp_resume_versions WHERE resume_id = ? ORDER BY version_number DESC LIMIT 20',
+      [resumeId]
+    );
+    return rows;
+  }
+
+  async getVersion(versionId) {
+    const [rows] = await pool.execute('SELECT * FROM aicp_resume_versions WHERE id = ?', [versionId]);
+    return rows[0];
+  }
+
+  async updateScore(id, score) {
+    await pool.execute('UPDATE aicp_resumes SET ats_score = ? WHERE id = ?', [score, id]);
   }
 
   async getScoreDistribution() {

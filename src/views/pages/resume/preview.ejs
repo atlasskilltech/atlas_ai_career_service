@@ -1,89 +1,97 @@
+<%
+  const profile = resume.profile_data || {};
+  const education = resume.education_data || [];
+  const experience = resume.experience_data || [];
+  const projects = resume.projects_data || [];
+  const skills = resume.skills_data || {};
+  const achievements = resume.achievements_data || [];
+  const certifications = resume.certifications_data || [];
+  const languages = resume.languages_data || [];
+  const interests = resume.interests_data || [];
+  const sectionOrder = resume.section_order || ['profile','education','experience','projects','skills','achievements','certifications','languages','interests'];
+  const template = resume.template || 'modern';
+  const color = resume.theme_color || '#0a1a4a';
+  const fontFamily = template === 'professional' ? '"Georgia",serif' : template === 'minimal' ? '"Helvetica Neue","Arial",sans-serif' : '"Calibri","Segoe UI",sans-serif';
+%>
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title><%= resume.profile_data?.name || 'Resume' %> - Resume</title>
+  <title><%= profile.name || 'Resume' %></title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Georgia', serif; color: #333; line-height: 1.5; padding: 40px; max-width: 800px; margin: 0 auto; }
-    h1 { font-size: 28px; text-align: center; margin-bottom: 4px; }
-    .contact { text-align: center; font-size: 12px; color: #666; margin-bottom: 16px; }
-    .summary { font-size: 13px; color: #555; margin-bottom: 20px; }
-    h2 { font-size: 14px; text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid #0a1a4a; padding-bottom: 4px; margin: 16px 0 10px; color: #0a1a4a; }
-    .entry { margin-bottom: 12px; }
-    .entry-header { display: flex; justify-content: space-between; font-weight: bold; font-size: 14px; }
-    .entry-sub { font-style: italic; font-size: 13px; color: #555; }
-    .entry-desc { font-size: 13px; margin-top: 4px; white-space: pre-line; }
-    .skills-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 13px; }
-    .skill-cat { font-weight: bold; }
-    ul { padding-left: 20px; font-size: 13px; }
-    li { margin-bottom: 4px; }
+    body { font-family: <%= fontFamily %>; color: #333; line-height: 1.5; padding: 30px 36px; max-width: 800px; margin: 0 auto; font-size: 13px; }
+    h1 { font-size: <%= template === 'minimal' ? '22px' : '26px' %>; text-align: <%= template === 'professional' ? 'left' : 'center' %>; margin-bottom: 2px; color: <%= template === 'minimal' ? '#333' : color %>; letter-spacing: <%= template === 'professional' ? '2px' : '0' %>; text-transform: <%= template === 'professional' ? 'uppercase' : 'none' %>; }
+    .headline { text-align: <%= template === 'professional' ? 'left' : 'center' %>; font-size: 13px; color: #555; margin-bottom: 2px; font-style: italic; }
+    .contact { text-align: <%= template === 'professional' ? 'left' : 'center' %>; font-size: 11px; color: #666; margin-bottom: 14px; }
+    .summary { font-size: 12px; color: #444; margin-bottom: 16px; <%= template === 'professional' ? 'border-left: 3px solid '+color+'; padding-left: 12px;' : '' %> }
+    h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; border-bottom: <%= template === 'minimal' ? '1px solid #ddd' : template === 'ats' ? '1px solid #333' : '2px solid '+color %>; padding-bottom: 3px; margin: 16px 0 8px; color: <%= template === 'minimal' ? '#555' : color %>; font-weight: 700; }
+    .entry { margin-bottom: 10px; }
+    .entry-header { display: flex; justify-content: space-between; font-weight: 600; font-size: 13px; }
+    .entry-sub { font-style: italic; font-size: 11px; color: #555; }
+    .entry-desc { font-size: 12px; margin-top: 2px; white-space: pre-line; }
+    .skills-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 16px; font-size: 12px; }
+    .skill-cat { font-weight: 600; }
+    ul { padding-left: 18px; font-size: 12px; }
+    li { margin-bottom: 3px; }
+    p { font-size: 12px; }
     @media print { body { padding: 20px; } }
   </style>
 </head>
 <body>
-  <% const profile = resume.profile_data || {}; %>
-  <h1><%= profile.name || 'Your Name' %></h1>
-  <div class="contact">
-    <%= [profile.email, profile.phone, profile.location, profile.linkedin].filter(Boolean).join(' | ') %>
-  </div>
+  <h1><%= profile.name || profile.full_name || 'Your Name' %></h1>
+  <% if (profile.headline) { %><div class="headline"><%= profile.headline %></div><% } %>
+  <div class="contact"><%= [profile.email, profile.phone, profile.location, profile.linkedin, profile.github, profile.website || profile.portfolio].filter(Boolean).join(' | ') %></div>
+  <% if (profile.summary) { %><div class="summary"><%= profile.summary %></div><% } %>
 
-  <% if (profile.summary) { %>
-    <div class="summary"><%= profile.summary %></div>
-  <% } %>
-
-  <% const education = resume.education_data || []; %>
-  <% if (education.length > 0) { %>
-    <h2>Education</h2>
-    <% education.forEach(edu => { %>
-      <div class="entry">
-        <div class="entry-header"><span><%= edu.institution %></span><span><%= edu.year %></span></div>
-        <div class="entry-sub"><%= edu.degree %><%= edu.gpa ? ' | ' + edu.gpa : '' %></div>
-      </div>
-    <% }); %>
-  <% } %>
-
-  <% const experience = resume.experience_data || []; %>
-  <% if (experience.length > 0) { %>
-    <h2>Experience</h2>
-    <% experience.forEach(exp => { %>
-      <div class="entry">
-        <div class="entry-header"><span><%= exp.title %> - <%= exp.company %></span><span><%= exp.startDate %> - <%= exp.endDate %></span></div>
-        <div class="entry-desc"><%= exp.description %></div>
-      </div>
-    <% }); %>
-  <% } %>
-
-  <% const projects = resume.projects_data || []; %>
-  <% if (projects.length > 0) { %>
-    <h2>Projects</h2>
-    <% projects.forEach(proj => { %>
-      <div class="entry">
-        <div class="entry-header"><span><%= proj.name %></span><span><%= proj.technologies %></span></div>
-        <div class="entry-desc"><%= proj.description %></div>
-      </div>
-    <% }); %>
-  <% } %>
-
-  <% const skills = resume.skills_data || {}; %>
-  <% if (skills.technical || skills.soft || skills.tools) { %>
-    <h2>Skills</h2>
-    <div class="skills-grid">
-      <% if (skills.technical) { %><div><span class="skill-cat">Technical:</span> <%= skills.technical %></div><% } %>
-      <% if (skills.tools) { %><div><span class="skill-cat">Tools:</span> <%= skills.tools %></div><% } %>
-      <% if (skills.soft) { %><div><span class="skill-cat">Soft Skills:</span> <%= skills.soft %></div><% } %>
-      <% if (skills.languages) { %><div><span class="skill-cat">Languages:</span> <%= skills.languages %></div><% } %>
-    </div>
-  <% } %>
-
-  <% const achievements = resume.achievements_data || []; %>
-  <% if (achievements.length > 0) { %>
-    <h2>Achievements</h2>
-    <ul>
-      <% achievements.forEach(ach => { %>
-        <li><%= ach %></li>
+  <% sectionOrder.forEach(key => { %>
+    <% if (key === 'education' && education.length > 0) { %>
+      <h2>Education</h2>
+      <% education.forEach(edu => { %>
+        <div class="entry">
+          <div class="entry-header"><span><%= edu.institution %></span><span><%= edu.year || (edu.start_year && edu.end_year ? edu.start_year+' - '+edu.end_year : '') %></span></div>
+          <div class="entry-sub"><%= edu.degree %><%= edu.field ? ' in '+edu.field : '' %><%= edu.gpa || edu.cgpa ? ' | GPA: '+(edu.gpa||edu.cgpa) : '' %></div>
+        </div>
       <% }); %>
-    </ul>
-  <% } %>
+    <% } else if (key === 'experience' && experience.length > 0) { %>
+      <h2>Experience</h2>
+      <% experience.forEach(exp => { %>
+        <div class="entry">
+          <div class="entry-header"><span><%= exp.title || exp.role %> — <%= exp.company %></span><span><%= exp.startDate || exp.start_date || '' %> - <%= exp.endDate || exp.end_date || 'Present' %></span></div>
+          <% if (exp.location) { %><div class="entry-sub"><%= exp.location %></div><% } %>
+          <div class="entry-desc"><%= exp.description %></div>
+        </div>
+      <% }); %>
+    <% } else if (key === 'projects' && projects.length > 0) { %>
+      <h2>Projects</h2>
+      <% projects.forEach(proj => { %>
+        <div class="entry">
+          <div class="entry-header"><span><%= proj.name || proj.project_name %></span><span><%= proj.technologies %></span></div>
+          <div class="entry-desc"><%= proj.description %></div>
+          <% if (proj.url || proj.github_link) { %><div class="entry-sub"><%= proj.url || proj.github_link %></div><% } %>
+        </div>
+      <% }); %>
+    <% } else if (key === 'skills' && (skills.technical || skills.soft || skills.tools || skills.languages)) { %>
+      <h2>Skills</h2>
+      <div class="skills-grid">
+        <% if (skills.technical) { %><div><span class="skill-cat">Technical:</span> <%= skills.technical %></div><% } %>
+        <% if (skills.tools) { %><div><span class="skill-cat">Tools:</span> <%= skills.tools %></div><% } %>
+        <% if (skills.soft) { %><div><span class="skill-cat">Soft Skills:</span> <%= skills.soft %></div><% } %>
+        <% if (skills.languages) { %><div><span class="skill-cat">Languages:</span> <%= skills.languages %></div><% } %>
+      </div>
+    <% } else if (key === 'achievements' && achievements.length > 0) { %>
+      <h2>Achievements</h2>
+      <ul><% achievements.forEach(ach => { %><li><%= typeof ach === 'string' ? ach : ach.achievement_text || '' %></li><% }); %></ul>
+    <% } else if (key === 'certifications' && certifications.length > 0) { %>
+      <h2>Certifications</h2>
+      <ul><% certifications.forEach(cert => { %><li><strong><%= cert.name || cert.cert_name %></strong><%= cert.organization ? ' — '+cert.organization : '' %><%= cert.date || cert.issue_date ? ' ('+( cert.date||cert.issue_date)+')' : '' %></li><% }); %></ul>
+    <% } else if (key === 'languages' && languages.length > 0) { %>
+      <h2>Languages</h2>
+      <div class="skills-grid"><% languages.forEach(l => { %><div><%= l.language || l.name %> — <%= l.proficiency || l.level || '' %></div><% }); %></div>
+    <% } else if (key === 'interests' && interests.length > 0) { %>
+      <h2>Interests</h2>
+      <p><%= interests.map(i => typeof i === 'string' ? i : i.name || '').join(', ') %></p>
+    <% } %>
+  <% }); %>
 </body>
 </html>

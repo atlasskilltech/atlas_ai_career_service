@@ -230,6 +230,22 @@ const tables = [
     FOREIGN KEY (user_id) REFERENCES aicp_users(id) ON DELETE CASCADE,
     FOREIGN KEY (resume_id) REFERENCES aicp_resumes(id) ON DELETE SET NULL
   )`,
+
+  `ALTER TABLE aicp_resumes
+    ADD COLUMN IF NOT EXISTS certifications_data JSON AFTER achievements_data,
+    ADD COLUMN IF NOT EXISTS languages_data JSON AFTER certifications_data,
+    ADD COLUMN IF NOT EXISTS interests_data JSON AFTER languages_data,
+    ADD COLUMN IF NOT EXISTS section_order JSON AFTER interests_data,
+    ADD COLUMN IF NOT EXISTS theme_color VARCHAR(20) DEFAULT '#0a1a4a' AFTER section_order`,
+
+  `CREATE TABLE IF NOT EXISTS aicp_resume_versions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    resume_id INT NOT NULL,
+    version_number INT DEFAULT 1,
+    snapshot_json JSON NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (resume_id) REFERENCES aicp_resumes(id) ON DELETE CASCADE
+  )`,
 ];
 
 async function runMigrations() {
