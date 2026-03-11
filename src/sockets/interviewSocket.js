@@ -83,9 +83,15 @@ function setupInterviewSocket(io) {
         socket.emit('avatar-state', { state: 'listening' });
       } catch (err) {
         if (tmpPath) { try { fs.unlinkSync(tmpPath); } catch {} }
-        const userMsg = err.message && err.message.includes('timeout')
-          ? 'Transcription timed out. Please try again.'
-          : 'Transcription failed. Please try again or type your answer.';
+        console.error('Transcription error:', err.message, err.status || '', err.code || '');
+        let userMsg = 'Transcription failed. Please try again or type your answer.';
+        if (err.message && err.message.includes('timeout')) {
+          userMsg = 'Transcription timed out. Please try again.';
+        } else if (err.status === 429) {
+          userMsg = 'Too many requests. Please wait a moment and try again.';
+        } else if (err.code === 'ECONNRESET' || err.code === 'ENOTFOUND') {
+          userMsg = 'Network error. Please check your connection and try again.';
+        }
         socket.emit('transcribe-result', { success: false, error: userMsg });
         socket.emit('avatar-state', { state: 'listening' });
       }
