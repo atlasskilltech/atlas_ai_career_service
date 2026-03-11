@@ -94,8 +94,8 @@
           <i class="fas fa-circle-notch fa-spin mr-1"></i>Connecting
         </span>
         <div class="flex-1"></div>
-        <button onclick="replayQuestion()" class="text-[10px] text-gray-400 hover:text-blue-500 transition" title="Replay question audio">
-          <i class="fas fa-volume-high"></i>
+        <button onclick="replayQuestion()" class="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-50 dark:bg-blue-900/30 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition" title="Replay question audio" id="replay-btn">
+          <i class="fas fa-rotate-right"></i> Repeat Question
         </button>
       </div>
 
@@ -264,16 +264,55 @@ function setAvatarState(state) {
 }
 
 // ===================== TTS =====================
+let audioUnlocked = false;
+let pendingAudioUrl = null;
+
 function playQuestionAudio(url) {
   if (isRecording) stopRecording(true);
   const audio = document.getElementById('ai-audio');
   audio.src = url;
   audio.onended = () => { setAvatarState('listening'); socket.emit('speak-done'); };
-  audio.onerror = () => setAvatarState('idle');
-  audio.play().catch(() => setAvatarState('idle'));
+  audio.onerror = () => { setAvatarState('idle'); showAutoplayHint(); };
+  const playPromise = audio.play();
+  if (playPromise !== undefined) {
+    playPromise.then(() => { audioUnlocked = true; hideAutoplayHint(); }).catch(() => {
+      // Browser blocked autoplay - show hint to user
+      pendingAudioUrl = url;
+      showAutoplayHint();
+      setAvatarState('idle');
+    });
+  }
 }
+
+function showAutoplayHint() {
+  const btn = document.getElementById('replay-btn');
+  btn.classList.add('animate-pulse', 'bg-orange-100', 'dark:bg-orange-900/30', 'text-orange-600');
+  btn.classList.remove('bg-blue-50', 'dark:bg-blue-900/30', 'text-blue-500');
+  btn.innerHTML = '<i class="fas fa-volume-high"></i> Click to hear question';
+}
+
+function hideAutoplayHint() {
+  const btn = document.getElementById('replay-btn');
+  btn.classList.remove('animate-pulse', 'bg-orange-100', 'dark:bg-orange-900/30', 'text-orange-600');
+  btn.classList.add('bg-blue-50', 'dark:bg-blue-900/30', 'text-blue-500');
+  btn.innerHTML = '<i class="fas fa-rotate-right"></i> Repeat Question';
+}
+
 function speakQuestion(qId) { socket.emit('speak-question', { questionId: qId }); }
-function replayQuestion() { if (currentQuestionId) speakQuestion(currentQuestionId); }
+
+function replayQuestion() {
+  if (pendingAudioUrl) {
+    // User clicked after autoplay was blocked - play the pending audio
+    const audio = document.getElementById('ai-audio');
+    audio.src = pendingAudioUrl;
+    audio.onended = () => { setAvatarState('listening'); socket.emit('speak-done'); };
+    audio.onerror = () => setAvatarState('idle');
+    setAvatarState('speaking');
+    audio.play().then(() => { audioUnlocked = true; pendingAudioUrl = null; hideAutoplayHint(); }).catch(() => {});
+  } else if (currentQuestionId) {
+    speakQuestion(currentQuestionId);
+  }
+}
 
 // ===================== CAMERA =====================
 async function initMedia() {
@@ -456,6 +495,14 @@ function initWordCount() {
     document.getElementById('word-count').textContent = t ? t.split(/\s+/).length : 0;
   });
 }
+
+// Unlock audio on first user interaction so subsequent questions can auto-play
+function unlockAudio() {
+  if (audioUnlocked) return;
+  const audio = document.getElementById('ai-audio');
+  audio.play().then(() => { audio.pause(); audio.currentTime = 0; audioUnlocked = true; }).catch(() => {});
+}
+['click', 'touchstart', 'keydown'].forEach(evt => document.addEventListener(evt, unlockAudio, { once: false }));
 
 async function init() {
   await initMedia();
