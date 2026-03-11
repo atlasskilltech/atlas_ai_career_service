@@ -194,22 +194,44 @@ class ResumeController {
   }
 
   // Upload & Parse Resume
+  // Step 1: Upload file and extract text (fast, ~1-2s)
   async uploadAndParse(req, res) {
-    // Set response timeout to 45s for AI parsing
-    req.setTimeout(45000);
-    res.setTimeout(45000);
     try {
       if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
       console.log('Upload received:', req.file.originalname, req.file.size, 'bytes, path:', req.file.path);
-      const parsed = await resumeService.parseUploadedResume(req.file.path);
-      res.json({ success: true, data: parsed });
+
+      // Extract text only (no AI) - this is fast
+      const extractResult = await resumeService.extractTextFromResume(req.file.path);
+
+      // Try AI parsing inline but with a short timeout
+      // If AI fails or times out, return regex-extracted data immediately
+      try {
+        const parsed = await resumeService.parseResumeTextWithAI(extractResult.text);
+        return res.json({ success: true, data: parsed });
+      } catch(aiErr) {
+        console.log('AI parse failed, using fallback:', aiErr.message);
+        const fallback = resumeService.extractResumeFromText(extractResult.text);
+        return res.json({ success: true, data: fallback, ai_fallback: true });
+      }
     } catch (err) {
       console.error('Upload parse error:', err.message, err.stack);
-      // Clean up file if it still exists
       if (req.file && req.file.path) {
         try { require('fs').unlinkSync(req.file.path); } catch(e) {}
       }
       res.status(500).json({ error: err.message || 'Failed to parse resume' });
+    }
+  }
+
+  // Step 2: AI-enhance parsed data (called separately from frontend)
+  async aiParseText(req, res) {
+    try {
+      const { text } = req.body;
+      if (!text) return res.status(400).json({ error: 'No text provided' });
+      const parsed = await resumeService.parseResumeTextWithAI(text);
+      res.json({ success: true, data: parsed });
+    } catch (err) {
+      console.error('AI parse error:', err.message);
+      res.status(500).json({ error: err.message || 'AI parsing failed' });
     }
   }
 

@@ -896,52 +896,61 @@ async function handleResumeUpload(input) {
   document.getElementById('upload-error').classList.add('hidden');
   document.getElementById('upload-progress').classList.remove('hidden');
   document.getElementById('upload-filename').textContent = file.name;
-  document.getElementById('upload-status-text').textContent = 'Uploading & parsing with AI...';
-  document.getElementById('upload-bar').style.width = '30%';
+  document.getElementById('upload-status-text').textContent = 'Uploading file...';
+  document.getElementById('upload-bar').style.width = '20%';
   document.getElementById('upload-spinner').classList.remove('hidden');
 
   var formData = new FormData();
   formData.append('resume', file);
 
   try {
-    document.getElementById('upload-bar').style.width = '60%';
-    var controller = new AbortController();
-    var timeout = setTimeout(function() { controller.abort(); }, 45000);
-    var res = await fetch('/resume/upload-parse', { method: 'POST', body: formData, signal: controller.signal });
-    clearTimeout(timeout);
-    document.getElementById('upload-bar').style.width = '90%';
+    // Step 1: Upload and parse (server tries AI inline, falls back to regex)
+    document.getElementById('upload-bar').style.width = '40%';
+    document.getElementById('upload-status-text').textContent = 'Extracting data from resume...';
+
+    var res = await fetch('/resume/upload-parse', { method: 'POST', body: formData });
 
     var result;
     try {
       result = await res.json();
     } catch(jsonErr) {
-      throw new Error('Server returned status ' + res.status + '. Please try again.');
+      throw new Error('Server error (status ' + res.status + '). Please try again.');
     }
 
-    if (result.success && result.data) {
-      document.getElementById('upload-bar').style.width = '100%';
-      document.getElementById('upload-status-text').textContent = 'Data extracted! Filling form...';
-      document.getElementById('upload-spinner').classList.add('hidden');
+    if (!result.success || !result.data) {
+      throw new Error(result.error || 'Failed to parse resume.');
+    }
 
-      // Fill the form with parsed data
+    document.getElementById('upload-bar').style.width = '80%';
+
+    // If server used fallback (regex), try AI enhancement in background
+    if (result.ai_fallback && result.data.profile_data) {
+      document.getElementById('upload-status-text').textContent = 'Filling form... (AI enhancing in background)';
       fillFormWithParsedData(result.data);
 
-      setTimeout(function() {
-        closeUploadModal();
-        showToast('Resume data imported successfully!', 'success');
-        triggerAutoSave();
-      }, 800);
+      // Try AI parse in a separate request (non-blocking)
+      fetch('/resume/ai/parse-resume', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: '' })
+      }).catch(function() {});
     } else {
-      document.getElementById('upload-spinner').classList.add('hidden');
-      document.getElementById('upload-error').classList.remove('hidden');
-      document.getElementById('upload-error').textContent = result.error || 'Failed to parse resume. Please try again.';
-      document.getElementById('upload-status-text').textContent = 'Failed';
+      fillFormWithParsedData(result.data);
     }
+
+    document.getElementById('upload-bar').style.width = '100%';
+    document.getElementById('upload-status-text').textContent = 'Data extracted! Filling form...';
+    document.getElementById('upload-spinner').classList.add('hidden');
+
+    setTimeout(function() {
+      closeUploadModal();
+      showToast('Resume data imported successfully!', 'success');
+      triggerAutoSave();
+    }, 800);
   } catch(err) {
     document.getElementById('upload-spinner').classList.add('hidden');
     document.getElementById('upload-error').classList.remove('hidden');
-    var msg = err.name === 'AbortError' ? 'Request timed out. The AI is taking too long. Please try again.' : (err.message || 'Upload failed. Please try again.');
-    document.getElementById('upload-error').textContent = msg;
+    document.getElementById('upload-error').textContent = err.message || 'Upload failed. Please try again.';
     document.getElementById('upload-status-text').textContent = 'Failed';
   }
 }
