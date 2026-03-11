@@ -1,11 +1,14 @@
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
 
 function createUploader(destFolder, allowedTypes) {
   const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-      cb(null, path.join(__dirname, '../../public/uploads', destFolder));
+      const dest = path.join(__dirname, '../../public/uploads', destFolder);
+      fs.mkdirSync(dest, { recursive: true });
+      cb(null, dest);
     },
     filename: (req, file, cb) => {
       const ext = path.extname(file.originalname);
