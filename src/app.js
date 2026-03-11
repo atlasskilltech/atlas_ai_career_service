@@ -76,6 +76,17 @@ app.use('/skills', require('./routes/skillRoutes'));
 app.use('/documents', require('./routes/documentRoutes'));
 app.use('/admin', require('./routes/adminRoutes'));
 
+// API: Direct ATS analysis endpoint (POST /api/resume/analyze)
+const { isAuthenticated } = require('./middleware/auth');
+const { resumeMemoryUpload } = require('./config/multer');
+const analyzerController = require('./modules/resume-analyzer/controllers/analyzerController');
+app.post('/api/resume/analyze', isAuthenticated, (req, res, next) => {
+  resumeMemoryUpload.single('resume')(req, res, (err) => {
+    if (err) return res.status(400).json({ error: err.message });
+    next();
+  });
+}, analyzerController.analyze.bind(analyzerController));
+
 // Error handling
 app.use(notFound);
 app.use(errorHandler);

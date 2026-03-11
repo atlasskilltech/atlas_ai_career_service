@@ -19,7 +19,7 @@
     <a href="/resume" class="sidebar-link <%= currentPath.startsWith('/resume') ? 'active' : '' %>">
       <i class="fas fa-file-alt w-5"></i> Resume Builder
     </a>
-    <a href="/resume/ats" class="sidebar-link <%= currentPath === '/resume/ats' ? 'active' : '' %>">
+    <a href="/resume/ats" class="sidebar-link <%= currentPath.startsWith('/resume/ats') ? 'active' : '' %>">
       <i class="fas fa-search-plus w-5"></i> ATS Analyzer
     </a>
     <a href="/cover-letter" class="sidebar-link <%= currentPath.startsWith('/cover-letter') ? 'active' : '' %>">
