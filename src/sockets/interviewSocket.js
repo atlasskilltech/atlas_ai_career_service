@@ -52,24 +52,42 @@ function setupInterviewSocket(io) {
 
     // Client sends recorded audio for transcription
     socket.on('transcribe', async (data) => {
+      let tmpPath = null;
       try {
+        if (!data.audio || data.audio.byteLength < 1000) {
+          socket.emit('transcribe-result', { success: false, error: 'Audio too short. Please speak louder or longer.' });
+          socket.emit('avatar-state', { state: 'listening' });
+          return;
+        }
+
         socket.emit('avatar-state', { state: 'thinking' });
         socket.emit('transcribe-status', { status: 'processing' });
 
         // Save audio buffer to temp file
         const tmpDir = path.join(__dirname, '../../uploads/audio/');
         if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
-        const tmpPath = path.join(tmpDir, `ws_${Date.now()}_${Math.random().toString(36).slice(2)}.webm`);
+        tmpPath = path.join(tmpDir, `ws_${Date.now()}_${Math.random().toString(36).slice(2)}.webm`);
         fs.writeFileSync(tmpPath, Buffer.from(data.audio));
 
         const text = await speechToText(tmpPath);
         try { fs.unlinkSync(tmpPath); } catch {}
+        tmpPath = null;
+
+        if (!text || text.trim().length === 0) {
+          socket.emit('transcribe-result', { success: false, error: 'No speech detected. Please speak clearly near the microphone.' });
+          socket.emit('avatar-state', { state: 'listening' });
+          return;
+        }
 
         socket.emit('transcribe-result', { success: true, text });
         socket.emit('avatar-state', { state: 'listening' });
       } catch (err) {
-        socket.emit('transcribe-result', { success: false, error: err.message });
-        socket.emit('avatar-state', { state: 'idle' });
+        if (tmpPath) { try { fs.unlinkSync(tmpPath); } catch {} }
+        const userMsg = err.message && err.message.includes('timeout')
+          ? 'Transcription timed out. Please try again.'
+          : 'Transcription failed. Please try again or type your answer.';
+        socket.emit('transcribe-result', { success: false, error: userMsg });
+        socket.emit('avatar-state', { state: 'listening' });
       }
     });
 

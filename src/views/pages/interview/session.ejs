@@ -150,7 +150,30 @@
       <!-- Status line -->
       <div class="flex items-center justify-between text-[9px] text-gray-400 flex-shrink-0">
         <span><span id="answered-count"><%= progress.answered %></span> of <%= progress.total %> answered</span>
-        <span id="save-status"></span>
+        <div class="flex items-center gap-2">
+          <span id="save-status"></span>
+          <button onclick="toggleHelp()" class="text-blue-400 hover:text-blue-500 transition" title="Quick help">
+            <i class="fas fa-circle-question"></i> Help
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Help Panel (hidden by default) -->
+      <div id="help-panel" class="hidden flex-shrink-0 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl px-3 py-2 text-[10px] text-blue-700 dark:text-blue-300 space-y-1.5 mt-1">
+        <div class="flex items-center justify-between">
+          <span class="font-bold text-[11px]"><i class="fas fa-circle-question mr-1"></i> Quick Guide</span>
+          <button onclick="toggleHelp()" class="text-blue-400 hover:text-blue-600"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="grid grid-cols-2 gap-x-4 gap-y-1">
+          <div><i class="fas fa-volume-high text-blue-400 mr-1"></i> <strong>Repeat Question</strong> - Replay the AI's voice</div>
+          <div><i class="fas fa-microphone text-red-400 mr-1"></i> <strong>Rec</strong> badge means mic is recording</div>
+          <div><i class="fas fa-paper-plane text-blue-400 mr-1"></i> <strong>Submit</strong> - Save answer & next question</div>
+          <div><i class="fas fa-forward text-gray-400 mr-1"></i> <strong>Skip</strong> - Skip this question</div>
+          <div><i class="fas fa-save text-green-400 mr-1"></i> <strong>Save</strong> - Save progress & resume later</div>
+          <div><i class="fas fa-sign-out-alt text-red-400 mr-1"></i> <strong>End</strong> - Finish & get AI report</div>
+          <div><i class="fas fa-keyboard text-gray-400 mr-1"></i> You can <strong>type</strong> answers if voice fails</div>
+          <div><i class="fas fa-rotate-right text-blue-400 mr-1"></i> <strong>Retry</strong> link appears if transcription fails</div>
+        </div>
       </div>
 
       <!-- Complete Section (hidden) -->
@@ -199,8 +222,14 @@ socket.on('avatar-state', (d) => setAvatarState(d.state));
 socket.on('question-audio-ready', (d) => playQuestionAudio(d.audioUrl));
 socket.on('speak-error', () => { setAvatarState('idle'); });
 
+let transcribeRetryCount = 0;
+const MAX_TRANSCRIBE_RETRIES = 2;
+let lastTranscribeBlob = null;
+
 socket.on('transcribe-result', (data) => {
   if (data.success && data.text) {
+    transcribeRetryCount = 0;
+    lastTranscribeBlob = null;
     const ta = document.getElementById('answer-text');
     const existing = ta.value.trim();
     ta.value = existing ? existing + ' ' + data.text : data.text;
@@ -209,8 +238,22 @@ socket.on('transcribe-result', (data) => {
     updateLiveCaption(data.text);
     document.getElementById('transcribe-status').textContent = '';
   } else {
-    document.getElementById('transcribe-status').textContent = 'Failed';
-    showToast(data.error || 'Transcription failed', 'error');
+    // Auto-retry up to MAX_TRANSCRIBE_RETRIES times
+    if (transcribeRetryCount < MAX_TRANSCRIBE_RETRIES && lastTranscribeBlob) {
+      transcribeRetryCount++;
+      document.getElementById('transcribe-status').textContent = 'Retrying (' + transcribeRetryCount + '/' + MAX_TRANSCRIBE_RETRIES + ')...';
+      updateLiveCaption('Retrying transcription...');
+      setTimeout(() => {
+        const r = new FileReader();
+        r.onloadend = () => { socket.emit('transcribe', { audio: r.result }); };
+        r.readAsArrayBuffer(lastTranscribeBlob);
+      }, 1000);
+    } else {
+      transcribeRetryCount = 0;
+      document.getElementById('transcribe-status').innerHTML = '<span class="text-red-400">Failed</span> <button onclick="retryTranscribe()" class="text-blue-400 hover:text-blue-500 underline ml-1">Retry</button>';
+      updateLiveCaption('Transcription failed - you can type your answer or click Retry');
+      showToast('Transcription failed. You can type your answer manually.', 'error');
+    }
   }
 });
 
@@ -370,11 +413,35 @@ function stopRecording(silent) {
 // ===================== TRANSCRIBE =====================
 function autoTranscribe() {
   if (!recordedBlob) return;
+  // Skip if recording is too short (less than 0.5 seconds worth of data)
+  if (recordedBlob.size < 1000) {
+    document.getElementById('transcribe-status').textContent = 'Too short';
+    updateLiveCaption('Recording too short - please speak longer');
+    return;
+  }
+  transcribeRetryCount = 0;
+  lastTranscribeBlob = recordedBlob;
   document.getElementById('transcribe-status').textContent = 'Transcribing...';
   updateLiveCaption('Transcribing...');
   const r = new FileReader();
   r.onloadend = () => { socket.emit('transcribe', { audio: r.result }); };
   r.readAsArrayBuffer(recordedBlob);
+}
+
+function retryTranscribe() {
+  if (lastTranscribeBlob) {
+    transcribeRetryCount = 0;
+    document.getElementById('transcribe-status').textContent = 'Retrying...';
+    updateLiveCaption('Retrying transcription...');
+    const r = new FileReader();
+    r.onloadend = () => { socket.emit('transcribe', { audio: r.result }); };
+    r.readAsArrayBuffer(lastTranscribeBlob);
+  } else if (recordedBlob) {
+    lastTranscribeBlob = recordedBlob;
+    autoTranscribe();
+  } else {
+    showToast('No audio to transcribe. Please type your answer.', 'error');
+  }
 }
 
 // ===================== LIVE CAPTION =====================
@@ -486,6 +553,11 @@ function showComplete() {
   document.getElementById('progress-bar').style.width = '100%';
   setAvatarState('idle'); clearInterval(interviewTimer);
   if (isRecording) stopRecording(true);
+}
+
+// ===================== HELP =====================
+function toggleHelp() {
+  document.getElementById('help-panel').classList.toggle('hidden');
 }
 
 // ===================== INIT =====================
