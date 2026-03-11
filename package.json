@@ -1,7 +1,7 @@
 {
   "name": "atlas-ai-career-service",
   "version": "1.0.0",
-  "description": "AI Career Platform for Atlas SkillTech University",
+  "description": "AI Career Platform for ATLAS SkillTech University",
   "main": "src/app.js",
   "scripts": {
     "start": "node src/app.js",
