@@ -1,369 +1,740 @@
-<div class="grid grid-cols-12 gap-6 h-[calc(100vh-120px)]">
-  <!-- Sidebar: Sections -->
-  <div class="col-span-3">
-    <div class="card h-full overflow-y-auto">
-      <h3 class="font-semibold text-lg mb-4">Sections</h3>
-      <nav class="space-y-1">
-        <button onclick="showSection('profile')" class="section-btn sidebar-link active w-full text-left" data-section="profile">
-          <i class="fas fa-user w-5"></i> Profile
-        </button>
-        <button onclick="showSection('education')" class="section-btn sidebar-link w-full text-left" data-section="education">
-          <i class="fas fa-graduation-cap w-5"></i> Education
-        </button>
-        <button onclick="showSection('experience')" class="section-btn sidebar-link w-full text-left" data-section="experience">
-          <i class="fas fa-briefcase w-5"></i> Experience
-        </button>
-        <button onclick="showSection('projects')" class="section-btn sidebar-link w-full text-left" data-section="projects">
-          <i class="fas fa-code w-5"></i> Projects
-        </button>
-        <button onclick="showSection('skills')" class="section-btn sidebar-link w-full text-left" data-section="skills">
-          <i class="fas fa-tools w-5"></i> Skills
-        </button>
-        <button onclick="showSection('achievements')" class="section-btn sidebar-link w-full text-left" data-section="achievements">
-          <i class="fas fa-trophy w-5"></i> Achievements
-        </button>
-      </nav>
-      <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-        <h4 class="text-sm font-medium text-gray-500 mb-3">AI Tools</h4>
-        <button onclick="generateSummary()" class="sidebar-link w-full text-left text-sm">
-          <i class="fas fa-magic w-5 text-accent"></i> Generate Summary
-        </button>
-        <button onclick="generateBullets()" class="sidebar-link w-full text-left text-sm">
-          <i class="fas fa-list w-5 text-accent"></i> Generate Bullets
-        </button>
-      </div>
+<style>
+  #builder-app{height:calc(100vh - 120px);display:flex;flex-direction:column;overflow:hidden}
+  @media(max-width:1023px){#builder-app{height:auto;overflow:visible}}
+  .drag-handle{cursor:grab}.drag-handle:active{cursor:grabbing}
+  .sortable-ghost{opacity:0.4;background:#e0e7ff}
+  .section-btn.active{background:var(--accent-light,#e0e7ff);color:var(--accent,#3b82f6);font-weight:600}
+  .section-btn{transition:all 0.15s}
+  .ai-btn{font-size:10px;color:#7c3aed;cursor:pointer;transition:opacity 0.15s}.ai-btn:hover{opacity:0.7}
+  #preview-frame{border:none;width:100%;height:100%;background:white}
+</style>
+
+<div id="builder-app">
+  <!-- Top bar -->
+  <div class="flex items-center justify-between mb-2 flex-shrink-0 gap-2 flex-wrap">
+    <div class="flex items-center gap-2 flex-1 min-w-0">
+      <a href="/resume" class="text-gray-400 hover:text-gray-600"><i class="fas fa-arrow-left"></i></a>
+      <input type="text" id="resume-title" value="<%= resume ? resume.title : 'Untitled Resume' %>" class="text-base font-bold bg-transparent border-none outline-none focus:ring-0 flex-1 min-w-0" placeholder="Resume Title">
+    </div>
+    <div class="flex items-center gap-2 flex-shrink-0">
+      <span class="text-[10px] text-gray-400" id="save-status"><i class="fas fa-check text-green-500"></i> Saved</span>
+      <select id="template-select" onchange="changeTemplate()" class="text-xs border border-gray-300 dark:border-gray-600 rounded px-2 py-1 bg-white dark:bg-gray-800">
+        <option value="modern" <%= resume?.template === 'modern' ? 'selected' : '' %>>Modern</option>
+        <option value="professional" <%= resume?.template === 'professional' ? 'selected' : '' %>>Professional</option>
+        <option value="minimal" <%= resume?.template === 'minimal' ? 'selected' : '' %>>Minimal</option>
+        <option value="ats" <%= resume?.template === 'ats' ? 'selected' : '' %>>ATS Friendly</option>
+      </select>
+      <input type="color" id="theme-color" value="<%= resume?.theme_color || '#0a1a4a' %>" onchange="changeTemplate()" class="w-7 h-7 rounded cursor-pointer border-0" title="Theme Color">
+      <% if (resume) { %>
+        <button onclick="exportPDF()" class="btn-outline text-xs px-3 py-1"><i class="fas fa-file-pdf mr-1"></i>PDF</button>
+      <% } %>
+      <button onclick="saveResume()" class="btn-primary text-xs px-3 py-1"><i class="fas fa-save mr-1"></i>Save</button>
     </div>
   </div>
 
-  <!-- Editor -->
-  <div class="col-span-5">
-    <div class="card h-full overflow-y-auto">
-      <div class="flex items-center justify-between mb-4">
-        <input type="text" id="resume-title" value="<%= resume ? resume.title : 'Untitled Resume' %>" class="text-lg font-semibold bg-transparent border-none outline-none focus:ring-0 w-full" placeholder="Resume Title">
-        <button onclick="saveResume()" class="btn-accent text-sm"><i class="fas fa-save mr-1"></i> Save</button>
-      </div>
+  <!-- Main 3-col grid -->
+  <div class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-2 min-h-0 overflow-hidden">
 
-      <!-- Profile Section -->
-      <div id="section-profile" class="section-content">
-        <h3 class="font-semibold mb-4">Profile</h3>
-        <div class="space-y-4">
-          <div><label class="label-field">Full Name</label><input type="text" id="profile-name" class="input-field" value="<%= resume?.profile_data?.name || '' %>" placeholder="John Doe"></div>
-          <div><label class="label-field">Email</label><input type="email" id="profile-email" class="input-field" value="<%= resume?.profile_data?.email || '' %>" placeholder="john@email.com"></div>
-          <div><label class="label-field">Phone</label><input type="tel" id="profile-phone" class="input-field" value="<%= resume?.profile_data?.phone || '' %>" placeholder="+91 9876543210"></div>
-          <div><label class="label-field">Location</label><input type="text" id="profile-location" class="input-field" value="<%= resume?.profile_data?.location || '' %>" placeholder="Mumbai, India"></div>
-          <div><label class="label-field">LinkedIn</label><input type="url" id="profile-linkedin" class="input-field" value="<%= resume?.profile_data?.linkedin || '' %>" placeholder="linkedin.com/in/johndoe"></div>
-          <div><label class="label-field">Portfolio/Website</label><input type="url" id="profile-website" class="input-field" value="<%= resume?.profile_data?.website || '' %>" placeholder="johndoe.com"></div>
-          <div>
-            <div class="flex items-center justify-between">
-              <label class="label-field">Professional Summary</label>
-              <button onclick="generateSummary()" class="text-xs text-accent hover:underline"><i class="fas fa-magic"></i> AI Generate</button>
-            </div>
-            <textarea id="profile-summary" rows="4" class="input-field" placeholder="Brief professional summary..."><%= resume?.profile_data?.summary || '' %></textarea>
+    <!-- SIDEBAR (3 cols) -->
+    <div class="lg:col-span-3 flex flex-col min-h-0 overflow-hidden">
+      <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3 flex-1 overflow-y-auto">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Sections</span>
+          <span class="text-[9px] text-gray-400"><i class="fas fa-grip-vertical mr-1"></i>Drag to reorder</span>
+        </div>
+        <nav id="section-list" class="space-y-0.5">
+          <%
+            const defaultOrder = ['profile','education','experience','projects','skills','achievements','certifications','languages','interests'];
+            const sectionOrder = resume?.section_order || defaultOrder;
+            const sectionMeta = {
+              profile: { icon: 'fa-user', label: 'Profile' },
+              education: { icon: 'fa-graduation-cap', label: 'Education' },
+              experience: { icon: 'fa-briefcase', label: 'Experience' },
+              projects: { icon: 'fa-code', label: 'Projects' },
+              skills: { icon: 'fa-tools', label: 'Skills' },
+              achievements: { icon: 'fa-trophy', label: 'Achievements' },
+              certifications: { icon: 'fa-certificate', label: 'Certifications' },
+              languages: { icon: 'fa-language', label: 'Languages' },
+              interests: { icon: 'fa-heart', label: 'Interests' },
+            };
+          %>
+          <% sectionOrder.forEach((key, idx) => { const meta = sectionMeta[key]; if (!meta) return; %>
+            <button onclick="showSection('<%= key %>')" class="section-btn sidebar-link w-full text-left flex items-center gap-2 text-xs <%= idx === 0 ? 'active' : '' %>" data-section="<%= key %>">
+              <i class="fas fa-grip-vertical drag-handle text-gray-300 text-[10px]"></i>
+              <i class="fas <%= meta.icon %> w-4 text-center text-gray-400"></i>
+              <span><%= meta.label %></span>
+            </button>
+          <% }); %>
+        </nav>
+
+        <!-- AI Tools -->
+        <div class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+          <span class="text-[9px] font-bold text-gray-400 uppercase tracking-wider">AI Tools</span>
+          <div class="space-y-0.5 mt-1">
+            <button onclick="aiGenerateSummary()" class="sidebar-link w-full text-left text-xs flex items-center gap-2"><i class="fas fa-magic w-4 text-center text-purple-400"></i>Generate Summary</button>
+            <button onclick="aiSuggestSkills()" class="sidebar-link w-full text-left text-xs flex items-center gap-2"><i class="fas fa-lightbulb w-4 text-center text-purple-400"></i>Suggest Skills</button>
+            <button onclick="showATSModal()" class="sidebar-link w-full text-left text-xs flex items-center gap-2"><i class="fas fa-chart-bar w-4 text-center text-purple-400"></i>ATS Analyzer</button>
           </div>
         </div>
-      </div>
 
-      <!-- Education Section -->
-      <div id="section-education" class="section-content hidden">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="font-semibold">Education</h3>
-          <button onclick="addEducation()" class="text-sm text-accent hover:underline"><i class="fas fa-plus"></i> Add</button>
-        </div>
-        <div id="education-list" class="space-y-4">
-          <% if (resume?.education_data?.length > 0) { %>
-            <% resume.education_data.forEach((edu, i) => { %>
-              <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg" data-index="<%= i %>">
-                <input type="text" class="input-field mb-2 edu-institution" value="<%= edu.institution || '' %>" placeholder="Institution">
-                <input type="text" class="input-field mb-2 edu-degree" value="<%= edu.degree || '' %>" placeholder="Degree">
-                <div class="grid grid-cols-2 gap-2">
-                  <input type="text" class="input-field edu-year" value="<%= edu.year || '' %>" placeholder="Year">
-                  <input type="text" class="input-field edu-gpa" value="<%= edu.gpa || '' %>" placeholder="GPA/Percentage">
-                </div>
-              </div>
-            <% }); %>
-          <% } %>
-        </div>
-      </div>
-
-      <!-- Experience Section -->
-      <div id="section-experience" class="section-content hidden">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="font-semibold">Experience</h3>
-          <button onclick="addExperience()" class="text-sm text-accent hover:underline"><i class="fas fa-plus"></i> Add</button>
-        </div>
-        <div id="experience-list" class="space-y-4">
-          <% if (resume?.experience_data?.length > 0) { %>
-            <% resume.experience_data.forEach((exp, i) => { %>
-              <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg" data-index="<%= i %>">
-                <input type="text" class="input-field mb-2 exp-title" value="<%= exp.title || '' %>" placeholder="Job Title">
-                <input type="text" class="input-field mb-2 exp-company" value="<%= exp.company || '' %>" placeholder="Company">
-                <div class="grid grid-cols-2 gap-2 mb-2">
-                  <input type="text" class="input-field exp-start" value="<%= exp.startDate || '' %>" placeholder="Start Date">
-                  <input type="text" class="input-field exp-end" value="<%= exp.endDate || '' %>" placeholder="End Date">
-                </div>
-                <textarea class="input-field exp-desc" rows="3" placeholder="Description / bullet points"><%= exp.description || '' %></textarea>
-                <button onclick="generateBulletsFor(this)" class="text-xs text-accent hover:underline mt-2"><i class="fas fa-magic"></i> AI Generate Bullets</button>
-              </div>
-            <% }); %>
-          <% } %>
-        </div>
-      </div>
-
-      <!-- Projects Section -->
-      <div id="section-projects" class="section-content hidden">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="font-semibold">Projects</h3>
-          <button onclick="addProject()" class="text-sm text-accent hover:underline"><i class="fas fa-plus"></i> Add</button>
-        </div>
-        <div id="projects-list" class="space-y-4">
-          <% if (resume?.projects_data?.length > 0) { %>
-            <% resume.projects_data.forEach((proj, i) => { %>
-              <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg" data-index="<%= i %>">
-                <input type="text" class="input-field mb-2 proj-name" value="<%= proj.name || '' %>" placeholder="Project Name">
-                <input type="text" class="input-field mb-2 proj-tech" value="<%= proj.technologies || '' %>" placeholder="Technologies Used">
-                <textarea class="input-field proj-desc" rows="3" placeholder="Project description"><%= proj.description || '' %></textarea>
-                <input type="url" class="input-field mt-2 proj-url" value="<%= proj.url || '' %>" placeholder="Project URL">
-              </div>
-            <% }); %>
-          <% } %>
-        </div>
-      </div>
-
-      <!-- Skills Section -->
-      <div id="section-skills" class="section-content hidden">
-        <h3 class="font-semibold mb-4">Skills</h3>
-        <div class="space-y-4">
-          <div>
-            <label class="label-field">Technical Skills</label>
-            <textarea id="skills-technical" rows="3" class="input-field" placeholder="JavaScript, React, Node.js, Python..."><%= resume?.skills_data?.technical || '' %></textarea>
-          </div>
-          <div>
-            <label class="label-field">Soft Skills</label>
-            <textarea id="skills-soft" rows="2" class="input-field" placeholder="Leadership, Communication, Teamwork..."><%= resume?.skills_data?.soft || '' %></textarea>
-          </div>
-          <div>
-            <label class="label-field">Tools & Frameworks</label>
-            <textarea id="skills-tools" rows="2" class="input-field" placeholder="Git, Docker, AWS, Figma..."><%= resume?.skills_data?.tools || '' %></textarea>
-          </div>
-          <div>
-            <label class="label-field">Languages</label>
-            <textarea id="skills-languages" rows="2" class="input-field" placeholder="English, Hindi, Marathi..."><%= resume?.skills_data?.languages || '' %></textarea>
-          </div>
-        </div>
-      </div>
-
-      <!-- Achievements Section -->
-      <div id="section-achievements" class="section-content hidden">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="font-semibold">Achievements</h3>
-          <button onclick="addAchievement()" class="text-sm text-accent hover:underline"><i class="fas fa-plus"></i> Add</button>
-        </div>
-        <div id="achievements-list" class="space-y-3">
-          <% if (resume?.achievements_data?.length > 0) { %>
-            <% resume.achievements_data.forEach((ach, i) => { %>
-              <div class="flex gap-2" data-index="<%= i %>">
-                <input type="text" class="input-field flex-1 ach-text" value="<%= ach %>" placeholder="Achievement">
-                <button onclick="rewriteAchievement(this)" class="text-accent hover:opacity-70" title="AI Rewrite"><i class="fas fa-magic"></i></button>
-              </div>
-            <% }); %>
-          <% } %>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Live Preview -->
-  <div class="col-span-4">
-    <div class="card h-full overflow-y-auto">
-      <div class="flex items-center justify-between mb-4">
-        <h3 class="font-semibold">Preview</h3>
         <% if (resume) { %>
-          <a href="/resume/<%= resume.id %>/preview" target="_blank" class="text-sm text-accent hover:underline"><i class="fas fa-external-link-alt"></i> Full View</a>
+        <!-- Version History -->
+        <div class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+          <div class="flex items-center justify-between">
+            <span class="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Versions</span>
+            <button onclick="saveVersion()" class="text-[9px] text-purple-500 hover:underline">Save Version</button>
+          </div>
+          <div id="version-list" class="mt-1 space-y-0.5 max-h-24 overflow-y-auto">
+            <% if (typeof versions !== 'undefined' && versions && versions.length > 0) { %>
+              <% versions.forEach(v => { %>
+                <button onclick="restoreVersion(<%= v.id %>)" class="text-[10px] text-gray-500 hover:text-blue-500 block w-full text-left px-2 py-0.5 rounded hover:bg-gray-50 dark:hover:bg-gray-700">
+                  v<%= v.version_number %> — <%= new Date(v.created_at).toLocaleDateString('en-IN', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }) %>
+                </button>
+              <% }); %>
+            <% } else { %>
+              <p class="text-[10px] text-gray-400 italic px-2">No versions saved yet</p>
+            <% } %>
+          </div>
+        </div>
         <% } %>
       </div>
-      <div id="resume-preview" class="border border-gray-200 dark:border-gray-700 rounded-lg p-6 bg-white text-gray-900 text-sm leading-relaxed min-h-[600px]">
-        <div class="text-center mb-4">
-          <h2 class="text-xl font-bold" id="preview-name"><%= resume?.profile_data?.name || 'Your Name' %></h2>
-          <p class="text-gray-500 text-xs" id="preview-contact"><%= resume?.profile_data?.email || '' %> | <%= resume?.profile_data?.phone || '' %></p>
+    </div>
+
+    <!-- EDITOR (5 cols) -->
+    <div class="lg:col-span-5 flex flex-col min-h-0 overflow-hidden">
+      <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 flex-1 overflow-y-auto">
+
+        <!-- Profile Section -->
+        <div id="section-profile" class="section-content">
+          <h3 class="font-semibold text-sm mb-3">Profile</h3>
+          <div class="space-y-3">
+            <div class="grid grid-cols-2 gap-3">
+              <div><label class="label-field text-xs">Full Name</label><input type="text" id="profile-name" class="input-field text-sm" value="<%= resume?.profile_data?.name || resume?.profile_data?.full_name || '' %>" placeholder="John Doe"></div>
+              <div><label class="label-field text-xs">Headline</label><input type="text" id="profile-headline" class="input-field text-sm" value="<%= resume?.profile_data?.headline || '' %>" placeholder="Software Engineer"></div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div><label class="label-field text-xs">Email</label><input type="email" id="profile-email" class="input-field text-sm" value="<%= resume?.profile_data?.email || '' %>" placeholder="john@email.com"></div>
+              <div><label class="label-field text-xs">Phone</label><input type="tel" id="profile-phone" class="input-field text-sm" value="<%= resume?.profile_data?.phone || '' %>" placeholder="+91 98765 43210"></div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div><label class="label-field text-xs">LinkedIn</label><input type="url" id="profile-linkedin" class="input-field text-sm" value="<%= resume?.profile_data?.linkedin || '' %>" placeholder="linkedin.com/in/johndoe"></div>
+              <div><label class="label-field text-xs">GitHub</label><input type="url" id="profile-github" class="input-field text-sm" value="<%= resume?.profile_data?.github || '' %>" placeholder="github.com/johndoe"></div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div><label class="label-field text-xs">Portfolio</label><input type="url" id="profile-website" class="input-field text-sm" value="<%= resume?.profile_data?.website || resume?.profile_data?.portfolio || '' %>" placeholder="johndoe.com"></div>
+              <div><label class="label-field text-xs">Location</label><input type="text" id="profile-location" class="input-field text-sm" value="<%= resume?.profile_data?.location || '' %>" placeholder="Mumbai, India"></div>
+            </div>
+            <div>
+              <div class="flex items-center justify-between">
+                <label class="label-field text-xs">Professional Summary</label>
+                <button onclick="aiGenerateSummary()" class="ai-btn"><i class="fas fa-magic mr-1"></i>AI Generate</button>
+              </div>
+              <textarea id="profile-summary" rows="3" class="input-field text-sm" placeholder="2-3 sentence summary..."><%= resume?.profile_data?.summary || '' %></textarea>
+            </div>
+          </div>
         </div>
-        <p class="text-xs text-gray-600" id="preview-summary"><%= resume?.profile_data?.summary || 'Your professional summary will appear here...' %></p>
-        <hr class="my-3">
-        <div id="preview-sections">
-          <p class="text-gray-400 text-xs italic">Start filling in the sections to see your resume preview</p>
+
+        <!-- Education Section -->
+        <div id="section-education" class="section-content hidden">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-semibold text-sm">Education</h3>
+            <button onclick="addEntry('education')" class="text-xs text-blue-500 hover:underline"><i class="fas fa-plus mr-1"></i>Add</button>
+          </div>
+          <div id="education-list" class="space-y-3">
+            <% const eduData = resume?.education_data || []; eduData.forEach((edu, i) => { %>
+              <div class="p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg relative group" data-index="<%= i %>">
+                <button onclick="removeEntry(this)" class="absolute top-2 right-2 text-red-400 hover:text-red-600 text-xs opacity-0 group-hover:opacity-100 transition"><i class="fas fa-times"></i></button>
+                <div class="grid grid-cols-2 gap-2 mb-2">
+                  <input type="text" class="input-field text-xs edu-institution" value="<%= edu.institution || '' %>" placeholder="Institution">
+                  <input type="text" class="input-field text-xs edu-degree" value="<%= edu.degree || '' %>" placeholder="Degree">
+                </div>
+                <div class="grid grid-cols-3 gap-2">
+                  <input type="text" class="input-field text-xs edu-field" value="<%= edu.field || '' %>" placeholder="Field of Study">
+                  <input type="text" class="input-field text-xs edu-year" value="<%= edu.year || (edu.start_year && edu.end_year ? edu.start_year+' - '+edu.end_year : '') %>" placeholder="Year(s)">
+                  <input type="text" class="input-field text-xs edu-gpa" value="<%= edu.gpa || edu.cgpa || '' %>" placeholder="GPA/CGPA">
+                </div>
+              </div>
+            <% }); %>
+          </div>
+        </div>
+
+        <!-- Experience Section -->
+        <div id="section-experience" class="section-content hidden">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-semibold text-sm">Experience</h3>
+            <button onclick="addEntry('experience')" class="text-xs text-blue-500 hover:underline"><i class="fas fa-plus mr-1"></i>Add</button>
+          </div>
+          <div id="experience-list" class="space-y-3">
+            <% const expData = resume?.experience_data || []; expData.forEach((exp, i) => { %>
+              <div class="p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg relative group" data-index="<%= i %>">
+                <button onclick="removeEntry(this)" class="absolute top-2 right-2 text-red-400 hover:text-red-600 text-xs opacity-0 group-hover:opacity-100 transition"><i class="fas fa-times"></i></button>
+                <div class="grid grid-cols-2 gap-2 mb-2">
+                  <input type="text" class="input-field text-xs exp-title" value="<%= exp.title || exp.role || '' %>" placeholder="Job Title">
+                  <input type="text" class="input-field text-xs exp-company" value="<%= exp.company || '' %>" placeholder="Company">
+                </div>
+                <div class="grid grid-cols-3 gap-2 mb-2">
+                  <input type="text" class="input-field text-xs exp-location" value="<%= exp.location || '' %>" placeholder="Location">
+                  <input type="text" class="input-field text-xs exp-start" value="<%= exp.startDate || exp.start_date || '' %>" placeholder="Start Date">
+                  <input type="text" class="input-field text-xs exp-end" value="<%= exp.endDate || exp.end_date || '' %>" placeholder="End Date">
+                </div>
+                <textarea class="input-field text-xs exp-desc" rows="3" placeholder="Bullet points / description"><%= exp.description || '' %></textarea>
+                <button onclick="aiGenerateBullets(this)" class="ai-btn mt-1"><i class="fas fa-magic mr-1"></i>AI Generate Bullets</button>
+              </div>
+            <% }); %>
+          </div>
+        </div>
+
+        <!-- Projects Section -->
+        <div id="section-projects" class="section-content hidden">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-semibold text-sm">Projects</h3>
+            <button onclick="addEntry('projects')" class="text-xs text-blue-500 hover:underline"><i class="fas fa-plus mr-1"></i>Add</button>
+          </div>
+          <div id="projects-list" class="space-y-3">
+            <% const projData = resume?.projects_data || []; projData.forEach((proj, i) => { %>
+              <div class="p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg relative group" data-index="<%= i %>">
+                <button onclick="removeEntry(this)" class="absolute top-2 right-2 text-red-400 hover:text-red-600 text-xs opacity-0 group-hover:opacity-100 transition"><i class="fas fa-times"></i></button>
+                <div class="grid grid-cols-2 gap-2 mb-2">
+                  <input type="text" class="input-field text-xs proj-name" value="<%= proj.name || proj.project_name || '' %>" placeholder="Project Name">
+                  <input type="text" class="input-field text-xs proj-tech" value="<%= proj.technologies || '' %>" placeholder="Technologies">
+                </div>
+                <textarea class="input-field text-xs proj-desc" rows="2" placeholder="Description"><%= proj.description || '' %></textarea>
+                <input type="url" class="input-field text-xs mt-2 proj-url" value="<%= proj.url || proj.github_link || '' %>" placeholder="GitHub / Live URL">
+                <button onclick="aiGenerateProjectDesc(this)" class="ai-btn mt-1"><i class="fas fa-magic mr-1"></i>AI Improve Description</button>
+              </div>
+            <% }); %>
+          </div>
+        </div>
+
+        <!-- Skills Section -->
+        <div id="section-skills" class="section-content hidden">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-semibold text-sm">Skills</h3>
+            <button onclick="aiSuggestSkills()" class="ai-btn"><i class="fas fa-magic mr-1"></i>AI Suggest</button>
+          </div>
+          <div class="space-y-3">
+            <div><label class="label-field text-xs">Technical Skills</label><textarea id="skills-technical" rows="2" class="input-field text-xs" placeholder="JavaScript, Python, React, Node.js..."><%= resume?.skills_data?.technical || '' %></textarea></div>
+            <div><label class="label-field text-xs">Soft Skills</label><textarea id="skills-soft" rows="2" class="input-field text-xs" placeholder="Leadership, Communication..."><%= resume?.skills_data?.soft || '' %></textarea></div>
+            <div><label class="label-field text-xs">Tools & Frameworks</label><textarea id="skills-tools" rows="2" class="input-field text-xs" placeholder="Git, Docker, AWS, Figma..."><%= resume?.skills_data?.tools || '' %></textarea></div>
+            <div><label class="label-field text-xs">Languages</label><textarea id="skills-languages" rows="1" class="input-field text-xs" placeholder="English, Hindi..."><%= resume?.skills_data?.languages || '' %></textarea></div>
+          </div>
+        </div>
+
+        <!-- Achievements Section -->
+        <div id="section-achievements" class="section-content hidden">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-semibold text-sm">Achievements</h3>
+            <button onclick="addEntry('achievements')" class="text-xs text-blue-500 hover:underline"><i class="fas fa-plus mr-1"></i>Add</button>
+          </div>
+          <div id="achievements-list" class="space-y-2">
+            <% const achData = resume?.achievements_data || []; achData.forEach((ach, i) => { %>
+              <div class="flex gap-2 items-center group" data-index="<%= i %>">
+                <input type="text" class="input-field text-xs flex-1 ach-text" value="<%= typeof ach === 'string' ? ach : ach.achievement_text || '' %>" placeholder="Achievement">
+                <button onclick="aiRewriteAchievement(this)" class="ai-btn flex-shrink-0" title="AI Rewrite"><i class="fas fa-magic"></i></button>
+                <button onclick="removeEntry(this)" class="text-red-400 hover:text-red-600 text-xs flex-shrink-0 opacity-0 group-hover:opacity-100"><i class="fas fa-times"></i></button>
+              </div>
+            <% }); %>
+          </div>
+        </div>
+
+        <!-- Certifications Section -->
+        <div id="section-certifications" class="section-content hidden">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-semibold text-sm">Certifications</h3>
+            <button onclick="addEntry('certifications')" class="text-xs text-blue-500 hover:underline"><i class="fas fa-plus mr-1"></i>Add</button>
+          </div>
+          <div id="certifications-list" class="space-y-3">
+            <% const certData = resume?.certifications_data || []; certData.forEach((cert, i) => { %>
+              <div class="p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg relative group" data-index="<%= i %>">
+                <button onclick="removeEntry(this)" class="absolute top-2 right-2 text-red-400 hover:text-red-600 text-xs opacity-0 group-hover:opacity-100 transition"><i class="fas fa-times"></i></button>
+                <div class="grid grid-cols-3 gap-2">
+                  <input type="text" class="input-field text-xs cert-name" value="<%= cert.name || cert.cert_name || '' %>" placeholder="Certification Name">
+                  <input type="text" class="input-field text-xs cert-org" value="<%= cert.organization || '' %>" placeholder="Organization">
+                  <input type="text" class="input-field text-xs cert-date" value="<%= cert.date || cert.issue_date || '' %>" placeholder="Date">
+                </div>
+              </div>
+            <% }); %>
+          </div>
+        </div>
+
+        <!-- Languages Section -->
+        <div id="section-languages" class="section-content hidden">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-semibold text-sm">Languages</h3>
+            <button onclick="addEntry('languages')" class="text-xs text-blue-500 hover:underline"><i class="fas fa-plus mr-1"></i>Add</button>
+          </div>
+          <div id="languages-list" class="space-y-2">
+            <% const langData = resume?.languages_data || []; langData.forEach((lang, i) => { %>
+              <div class="flex gap-2 items-center group" data-index="<%= i %>">
+                <input type="text" class="input-field text-xs flex-1 lang-name" value="<%= lang.language || lang.name || '' %>" placeholder="Language">
+                <select class="input-field text-xs w-32 lang-level">
+                  <option value="Native" <%= (lang.proficiency||lang.level)==='Native'?'selected':'' %>>Native</option>
+                  <option value="Fluent" <%= (lang.proficiency||lang.level)==='Fluent'?'selected':'' %>>Fluent</option>
+                  <option value="Advanced" <%= (lang.proficiency||lang.level)==='Advanced'?'selected':'' %>>Advanced</option>
+                  <option value="Intermediate" <%= (lang.proficiency||lang.level)==='Intermediate'?'selected':'' %>>Intermediate</option>
+                  <option value="Basic" <%= (lang.proficiency||lang.level)==='Basic'?'selected':'' %>>Basic</option>
+                </select>
+                <button onclick="removeEntry(this)" class="text-red-400 hover:text-red-600 text-xs flex-shrink-0 opacity-0 group-hover:opacity-100"><i class="fas fa-times"></i></button>
+              </div>
+            <% }); %>
+          </div>
+        </div>
+
+        <!-- Interests Section -->
+        <div id="section-interests" class="section-content hidden">
+          <h3 class="font-semibold text-sm mb-3">Interests</h3>
+          <textarea id="interests-text" rows="3" class="input-field text-xs" placeholder="Open Source, Machine Learning, Photography... (comma separated)"><%= (resume?.interests_data || []).map(i => typeof i === 'string' ? i : i.name || '').join(', ') %></textarea>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- PREVIEW (4 cols) -->
+    <div class="lg:col-span-4 flex flex-col min-h-0 overflow-hidden">
+      <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl flex-1 overflow-hidden flex flex-col">
+        <div class="flex items-center justify-between px-3 py-2 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+          <span class="text-xs font-bold text-gray-500">Live Preview</span>
+          <div class="flex items-center gap-2">
+            <% if (resume) { %>
+              <a href="/resume/<%= resume.id %>/preview" target="_blank" class="text-[10px] text-blue-500 hover:underline"><i class="fas fa-external-link-alt mr-1"></i>Full</a>
+            <% } %>
+          </div>
+        </div>
+        <div class="flex-1 overflow-auto bg-gray-100 dark:bg-gray-900 p-2">
+          <div id="resume-preview" class="bg-white shadow-sm rounded" style="transform-origin:top left;">
+            <iframe id="preview-frame" sandbox="allow-same-origin" style="width:800px;min-height:1000px;border:none;pointer-events:none;display:block"></iframe>
+          </div>
         </div>
       </div>
     </div>
   </div>
 </div>
 
+<!-- ATS Analysis Modal -->
+<div id="ats-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-sm">
+  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-lg mx-4 max-h-[80vh] overflow-y-auto p-6">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-bold text-lg">ATS Score Analyzer</h3>
+      <button onclick="closeATSModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+    </div>
+    <div id="ats-content">
+      <label class="label-field text-xs">Paste Job Description</label>
+      <textarea id="ats-jd" rows="6" class="input-field text-sm mb-4" placeholder="Paste the job description here to analyze your resume..."></textarea>
+      <button onclick="runATSAnalysis()" id="ats-run-btn" class="btn-primary w-full"><i class="fas fa-chart-bar mr-2"></i>Analyze Resume</button>
+    </div>
+    <div id="ats-results" class="hidden"></div>
+  </div>
+</div>
+
 <input type="hidden" id="resume-id" value="<%= resume ? resume.id : '' %>">
 
+<!-- SortableJS CDN -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
 <script>
+// =================== STATE ===================
+let autoSaveTimer = null;
+let lastSaveData = '';
+
+// =================== SECTION NAV ===================
 function showSection(name) {
   document.querySelectorAll('.section-content').forEach(s => s.classList.add('hidden'));
   document.querySelectorAll('.section-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('section-' + name).classList.remove('hidden');
-  document.querySelector('[data-section="' + name + '"]').classList.add('active');
+  const sec = document.getElementById('section-' + name);
+  if (sec) sec.classList.remove('hidden');
+  const btn = document.querySelector('[data-section="' + name + '"]');
+  if (btn) btn.classList.add('active');
 }
 
-function addEducation() {
-  const list = document.getElementById('education-list');
-  const i = list.children.length;
-  list.insertAdjacentHTML('beforeend', `
-    <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg" data-index="${i}">
-      <input type="text" class="input-field mb-2 edu-institution" placeholder="Institution">
-      <input type="text" class="input-field mb-2 edu-degree" placeholder="Degree">
-      <div class="grid grid-cols-2 gap-2">
-        <input type="text" class="input-field edu-year" placeholder="Year">
-        <input type="text" class="input-field edu-gpa" placeholder="GPA/Percentage">
-      </div>
-    </div>
-  `);
+// =================== SORTABLE DRAG-DROP ===================
+document.addEventListener('DOMContentLoaded', () => {
+  const sectionList = document.getElementById('section-list');
+  if (sectionList && typeof Sortable !== 'undefined') {
+    new Sortable(sectionList, {
+      animation: 150,
+      handle: '.drag-handle',
+      ghostClass: 'sortable-ghost',
+      onEnd: () => { triggerAutoSave(); }
+    });
+  }
+  // Start auto-save
+  setupAutoSave();
+  // Initial preview
+  updatePreview();
+});
+
+// =================== ADD/REMOVE ENTRIES ===================
+function addEntry(type) {
+  const templates = {
+    education: `<div class="p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg relative group">
+      <button onclick="removeEntry(this)" class="absolute top-2 right-2 text-red-400 hover:text-red-600 text-xs opacity-0 group-hover:opacity-100 transition"><i class="fas fa-times"></i></button>
+      <div class="grid grid-cols-2 gap-2 mb-2"><input type="text" class="input-field text-xs edu-institution" placeholder="Institution"><input type="text" class="input-field text-xs edu-degree" placeholder="Degree"></div>
+      <div class="grid grid-cols-3 gap-2"><input type="text" class="input-field text-xs edu-field" placeholder="Field"><input type="text" class="input-field text-xs edu-year" placeholder="Year(s)"><input type="text" class="input-field text-xs edu-gpa" placeholder="GPA"></div></div>`,
+    experience: `<div class="p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg relative group">
+      <button onclick="removeEntry(this)" class="absolute top-2 right-2 text-red-400 hover:text-red-600 text-xs opacity-0 group-hover:opacity-100 transition"><i class="fas fa-times"></i></button>
+      <div class="grid grid-cols-2 gap-2 mb-2"><input type="text" class="input-field text-xs exp-title" placeholder="Job Title"><input type="text" class="input-field text-xs exp-company" placeholder="Company"></div>
+      <div class="grid grid-cols-3 gap-2 mb-2"><input type="text" class="input-field text-xs exp-location" placeholder="Location"><input type="text" class="input-field text-xs exp-start" placeholder="Start Date"><input type="text" class="input-field text-xs exp-end" placeholder="End Date"></div>
+      <textarea class="input-field text-xs exp-desc" rows="3" placeholder="Description"></textarea>
+      <button onclick="aiGenerateBullets(this)" class="ai-btn mt-1"><i class="fas fa-magic mr-1"></i>AI Generate Bullets</button></div>`,
+    projects: `<div class="p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg relative group">
+      <button onclick="removeEntry(this)" class="absolute top-2 right-2 text-red-400 hover:text-red-600 text-xs opacity-0 group-hover:opacity-100 transition"><i class="fas fa-times"></i></button>
+      <div class="grid grid-cols-2 gap-2 mb-2"><input type="text" class="input-field text-xs proj-name" placeholder="Project Name"><input type="text" class="input-field text-xs proj-tech" placeholder="Technologies"></div>
+      <textarea class="input-field text-xs proj-desc" rows="2" placeholder="Description"></textarea>
+      <input type="url" class="input-field text-xs mt-2 proj-url" placeholder="URL">
+      <button onclick="aiGenerateProjectDesc(this)" class="ai-btn mt-1"><i class="fas fa-magic mr-1"></i>AI Improve</button></div>`,
+    achievements: `<div class="flex gap-2 items-center group">
+      <input type="text" class="input-field text-xs flex-1 ach-text" placeholder="Achievement">
+      <button onclick="aiRewriteAchievement(this)" class="ai-btn flex-shrink-0"><i class="fas fa-magic"></i></button>
+      <button onclick="removeEntry(this)" class="text-red-400 hover:text-red-600 text-xs flex-shrink-0 opacity-0 group-hover:opacity-100"><i class="fas fa-times"></i></button></div>`,
+    certifications: `<div class="p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg relative group">
+      <button onclick="removeEntry(this)" class="absolute top-2 right-2 text-red-400 hover:text-red-600 text-xs opacity-0 group-hover:opacity-100 transition"><i class="fas fa-times"></i></button>
+      <div class="grid grid-cols-3 gap-2"><input type="text" class="input-field text-xs cert-name" placeholder="Name"><input type="text" class="input-field text-xs cert-org" placeholder="Organization"><input type="text" class="input-field text-xs cert-date" placeholder="Date"></div></div>`,
+    languages: `<div class="flex gap-2 items-center group">
+      <input type="text" class="input-field text-xs flex-1 lang-name" placeholder="Language">
+      <select class="input-field text-xs w-32 lang-level"><option>Native</option><option>Fluent</option><option>Advanced</option><option selected>Intermediate</option><option>Basic</option></select>
+      <button onclick="removeEntry(this)" class="text-red-400 hover:text-red-600 text-xs flex-shrink-0 opacity-0 group-hover:opacity-100"><i class="fas fa-times"></i></button></div>`,
+  };
+  const list = document.getElementById(type + '-list');
+  if (list && templates[type]) list.insertAdjacentHTML('beforeend', templates[type]);
+  triggerAutoSave();
 }
 
-function addExperience() {
-  const list = document.getElementById('experience-list');
-  list.insertAdjacentHTML('beforeend', `
-    <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-      <input type="text" class="input-field mb-2 exp-title" placeholder="Job Title">
-      <input type="text" class="input-field mb-2 exp-company" placeholder="Company">
-      <div class="grid grid-cols-2 gap-2 mb-2">
-        <input type="text" class="input-field exp-start" placeholder="Start Date">
-        <input type="text" class="input-field exp-end" placeholder="End Date">
-      </div>
-      <textarea class="input-field exp-desc" rows="3" placeholder="Description"></textarea>
-      <button onclick="generateBulletsFor(this)" class="text-xs text-accent hover:underline mt-2"><i class="fas fa-magic"></i> AI Generate Bullets</button>
-    </div>
-  `);
+function removeEntry(btn) {
+  const entry = btn.closest('[class*="bg-gray"], .flex');
+  if (entry) { entry.remove(); triggerAutoSave(); }
 }
 
-function addProject() {
-  const list = document.getElementById('projects-list');
-  list.insertAdjacentHTML('beforeend', `
-    <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-      <input type="text" class="input-field mb-2 proj-name" placeholder="Project Name">
-      <input type="text" class="input-field mb-2 proj-tech" placeholder="Technologies">
-      <textarea class="input-field proj-desc" rows="3" placeholder="Description"></textarea>
-      <input type="url" class="input-field mt-2 proj-url" placeholder="URL">
-    </div>
-  `);
-}
-
-function addAchievement() {
-  const list = document.getElementById('achievements-list');
-  list.insertAdjacentHTML('beforeend', `
-    <div class="flex gap-2">
-      <input type="text" class="input-field flex-1 ach-text" placeholder="Achievement">
-      <button onclick="rewriteAchievement(this)" class="text-accent hover:opacity-70"><i class="fas fa-magic"></i></button>
-    </div>
-  `);
-}
-
+// =================== DATA COLLECTION ===================
 function collectResumeData() {
+  const sectionOrder = Array.from(document.querySelectorAll('#section-list .section-btn')).map(b => b.dataset.section).filter(Boolean);
+
   return {
     title: document.getElementById('resume-title').value,
-    profile_data: JSON.stringify({
+    template: document.getElementById('template-select').value,
+    theme_color: document.getElementById('theme-color').value,
+    section_order: sectionOrder,
+    profile_data: {
       name: document.getElementById('profile-name').value,
+      headline: document.getElementById('profile-headline').value,
       email: document.getElementById('profile-email').value,
       phone: document.getElementById('profile-phone').value,
-      location: document.getElementById('profile-location').value,
       linkedin: document.getElementById('profile-linkedin').value,
+      github: document.getElementById('profile-github').value,
       website: document.getElementById('profile-website').value,
+      location: document.getElementById('profile-location').value,
       summary: document.getElementById('profile-summary').value,
-    }),
-    education_data: JSON.stringify(Array.from(document.querySelectorAll('#education-list > div')).map(el => ({
+    },
+    education_data: Array.from(document.querySelectorAll('#education-list > div')).map(el => ({
       institution: el.querySelector('.edu-institution')?.value || '',
       degree: el.querySelector('.edu-degree')?.value || '',
+      field: el.querySelector('.edu-field')?.value || '',
       year: el.querySelector('.edu-year')?.value || '',
       gpa: el.querySelector('.edu-gpa')?.value || '',
-    }))),
-    experience_data: JSON.stringify(Array.from(document.querySelectorAll('#experience-list > div')).map(el => ({
+    })).filter(e => e.institution || e.degree),
+    experience_data: Array.from(document.querySelectorAll('#experience-list > div')).map(el => ({
       title: el.querySelector('.exp-title')?.value || '',
       company: el.querySelector('.exp-company')?.value || '',
+      location: el.querySelector('.exp-location')?.value || '',
       startDate: el.querySelector('.exp-start')?.value || '',
       endDate: el.querySelector('.exp-end')?.value || '',
       description: el.querySelector('.exp-desc')?.value || '',
-    }))),
-    projects_data: JSON.stringify(Array.from(document.querySelectorAll('#projects-list > div')).map(el => ({
+    })).filter(e => e.title || e.company),
+    projects_data: Array.from(document.querySelectorAll('#projects-list > div')).map(el => ({
       name: el.querySelector('.proj-name')?.value || '',
       technologies: el.querySelector('.proj-tech')?.value || '',
       description: el.querySelector('.proj-desc')?.value || '',
       url: el.querySelector('.proj-url')?.value || '',
-    }))),
-    skills_data: JSON.stringify({
+    })).filter(e => e.name),
+    skills_data: {
       technical: document.getElementById('skills-technical').value,
       soft: document.getElementById('skills-soft').value,
       tools: document.getElementById('skills-tools').value,
       languages: document.getElementById('skills-languages').value,
-    }),
-    achievements_data: JSON.stringify(Array.from(document.querySelectorAll('.ach-text')).map(el => el.value).filter(Boolean)),
+    },
+    achievements_data: Array.from(document.querySelectorAll('.ach-text')).map(el => el.value).filter(Boolean),
+    certifications_data: Array.from(document.querySelectorAll('#certifications-list > div')).map(el => ({
+      name: el.querySelector('.cert-name')?.value || '',
+      organization: el.querySelector('.cert-org')?.value || '',
+      date: el.querySelector('.cert-date')?.value || '',
+    })).filter(e => e.name),
+    languages_data: Array.from(document.querySelectorAll('#languages-list > div, #languages-list > .flex')).map(el => ({
+      language: el.querySelector('.lang-name')?.value || '',
+      proficiency: el.querySelector('.lang-level')?.value || '',
+    })).filter(e => e.language),
+    interests_data: (document.getElementById('interests-text')?.value || '').split(',').map(s => s.trim()).filter(Boolean),
   };
 }
 
+// =================== SAVE ===================
 async function saveResume() {
   const resumeId = document.getElementById('resume-id').value;
   const data = collectResumeData();
   const url = resumeId ? '/resume/' + resumeId : '/resume';
   const method = resumeId ? 'PUT' : 'POST';
 
+  document.getElementById('save-status').innerHTML = '<i class="fas fa-spinner fa-spin text-blue-500"></i> Saving...';
+
   try {
-    const res = await fetch(url, {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
+    const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+    const result = await res.json();
     if (res.ok) {
-      const result = await res.json();
       if (!resumeId && result.id) {
         document.getElementById('resume-id').value = result.id;
+        window.history.replaceState({}, '', '/resume/' + result.id + '/edit');
       }
-      showToast('Resume saved successfully!', 'success');
+      document.getElementById('save-status').innerHTML = '<i class="fas fa-check text-green-500"></i> Saved';
+      lastSaveData = JSON.stringify(data);
+    } else {
+      document.getElementById('save-status').innerHTML = '<i class="fas fa-exclamation-triangle text-red-500"></i> Error';
     }
-  } catch (err) {
-    showToast('Failed to save resume', 'error');
+  } catch {
+    document.getElementById('save-status').innerHTML = '<i class="fas fa-exclamation-triangle text-red-500"></i> Error';
   }
 }
 
-async function generateSummary() {
+// =================== AUTO-SAVE (every 5s) ===================
+function setupAutoSave() {
+  lastSaveData = JSON.stringify(collectResumeData());
+  setInterval(() => {
+    const current = JSON.stringify(collectResumeData());
+    if (current !== lastSaveData) {
+      saveResume();
+      updatePreview();
+    }
+  }, 5000);
+}
+
+function triggerAutoSave() {
+  clearTimeout(autoSaveTimer);
+  autoSaveTimer = setTimeout(() => { updatePreview(); }, 300);
+}
+
+// Listen for input changes
+document.addEventListener('input', (e) => {
+  if (e.target.closest('#builder-app')) triggerAutoSave();
+});
+
+// =================== LIVE PREVIEW ===================
+function updatePreview() {
+  const resumeId = document.getElementById('resume-id').value;
+  if (!resumeId) {
+    // For new resumes render a simple preview
+    const data = collectResumeData();
+    const frame = document.getElementById('preview-frame');
+    const html = buildPreviewHTML(data);
+    frame.srcdoc = html;
+    scalePreview();
+    return;
+  }
+  const template = document.getElementById('template-select').value;
+  const color = encodeURIComponent(document.getElementById('theme-color').value);
+  const frame = document.getElementById('preview-frame');
+  // Use data-based preview for instant updates (no network)
+  const data = collectResumeData();
+  const html = buildPreviewHTML(data);
+  frame.srcdoc = html;
+  scalePreview();
+}
+
+function scalePreview() {
+  const container = document.getElementById('resume-preview');
+  if (!container) return;
+  const parent = container.parentElement;
+  const scale = Math.min((parent.clientWidth - 16) / 800, 1);
+  container.style.transform = 'scale(' + scale + ')';
+  container.style.width = '800px';
+}
+
+function buildPreviewHTML(data) {
+  const template = data.template || 'modern';
+  const color = data.theme_color || '#0a1a4a';
+  const p = data.profile_data || {};
+  const esc = (s) => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const order = data.section_order || ['profile','education','experience','projects','skills','achievements','certifications','languages','interests'];
+
+  const renderSec = (key) => {
+    switch(key) {
+      case 'education': return (data.education_data||[]).length ? '<h2>EDUCATION</h2>' + (data.education_data||[]).map(e=>'<div class="entry"><div class="eh"><span>'+esc(e.institution)+'</span><span>'+esc(e.year)+'</span></div><div class="es">'+esc(e.degree)+(e.field?' in '+esc(e.field):'')+(e.gpa?' | GPA: '+esc(e.gpa):'')+'</div></div>').join('') : '';
+      case 'experience': return (data.experience_data||[]).length ? '<h2>EXPERIENCE</h2>' + (data.experience_data||[]).map(e=>'<div class="entry"><div class="eh"><span>'+esc(e.title)+' — '+esc(e.company)+'</span><span>'+esc(e.startDate)+' - '+esc(e.endDate||'Present')+'</span></div>'+(e.location?'<div class="es">'+esc(e.location)+'</div>':'')+'<div class="ed">'+esc(e.description)+'</div></div>').join('') : '';
+      case 'projects': return (data.projects_data||[]).length ? '<h2>PROJECTS</h2>' + (data.projects_data||[]).map(pr=>'<div class="entry"><div class="eh"><span>'+esc(pr.name)+'</span><span>'+esc(pr.technologies)+'</span></div><div class="ed">'+esc(pr.description)+'</div></div>').join('') : '';
+      case 'skills': { const s=data.skills_data||{}; return (s.technical||s.soft||s.tools||s.languages)?'<h2>SKILLS</h2><div class="sg">'+(s.technical?'<div><b>Technical:</b> '+esc(s.technical)+'</div>':'')+(s.tools?'<div><b>Tools:</b> '+esc(s.tools)+'</div>':'')+(s.soft?'<div><b>Soft Skills:</b> '+esc(s.soft)+'</div>':'')+(s.languages?'<div><b>Languages:</b> '+esc(s.languages)+'</div>':'')+'</div>':''; }
+      case 'achievements': return (data.achievements_data||[]).length?'<h2>ACHIEVEMENTS</h2><ul>'+(data.achievements_data||[]).map(a=>'<li>'+esc(a)+'</li>').join('')+'</ul>':'';
+      case 'certifications': return (data.certifications_data||[]).length?'<h2>CERTIFICATIONS</h2><ul>'+(data.certifications_data||[]).map(c=>'<li><b>'+esc(c.name)+'</b>'+(c.organization?' — '+esc(c.organization):'')+(c.date?' ('+esc(c.date)+')':'')+'</li>').join('')+'</ul>':'';
+      case 'languages': return (data.languages_data||[]).length?'<h2>LANGUAGES</h2><div class="sg">'+(data.languages_data||[]).map(l=>'<div>'+esc(l.language)+' — '+esc(l.proficiency)+'</div>').join('')+'</div>':'';
+      case 'interests': return (data.interests_data||[]).length?'<h2>INTERESTS</h2><p>'+(data.interests_data||[]).map(i=>esc(typeof i==='string'?i:i.name||'')).join(', ')+'</p>':'';
+      default: return '';
+    }
+  };
+
+  const fontFamily = template==='professional'?'"Georgia",serif':template==='minimal'?'"Helvetica Neue","Arial",sans-serif':'"Calibri","Segoe UI",sans-serif';
+  const contact = [p.email,p.phone,p.location,p.linkedin,p.github,p.website].filter(Boolean).join(' | ');
+
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
+*{margin:0;padding:0;box-sizing:border-box}body{font-family:${fontFamily};color:#333;line-height:1.5;padding:28px 32px;font-size:12.5px}
+h1{font-size:${template==='minimal'?'20px':'24px'};text-align:${template==='professional'?'left':'center'};margin-bottom:1px;color:${template==='minimal'?'#333':color};letter-spacing:${template==='professional'?'2px':'0'};text-transform:${template==='professional'?'uppercase':'none'}}
+.hl{text-align:${template==='professional'?'left':'center'};font-size:12px;color:#555;font-style:italic;margin-bottom:1px}
+.ct{text-align:${template==='professional'?'left':'center'};font-size:10.5px;color:#666;margin-bottom:10px}
+.sm{font-size:11.5px;color:#444;margin-bottom:12px;${template==='professional'?'border-left:3px solid '+color+';padding-left:10px;':''}}
+h2{font-size:11px;text-transform:uppercase;letter-spacing:1.5px;border-bottom:${template==='minimal'?'1px solid #ddd':template==='ats'?'1px solid #333':'2px solid '+color};padding-bottom:2px;margin:12px 0 6px;color:${template==='minimal'?'#555':color};font-weight:700}
+.entry{margin-bottom:8px}.eh{display:flex;justify-content:space-between;font-weight:600;font-size:12px}.es{font-style:italic;font-size:10.5px;color:#555}
+.ed{font-size:11.5px;margin-top:2px;white-space:pre-line}.sg{display:grid;grid-template-columns:1fr 1fr;gap:3px 14px;font-size:11.5px}
+ul{padding-left:16px;font-size:11.5px}li{margin-bottom:2px}p{font-size:11.5px}b{font-weight:600}
+</style></head><body>
+<h1>${esc(p.name||'Your Name')}</h1>
+${p.headline?'<div class="hl">'+esc(p.headline)+'</div>':''}
+<div class="ct">${contact||'email@example.com | +91 98765 43210'}</div>
+${p.summary?'<div class="sm">'+esc(p.summary)+'</div>':''}
+${order.filter(k=>k!=='profile').map(renderSec).filter(Boolean).join('')}
+</body></html>`;
+}
+
+window.addEventListener('resize', scalePreview);
+
+// =================== TEMPLATE CHANGE ===================
+function changeTemplate() { triggerAutoSave(); }
+
+// =================== AI TOOLS ===================
+async function aiGenerateSummary() {
   const data = {
     name: document.getElementById('profile-name').value,
     skills: document.getElementById('skills-technical')?.value || '',
-    experience: Array.from(document.querySelectorAll('.exp-title')).map(e => e.value).join(', '),
-    education: Array.from(document.querySelectorAll('.edu-degree')).map(e => e.value).join(', '),
+    experience: Array.from(document.querySelectorAll('.exp-title')).map(e=>e.value).filter(Boolean).join(', '),
+    education: Array.from(document.querySelectorAll('.edu-degree')).map(e=>e.value).filter(Boolean).join(', '),
   };
+  showToast('Generating summary...', 'success');
   try {
-    const res = await fetch('/resume/ai/summary', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data),
-    });
+    const res = await fetch('/resume/ai/summary', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) });
     const result = await res.json();
-    if (result.success) document.getElementById('profile-summary').value = result.summary;
-  } catch (err) { showToast('Failed to generate summary', 'error'); }
+    if (result.success) { document.getElementById('profile-summary').value = result.summary; triggerAutoSave(); showToast('Summary generated!', 'success'); }
+    else showToast(result.error || 'Failed', 'error');
+  } catch { showToast('AI unavailable', 'error'); }
 }
 
-async function generateBulletsFor(btn) {
-  const container = btn.closest('div[class*="bg-gray"]');
+async function aiGenerateBullets(btn) {
+  const container = btn.closest('.p-3, [class*="bg-gray"]');
+  const data = { title: container.querySelector('.exp-title')?.value, company: container.querySelector('.exp-company')?.value, description: container.querySelector('.exp-desc')?.value };
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Generating...';
+  try {
+    const res = await fetch('/resume/ai/bullets', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) });
+    const result = await res.json();
+    if (result.success) { container.querySelector('.exp-desc').value = result.bullets; triggerAutoSave(); }
+  } catch { showToast('AI unavailable', 'error'); }
+  btn.innerHTML = '<i class="fas fa-magic mr-1"></i>AI Generate Bullets';
+}
+
+async function aiGenerateProjectDesc(btn) {
+  const container = btn.closest('.p-3, [class*="bg-gray"]');
+  const data = { name: container.querySelector('.proj-name')?.value, technologies: container.querySelector('.proj-tech')?.value, description: container.querySelector('.proj-desc')?.value };
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Generating...';
+  try {
+    const res = await fetch('/resume/ai/project', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) });
+    const result = await res.json();
+    if (result.success) { container.querySelector('.proj-desc').value = result.description; triggerAutoSave(); }
+  } catch { showToast('AI unavailable', 'error'); }
+  btn.innerHTML = '<i class="fas fa-magic mr-1"></i>AI Improve';
+}
+
+async function aiRewriteAchievement(btn) {
+  const input = btn.closest('.flex').querySelector('.ach-text');
+  if (!input.value) return;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+  try {
+    const res = await fetch('/resume/ai/rewrite', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ achievement: input.value }) });
+    const result = await res.json();
+    if (result.success) { input.value = result.rewritten; triggerAutoSave(); }
+  } catch { showToast('AI unavailable', 'error'); }
+  btn.innerHTML = '<i class="fas fa-magic"></i>';
+}
+
+async function aiSuggestSkills() {
   const data = {
-    title: container.querySelector('.exp-title')?.value || '',
-    company: container.querySelector('.exp-company')?.value || '',
-    description: container.querySelector('.exp-desc')?.value || '',
+    role: document.getElementById('profile-headline').value,
+    currentSkills: document.getElementById('skills-technical')?.value || '',
+    experience: Array.from(document.querySelectorAll('.exp-title')).map(e=>e.value).filter(Boolean).join(', '),
+    projects: Array.from(document.querySelectorAll('.proj-tech')).map(e=>e.value).filter(Boolean).join(', '),
   };
+  showToast('Suggesting skills...', 'success');
   try {
-    const res = await fetch('/resume/ai/bullets', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data),
-    });
+    const res = await fetch('/resume/ai/skills', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) });
     const result = await res.json();
-    if (result.success) container.querySelector('.exp-desc').value = result.bullets;
-  } catch (err) { showToast('Failed to generate bullets', 'error'); }
+    if (result.success && result.skills) {
+      const s = result.skills;
+      if (s.technical?.length) document.getElementById('skills-technical').value = s.technical.join(', ');
+      if (s.soft?.length) document.getElementById('skills-soft').value = s.soft.join(', ');
+      if (s.tools?.length) document.getElementById('skills-tools').value = s.tools.join(', ');
+      triggerAutoSave();
+      showToast('Skills suggested!', 'success');
+    }
+  } catch { showToast('AI unavailable', 'error'); }
 }
 
-async function rewriteAchievement(btn) {
-  const input = btn.parentElement.querySelector('.ach-text');
+// =================== ATS ANALYZER ===================
+function showATSModal() { document.getElementById('ats-modal').classList.remove('hidden'); document.getElementById('ats-modal').classList.add('flex'); }
+function closeATSModal() { document.getElementById('ats-modal').classList.add('hidden'); document.getElementById('ats-modal').classList.remove('flex'); }
+
+async function runATSAnalysis() {
+  const jd = document.getElementById('ats-jd').value.trim();
+  if (!jd) return showToast('Paste a job description', 'error');
+  const resumeId = document.getElementById('resume-id').value;
+  if (!resumeId) return showToast('Save resume first', 'error');
+  const btn = document.getElementById('ats-run-btn');
+  btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Analyzing...';
   try {
-    const res = await fetch('/resume/ai/rewrite', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ achievement: input.value }),
-    });
+    const res = await fetch('/resume/' + resumeId + '/analyze', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ jobDescription: jd }) });
     const result = await res.json();
-    if (result.success) input.value = result.rewritten;
-  } catch (err) { showToast('Failed to rewrite', 'error'); }
+    if (result.success) {
+      const a = result.analysis;
+      const scoreColor = a.score >= 80 ? 'text-green-500' : a.score >= 60 ? 'text-yellow-500' : 'text-red-500';
+      document.getElementById('ats-results').classList.remove('hidden');
+      document.getElementById('ats-results').innerHTML = `
+        <div class="text-center mb-4"><div class="text-4xl font-bold ${scoreColor}">${a.score}%</div><div class="text-sm text-gray-500">ATS Score</div></div>
+        ${a.matchedKeywords?.length ? '<div class="mb-3"><span class="text-xs font-bold text-gray-500">Matched Keywords:</span><div class="flex flex-wrap gap-1 mt-1">' + a.matchedKeywords.map(k=>'<span class="text-[10px] bg-green-50 text-green-600 px-2 py-0.5 rounded-full">'+k+'</span>').join('') + '</div></div>' : ''}
+        ${a.missingKeywords?.length ? '<div class="mb-3"><span class="text-xs font-bold text-gray-500">Missing Keywords:</span><div class="flex flex-wrap gap-1 mt-1">' + a.missingKeywords.map(k=>'<span class="text-[10px] bg-red-50 text-red-600 px-2 py-0.5 rounded-full">'+k+'</span>').join('') + '</div></div>' : ''}
+        ${a.suggestions?.length ? '<div class="mb-3"><span class="text-xs font-bold text-gray-500">Suggestions:</span><ul class="list-disc pl-4 mt-1 text-xs text-gray-600 space-y-1">' + a.suggestions.map(s=>'<li>'+s+'</li>').join('') + '</ul></div>' : ''}
+      `;
+    }
+  } catch { showToast('Analysis failed', 'error'); }
+  btn.disabled = false; btn.innerHTML = '<i class="fas fa-chart-bar mr-2"></i>Analyze Resume';
+}
+
+// =================== PDF EXPORT ===================
+async function exportPDF() {
+  const resumeId = document.getElementById('resume-id').value;
+  if (!resumeId) return showToast('Save resume first', 'error');
+  showToast('Generating PDF...', 'success');
+  try {
+    const res = await fetch('/resume/' + resumeId + '/export');
+    if (res.ok) {
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = (document.getElementById('resume-title').value || 'resume') + '.pdf';
+      a.click(); URL.revokeObjectURL(url);
+    } else {
+      const err = await res.json();
+      showToast(err.error || 'PDF export failed', 'error');
+    }
+  } catch { showToast('PDF export failed', 'error'); }
+}
+
+// =================== VERSION HISTORY ===================
+async function saveVersion() {
+  const resumeId = document.getElementById('resume-id').value;
+  if (!resumeId) return showToast('Save resume first', 'error');
+  await saveResume();
+  try {
+    const res = await fetch('/resume/' + resumeId + '/version', { method:'POST' });
+    const result = await res.json();
+    if (result.success) { showToast('Version saved!', 'success'); setTimeout(() => location.reload(), 500); }
+  } catch { showToast('Failed to save version', 'error'); }
+}
+
+async function restoreVersion(versionId) {
+  if (!confirm('Restore this version? Current changes will be overwritten.')) return;
+  const resumeId = document.getElementById('resume-id').value;
+  try {
+    const res = await fetch('/resume/' + resumeId + '/version/' + versionId + '/restore', { method:'POST' });
+    if (res.ok) { showToast('Version restored!', 'success'); setTimeout(() => location.reload(), 500); }
+  } catch { showToast('Failed to restore', 'error'); }
 }
 </script>
