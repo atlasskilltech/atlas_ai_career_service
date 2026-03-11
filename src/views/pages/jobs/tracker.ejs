@@ -1,24 +1,24 @@
 <div class="space-y-6">
-  <div class="flex items-center justify-between">
-    <h1 class="text-2xl font-bold">Job Application Tracker</h1>
-    <div class="flex gap-2">
-      <button onclick="openJobModal()" class="btn-primary"><i class="fas fa-plus mr-2"></i>Add Job</button>
-      <button onclick="openMatchModal()" class="btn-outline"><i class="fas fa-chart-pie mr-2"></i>Match Analyzer</button>
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <h1 class="text-xl sm:text-2xl font-bold">Job Application Tracker</h1>
+    <div class="flex gap-2 flex-shrink-0">
+      <button onclick="openJobModal()" class="btn-primary text-sm"><i class="fas fa-plus mr-1 sm:mr-2"></i><span class="hidden sm:inline">Add </span>Job</button>
+      <button onclick="openMatchModal()" class="btn-outline text-sm"><i class="fas fa-chart-pie mr-1 sm:mr-2"></i><span class="hidden sm:inline">Match </span>Analyzer</button>
     </div>
   </div>
 
   <!-- Stats -->
-  <div class="grid grid-cols-5 gap-4">
+  <div class="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-4">
     <% ['saved','applied','interview','offer','rejected'].forEach(status => { %>
-      <div class="card text-center p-4">
-        <div class="text-2xl font-bold"><%= stats[status] || 0 %></div>
+      <div class="card text-center p-3 sm:p-4">
+        <div class="text-xl sm:text-2xl font-bold"><%= stats[status] || 0 %></div>
         <p class="text-xs text-gray-500 capitalize"><%= status %></p>
       </div>
     <% }); %>
   </div>
 
   <!-- Kanban Board -->
-  <div class="grid grid-cols-5 gap-4">
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4">
     <% ['saved','applied','interview','offer','rejected'].forEach(status => { %>
       <div class="kanban-column" id="col-<%= status %>" ondrop="dropJob(event, '<%= status %>')" ondragover="event.preventDefault()">
         <h3 class="font-semibold text-sm uppercase tracking-wide mb-3 flex items-center gap-2">
