@@ -74,6 +74,9 @@ const setupInterviewSocket = require('./sockets/interviewSocket');
 setupInterviewSocket(io);
 
 const PORT = process.env.PORT || 3000;
+// Increase server timeout to 60s for long AI operations (upload-parse, etc.)
+server.keepAliveTimeout = 65000;
+server.headersTimeout = 66000;
 server.listen(PORT, () => {
   console.log(`Atlas Career Platform running on http://localhost:${PORT}`);
 });

@@ -69,38 +69,44 @@ class ResumeService {
     var ext = path.extname(filePath).toLowerCase();
     var text = '';
 
-    if (ext === '.pdf') {
-      var dataBuffer = fs.readFileSync(filePath);
-      var pdfData = await pdfParse(dataBuffer);
-      text = pdfData.text;
-    } else if (ext === '.docx' || ext === '.doc') {
-      // For DOCX, read raw text extraction
-      var dataBuffer = fs.readFileSync(filePath);
-      // Simple text extraction from docx XML
-      var content = dataBuffer.toString('utf8');
-      // Try to extract readable text
-      text = content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-      // If mostly binary/unreadable, try another approach
-      if (text.length < 50 || /[\x00-\x08]/.test(text.substring(0, 100))) {
-        // Extract from word/document.xml inside the zip
-        try {
-          var AdmZip = require('adm-zip');
-          var zip = new AdmZip(filePath);
-          var docEntry = zip.getEntry('word/document.xml');
-          if (docEntry) {
-            var xmlContent = docEntry.getData().toString('utf8');
-            text = xmlContent.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-          }
-        } catch(e) {
-          text = 'Could not extract text from document';
+    try {
+      if (ext === '.pdf') {
+        var dataBuffer = fs.readFileSync(filePath);
+        // Wrap pdfParse in a timeout to prevent hanging on bad PDFs
+        var pdfData = await Promise.race([
+          pdfParse(dataBuffer),
+          new Promise(function(_, reject) {
+            setTimeout(function() { reject(new Error('PDF parsing timed out')); }, 15000);
+          })
+        ]);
+        text = pdfData.text;
+      } else if (ext === '.docx') {
+        // DOCX is a ZIP file containing XML
+        var AdmZip = require('adm-zip');
+        var zip = new AdmZip(filePath);
+        var docEntry = zip.getEntry('word/document.xml');
+        if (docEntry) {
+          var xmlContent = docEntry.getData().toString('utf8');
+          text = xmlContent.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
         }
+        if (!text || text.length < 20) {
+          throw new Error('Could not extract text from DOCX file.');
+        }
+      } else if (ext === '.doc') {
+        // .doc is a legacy binary format - try raw text extraction
+        var dataBuffer = fs.readFileSync(filePath);
+        var content = dataBuffer.toString('utf8');
+        text = content.replace(/[\x00-\x1f]/g, ' ').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+        if (!text || text.length < 20) {
+          throw new Error('Legacy .doc format not fully supported. Please convert to PDF or DOCX.');
+        }
+      } else {
+        throw new Error('Unsupported file format. Please upload a PDF or DOCX file.');
       }
-    } else {
-      throw new Error('Unsupported file format. Please upload a PDF or DOCX file.');
+    } finally {
+      // Always clean up uploaded file
+      try { fs.unlinkSync(filePath); } catch(e) {}
     }
-
-    // Clean up uploaded file
-    try { fs.unlinkSync(filePath); } catch(e) {}
 
     if (!text || text.trim().length < 20) {
       throw new Error('Could not extract text from the uploaded file. Please try a different file.');
@@ -113,7 +119,7 @@ class ResumeService {
     try {
       var systemPrompt = 'You are a resume parser. Extract structured data from the resume text provided. Return ONLY valid JSON with no markdown formatting, no code blocks, no extra text. The JSON must have this exact structure:\n{\n  "name": "string",\n  "headline": "string (job title/role)",\n  "email": "string",\n  "phone": "string",\n  "linkedin": "string",\n  "github": "string",\n  "website": "string",\n  "location": "string",\n  "summary": "string (professional summary)",\n  "education": [{"institution":"string","degree":"string","field":"string","year":"string","gpa":"string"}],\n  "experience": [{"title":"string","company":"string","location":"string","startDate":"string","endDate":"string","description":"string"}],\n  "projects": [{"name":"string","technologies":"string","description":"string","url":"string"}],\n  "skills": {"technical":"comma separated string","soft":"comma separated string","tools":"comma separated string","languages":"comma separated string"},\n  "achievements": ["string"],\n  "certifications": [{"name":"string","organization":"string","date":"string"}],\n  "languages": [{"language":"string","proficiency":"string"}],\n  "interests": ["string"]\n}\nExtract as much data as possible. For missing fields use empty strings or empty arrays. Return ONLY the JSON object.';
 
-      var result = await chatCompletion(systemPrompt, 'Parse this resume:\n\n' + text, { maxTokens: 3000, temperature: 0.3 });
+      var result = await chatCompletion(systemPrompt, 'Parse this resume:\n\n' + text, { maxTokens: 3000, temperature: 0.3, timeout: 25000 });
 
       // Clean the response - remove markdown code blocks if present
       result = result.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
