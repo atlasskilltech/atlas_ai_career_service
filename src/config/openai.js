@@ -8,16 +8,33 @@ const openai = new OpenAI({
 });
 
 async function chatCompletion(systemPrompt, userPrompt, options = {}) {
-  const response = await openai.chat.completions.create({
-    model: options.model || 'gpt-4o-mini',
-    messages: [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: userPrompt },
-    ],
-    temperature: options.temperature || 0.7,
-    max_tokens: options.maxTokens || 2000,
-  });
-  return response.choices[0].message.content;
+  try {
+    const timeoutMs = options.timeout || 25000;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+    const response = await openai.chat.completions.create({
+      model: options.model || 'gpt-4o-mini',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      temperature: options.temperature || 0.7,
+      max_tokens: options.maxTokens || 2000,
+    }, { signal: controller.signal });
+
+    clearTimeout(timer);
+
+    if (!response.choices || !response.choices[0] || !response.choices[0].message) {
+      throw new Error('Invalid response from OpenAI API');
+    }
+    return response.choices[0].message.content;
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      throw new Error('OpenAI API request timed out');
+    }
+    throw err;
+  }
 }
 
 async function textToSpeech(text, outputPath) {

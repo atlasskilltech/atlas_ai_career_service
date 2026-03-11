@@ -905,9 +905,18 @@ async function handleResumeUpload(input) {
 
   try {
     document.getElementById('upload-bar').style.width = '60%';
-    var res = await fetch('/resume/upload-parse', { method: 'POST', body: formData });
+    var controller = new AbortController();
+    var timeout = setTimeout(function() { controller.abort(); }, 45000);
+    var res = await fetch('/resume/upload-parse', { method: 'POST', body: formData, signal: controller.signal });
+    clearTimeout(timeout);
     document.getElementById('upload-bar').style.width = '90%';
-    var result = await res.json();
+
+    var result;
+    try {
+      result = await res.json();
+    } catch(jsonErr) {
+      throw new Error('Server returned status ' + res.status + '. Please try again.');
+    }
 
     if (result.success && result.data) {
       document.getElementById('upload-bar').style.width = '100%';
@@ -931,7 +940,8 @@ async function handleResumeUpload(input) {
   } catch(err) {
     document.getElementById('upload-spinner').classList.add('hidden');
     document.getElementById('upload-error').classList.remove('hidden');
-    document.getElementById('upload-error').textContent = 'Upload failed. Please try again.';
+    var msg = err.name === 'AbortError' ? 'Request timed out. The AI is taking too long. Please try again.' : (err.message || 'Upload failed. Please try again.');
+    document.getElementById('upload-error').textContent = msg;
     document.getElementById('upload-status-text').textContent = 'Failed';
   }
 }

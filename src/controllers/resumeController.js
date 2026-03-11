@@ -195,6 +195,9 @@ class ResumeController {
 
   // Upload & Parse Resume
   async uploadAndParse(req, res) {
+    // Set response timeout to 45s for AI parsing
+    req.setTimeout(45000);
+    res.setTimeout(45000);
     try {
       if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
       console.log('Upload received:', req.file.originalname, req.file.size, 'bytes, path:', req.file.path);
@@ -202,6 +205,10 @@ class ResumeController {
       res.json({ success: true, data: parsed });
     } catch (err) {
       console.error('Upload parse error:', err.message, err.stack);
+      // Clean up file if it still exists
+      if (req.file && req.file.path) {
+        try { require('fs').unlinkSync(req.file.path); } catch(e) {}
+      }
       res.status(500).json({ error: err.message || 'Failed to parse resume' });
     }
   }
