@@ -1,19 +1,13 @@
 const { fetchLinkedInJobs } = require('./linkedinFetcher');
 const { fetchNaukriJobs } = require('./naukriFetcher');
-const { fetchRemotiveJobs, fetchArbeitnowJobs, fetchAdzunaJobs, fetchJSearchJobs } = require('./apiFetcher');
 const jobAggregatorRepository = require('../repositories/jobAggregatorRepository');
 
 /**
- * Job Scheduler - Automatically fetches jobs from all sources.
+ * Job Scheduler - Automatically fetches jobs from LinkedIn & Naukri.
  *
- * Runs every 5 minutes with rotating sources:
- *   Cycle 1: Free APIs (Remotive + Arbeitnow)          — always works
- *   Cycle 2: LinkedIn scraper                           — needs Puppeteer
- *   Cycle 3: Free APIs (Remotive + Arbeitnow)           — always works
- *   Cycle 4: Naukri scraper                              — needs Puppeteer
- *   Cycle 5: Paid APIs (Adzuna + JSearch) if configured  — needs API keys
- *
- * This rotation avoids hammering any single source and spreads load.
+ * Runs every 5 minutes, alternating between sources:
+ *   Odd cycles:  LinkedIn
+ *   Even cycles:  Naukri
  */
 
 class JobScheduler {
@@ -33,7 +27,7 @@ class JobScheduler {
    */
   start() {
     if (this.timer) return;
-    console.log('[JobScheduler] Starting auto-fetch every 5 minutes...');
+    console.log('[JobScheduler] Starting auto-fetch every 5 minutes (LinkedIn + Naukri)...');
 
     // Run first fetch after 30 seconds (let the app boot)
     setTimeout(() => this.runCycle(), 30000);
@@ -58,64 +52,19 @@ class JobScheduler {
 
     this.isRunning = true;
     this.cycleIndex++;
-    const cycleNum = this.cycleIndex % 5;
+    const isLinkedIn = this.cycleIndex % 2 === 1; // odd = LinkedIn, even = Naukri
+    const source = isLinkedIn ? 'linkedin' : 'naukri';
     const startTime = Date.now();
 
-    console.log(`[JobScheduler] ── Cycle #${this.cycleIndex} (type ${cycleNum}) starting ──`);
+    console.log(`[JobScheduler] ── Cycle #${this.cycleIndex} (${source}) starting ──`);
 
     try {
       let allJobs = [];
-      let sources = [];
 
-      switch (cycleNum) {
-        case 1: // Free APIs
-        case 3:
-          sources = ['remotive', 'arbeitnow'];
-          const [remotiveJobs, arbeitnowJobs] = await Promise.allSettled([
-            fetchRemotiveJobs(),
-            fetchArbeitnowJobs(),
-          ]);
-          if (remotiveJobs.status === 'fulfilled') allJobs.push(...remotiveJobs.value);
-          if (arbeitnowJobs.status === 'fulfilled') allJobs.push(...arbeitnowJobs.value);
-          break;
-
-        case 2: // LinkedIn
-          sources = ['linkedin'];
-          try {
-            const linkedinJobs = await fetchLinkedInJobs();
-            allJobs.push(...linkedinJobs);
-          } catch (err) {
-            console.error('[JobScheduler] LinkedIn failed:', err.message);
-          }
-          break;
-
-        case 4: // Naukri
-          sources = ['naukri'];
-          try {
-            const naukriJobs = await fetchNaukriJobs();
-            allJobs.push(...naukriJobs);
-          } catch (err) {
-            console.error('[JobScheduler] Naukri failed:', err.message);
-          }
-          break;
-
-        case 0: // Paid APIs (if configured)
-          sources = ['adzuna', 'jsearch'];
-          const [adzunaJobs, jsearchJobs] = await Promise.allSettled([
-            fetchAdzunaJobs(),
-            fetchJSearchJobs(),
-          ]);
-          if (adzunaJobs.status === 'fulfilled') allJobs.push(...adzunaJobs.value);
-          if (jsearchJobs.status === 'fulfilled') allJobs.push(...jsearchJobs.value);
-
-          // If no paid APIs configured, fall back to free APIs
-          if (allJobs.length === 0) {
-            sources = ['remotive', 'arbeitnow'];
-            const [rJobs, aJobs] = await Promise.allSettled([fetchRemotiveJobs(), fetchArbeitnowJobs()]);
-            if (rJobs.status === 'fulfilled') allJobs.push(...rJobs.value);
-            if (aJobs.status === 'fulfilled') allJobs.push(...aJobs.value);
-          }
-          break;
+      try {
+        allJobs = isLinkedIn ? await fetchLinkedInJobs() : await fetchNaukriJobs();
+      } catch (err) {
+        console.error(`[JobScheduler] ${source} failed:`, err.message);
       }
 
       // Import all collected jobs
@@ -124,9 +73,7 @@ class JobScheduler {
       let errors = 0;
 
       if (allJobs.length > 0) {
-        // Create scraper log
-        const sourceLabel = sources.join('+');
-        const logId = await jobAggregatorRepository.createScraperLog(sourceLabel);
+        const logId = await jobAggregatorRepository.createScraperLog(source);
 
         for (const job of allJobs) {
           try {
@@ -135,7 +82,6 @@ class JobScheduler {
             else added++;
           } catch (err) {
             errors++;
-            // Duplicate key or other DB error - skip silently
           }
         }
 
@@ -150,7 +96,7 @@ class JobScheduler {
 
       const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
       this.lastRun = new Date();
-      this.lastResult = { sources, found: allJobs.length, added, updated, errors, elapsed: `${elapsed}s` };
+      this.lastResult = { sources: [source], found: allJobs.length, added, updated, errors, elapsed: `${elapsed}s` };
       this.totalImported.added += added;
       this.totalImported.updated += updated;
       this.totalImported.errors += errors;
@@ -183,14 +129,8 @@ class JobScheduler {
   }
 
   getNextSources() {
-    const next = (this.cycleIndex + 1) % 5;
-    switch (next) {
-      case 1: case 3: return ['Remotive', 'Arbeitnow'];
-      case 2: return ['LinkedIn'];
-      case 4: return ['Naukri'];
-      case 0: return ['Adzuna', 'JSearch'];
-      default: return ['Free APIs'];
-    }
+    const next = (this.cycleIndex + 1) % 2;
+    return next === 1 ? ['LinkedIn'] : ['Naukri'];
   }
 }
 
