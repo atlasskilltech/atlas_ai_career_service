@@ -1,18 +1,22 @@
-<header class="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-6 py-3 flex items-center justify-between sticky top-0 z-30">
-  <div>
-    <h2 class="text-lg font-semibold"><%= title %></h2>
+<header class="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-4 sm:px-6 py-3 flex items-center justify-between sticky top-0 z-30">
+  <div class="flex items-center gap-3">
+    <!-- Hamburger menu button (mobile only) -->
+    <button onclick="toggleSidebar()" class="lg:hidden p-2 -ml-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition text-gray-600 dark:text-gray-300">
+      <i class="fas fa-bars text-lg"></i>
+    </button>
+    <h2 class="text-base sm:text-lg font-semibold truncate"><%= title %></h2>
   </div>
-  <div class="flex items-center gap-4">
+  <div class="flex items-center gap-2 sm:gap-4">
     <button id="theme-toggle" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition">
       <i class="fas fa-moon dark:hidden"></i>
       <i class="fas fa-sun hidden dark:inline"></i>
     </button>
     <% if (user) { %>
-      <div class="flex items-center gap-3">
-        <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white text-sm font-medium">
+      <div class="flex items-center gap-2 sm:gap-3">
+        <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0">
           <%= user.name ? user.name.charAt(0).toUpperCase() : 'U' %>
         </div>
-        <div class="text-sm">
+        <div class="text-sm hidden sm:block">
           <p class="font-medium"><%= user.name %></p>
           <p class="text-gray-500 text-xs capitalize"><%= user.role ? user.role.replace('_', ' ') : '' %></p>
         </div>

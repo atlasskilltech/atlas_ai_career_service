@@ -1,4 +1,12 @@
-<aside class="fixed left-0 top-0 h-full w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 z-40 flex flex-col">
+<!-- Mobile overlay backdrop -->
+<div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 hidden lg:hidden" onclick="toggleSidebar()"></div>
+
+<aside id="app-sidebar" class="fixed left-0 top-0 h-full w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 z-50 flex flex-col transition-transform duration-300 -translate-x-full lg:translate-x-0">
+  <!-- Close button for mobile -->
+  <button onclick="toggleSidebar()" class="absolute top-4 right-4 lg:hidden text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-lg">
+    <i class="fas fa-times"></i>
+  </button>
+
   <div class="p-6 border-b border-gray-200 dark:border-gray-800">
     <h1 class="text-xl font-bold text-primary dark:text-white">Atlas Career</h1>
     <p class="text-xs text-gray-500 mt-1">SkillTech University</p>
@@ -43,3 +51,30 @@
     </a>
   </div>
 </aside>
+
+<script>
+function toggleSidebar() {
+  var sidebar = document.getElementById('app-sidebar');
+  var overlay = document.getElementById('sidebar-overlay');
+  var isOpen = !sidebar.classList.contains('-translate-x-full');
+  if (isOpen) {
+    sidebar.classList.add('-translate-x-full');
+    overlay.classList.add('hidden');
+    document.body.classList.remove('overflow-hidden');
+  } else {
+    sidebar.classList.remove('-translate-x-full');
+    overlay.classList.remove('hidden');
+    document.body.classList.add('overflow-hidden');
+  }
+}
+// Close sidebar on window resize to desktop
+window.addEventListener('resize', function() {
+  if (window.innerWidth >= 1024) {
+    var sidebar = document.getElementById('app-sidebar');
+    var overlay = document.getElementById('sidebar-overlay');
+    if (sidebar) sidebar.classList.remove('-translate-x-full');
+    if (overlay) overlay.classList.add('hidden');
+    document.body.classList.remove('overflow-hidden');
+  }
+});
+</script>
