@@ -61,7 +61,7 @@ app.use((req, res, next) => {
 // Routes
 app.get('/', (req, res) => {
   if (req.session.user) return res.redirect('/dashboard');
-  res.render('pages/landing', { title: 'Atlas Career Platform', layout: 'layouts/main' });
+  res.render('pages/landing', { title: 'ATLAS Career Platform', layout: 'layouts/main' });
 });
 
 app.use('/auth', require('./routes/authRoutes'));
@@ -105,7 +105,7 @@ const PORT = process.env.PORT || 3000;
 server.keepAliveTimeout = 65000;
 server.headersTimeout = 66000;
 server.listen(PORT, () => {
-  console.log(`Atlas Career Platform running on http://localhost:${PORT}`);
+console.log(`ATLAS Career Platform running on http://localhost:${PORT}`);
   // Start job auto-fetcher after server is ready
   jobScheduler.start();
 });
