@@ -39,6 +39,9 @@ router.post('/:id/version', resumeController.saveVersion);
 router.get('/:id/versions', resumeController.getVersions);
 router.post('/:id/version/:versionId/restore', resumeController.restoreVersion);
 
+// AI Parse text (step 2 of upload, called separately)
+router.post('/ai/parse-resume', resumeController.aiParseText);
+
 // AI Tools
 router.post('/ai/bullets', resumeController.generateBullets);
 router.post('/ai/summary', resumeController.generateSummary);

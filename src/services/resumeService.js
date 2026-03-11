@@ -64,24 +64,22 @@ class ResumeService {
     });
   }
 
-  // Parse Uploaded Resume
-  async parseUploadedResume(filePath) {
+  // Step 1: Extract text from file (fast, no AI)
+  async extractTextFromResume(filePath) {
     var ext = path.extname(filePath).toLowerCase();
     var text = '';
 
     try {
       if (ext === '.pdf') {
         var dataBuffer = fs.readFileSync(filePath);
-        // Wrap pdfParse in a timeout to prevent hanging on bad PDFs
         var pdfData = await Promise.race([
           pdfParse(dataBuffer),
           new Promise(function(_, reject) {
-            setTimeout(function() { reject(new Error('PDF parsing timed out')); }, 15000);
+            setTimeout(function() { reject(new Error('PDF parsing timed out')); }, 10000);
           })
         ]);
         text = pdfData.text;
       } else if (ext === '.docx') {
-        // DOCX is a ZIP file containing XML
         var AdmZip = require('adm-zip');
         var zip = new AdmZip(filePath);
         var docEntry = zip.getEntry('word/document.xml');
@@ -93,7 +91,6 @@ class ResumeService {
           throw new Error('Could not extract text from DOCX file.');
         }
       } else if (ext === '.doc') {
-        // .doc is a legacy binary format - try raw text extraction
         var dataBuffer = fs.readFileSync(filePath);
         var content = dataBuffer.toString('utf8');
         text = content.replace(/[\x00-\x1f]/g, ' ').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
@@ -104,7 +101,6 @@ class ResumeService {
         throw new Error('Unsupported file format. Please upload a PDF or DOCX file.');
       }
     } finally {
-      // Always clean up uploaded file
       try { fs.unlinkSync(filePath); } catch(e) {}
     }
 
@@ -112,44 +108,54 @@ class ResumeService {
       throw new Error('Could not extract text from the uploaded file. Please try a different file.');
     }
 
-    // Truncate to prevent token overflow
     text = text.substring(0, 8000);
+    return { text };
+  }
 
-    // Try AI parsing first, fall back to regex-based extraction
+  // Step 2: Parse extracted text with AI
+  async parseResumeTextWithAI(text) {
+    var systemPrompt = 'You are a resume parser. Extract structured data from the resume text provided. Return ONLY valid JSON with no markdown formatting, no code blocks, no extra text. The JSON must have this exact structure:\n{\n  "name": "string",\n  "headline": "string (job title/role)",\n  "email": "string",\n  "phone": "string",\n  "linkedin": "string",\n  "github": "string",\n  "website": "string",\n  "location": "string",\n  "summary": "string (professional summary)",\n  "education": [{"institution":"string","degree":"string","field":"string","year":"string","gpa":"string"}],\n  "experience": [{"title":"string","company":"string","location":"string","startDate":"string","endDate":"string","description":"string"}],\n  "projects": [{"name":"string","technologies":"string","description":"string","url":"string"}],\n  "skills": {"technical":"comma separated string","soft":"comma separated string","tools":"comma separated string","languages":"comma separated string"},\n  "achievements": ["string"],\n  "certifications": [{"name":"string","organization":"string","date":"string"}],\n  "languages": [{"language":"string","proficiency":"string"}],\n  "interests": ["string"]\n}\nExtract as much data as possible. For missing fields use empty strings or empty arrays. Return ONLY the JSON object.';
+
+    var result = await chatCompletion(systemPrompt, 'Parse this resume:\n\n' + text, { maxTokens: 3000, temperature: 0.3, timeout: 20000 });
+    result = result.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+
+    var parsed = JSON.parse(result);
+    return {
+      profile_data: {
+        name: parsed.name || '',
+        headline: parsed.headline || '',
+        email: parsed.email || '',
+        phone: parsed.phone || '',
+        linkedin: parsed.linkedin || '',
+        github: parsed.github || '',
+        website: parsed.website || '',
+        location: parsed.location || '',
+        summary: parsed.summary || '',
+      },
+      education_data: parsed.education || [],
+      experience_data: parsed.experience || [],
+      projects_data: parsed.projects || [],
+      skills_data: parsed.skills || { technical: '', soft: '', tools: '', languages: '' },
+      achievements_data: parsed.achievements || [],
+      certifications_data: parsed.certifications || [],
+      languages_data: parsed.languages || [],
+      interests_data: parsed.interests || [],
+    };
+  }
+
+  // Regex-based fallback (public, used by controller)
+  extractResumeFromText(text) {
+    return this._extractResumeFromText(text);
+  }
+
+  // Legacy method for backward compatibility
+  async parseUploadedResume(filePath) {
+    var extractResult = await this.extractTextFromResume(filePath);
     try {
-      var systemPrompt = 'You are a resume parser. Extract structured data from the resume text provided. Return ONLY valid JSON with no markdown formatting, no code blocks, no extra text. The JSON must have this exact structure:\n{\n  "name": "string",\n  "headline": "string (job title/role)",\n  "email": "string",\n  "phone": "string",\n  "linkedin": "string",\n  "github": "string",\n  "website": "string",\n  "location": "string",\n  "summary": "string (professional summary)",\n  "education": [{"institution":"string","degree":"string","field":"string","year":"string","gpa":"string"}],\n  "experience": [{"title":"string","company":"string","location":"string","startDate":"string","endDate":"string","description":"string"}],\n  "projects": [{"name":"string","technologies":"string","description":"string","url":"string"}],\n  "skills": {"technical":"comma separated string","soft":"comma separated string","tools":"comma separated string","languages":"comma separated string"},\n  "achievements": ["string"],\n  "certifications": [{"name":"string","organization":"string","date":"string"}],\n  "languages": [{"language":"string","proficiency":"string"}],\n  "interests": ["string"]\n}\nExtract as much data as possible. For missing fields use empty strings or empty arrays. Return ONLY the JSON object.';
-
-      var result = await chatCompletion(systemPrompt, 'Parse this resume:\n\n' + text, { maxTokens: 3000, temperature: 0.3, timeout: 25000 });
-
-      // Clean the response - remove markdown code blocks if present
-      result = result.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
-
-      var parsed = JSON.parse(result);
-      return {
-        profile_data: {
-          name: parsed.name || '',
-          headline: parsed.headline || '',
-          email: parsed.email || '',
-          phone: parsed.phone || '',
-          linkedin: parsed.linkedin || '',
-          github: parsed.github || '',
-          website: parsed.website || '',
-          location: parsed.location || '',
-          summary: parsed.summary || '',
-        },
-        education_data: parsed.education || [],
-        experience_data: parsed.experience || [],
-        projects_data: parsed.projects || [],
-        skills_data: parsed.skills || { technical: '', soft: '', tools: '', languages: '' },
-        achievements_data: parsed.achievements || [],
-        certifications_data: parsed.certifications || [],
-        languages_data: parsed.languages || [],
-        interests_data: parsed.interests || [],
-      };
+      return await this.parseResumeTextWithAI(extractResult.text);
     } catch(aiError) {
       console.error('AI parsing failed, using regex fallback:', aiError.message);
-      // Fallback: basic regex extraction from raw text
-      return this._extractResumeFromText(text);
+      return this._extractResumeFromText(extractResult.text);
     }
   }
 
