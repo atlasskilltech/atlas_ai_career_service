@@ -8,7 +8,65 @@
       <div class="space-y-4">
         <div>
           <label class="label-field">Your Resume / Current Skills</label>
-          <textarea id="sk-resume" rows="6" class="input-field" placeholder="Paste your resume or list your current skills..."></textarea>
+
+          <!-- Source selection tabs -->
+          <div class="flex gap-2 mb-3">
+            <button type="button" onclick="switchInputMode('paste')" id="tab-paste" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-600 text-white transition-colors">
+              <i class="fas fa-keyboard mr-1"></i>Paste Text
+            </button>
+            <button type="button" onclick="switchInputMode('upload')" id="tab-upload" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 transition-colors">
+              <i class="fas fa-upload mr-1"></i>Upload Resume
+            </button>
+            <% if (resumes && resumes.length > 0) { %>
+            <button type="button" onclick="switchInputMode('select')" id="tab-select" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 transition-colors">
+              <i class="fas fa-file-alt mr-1"></i>My Resumes
+            </button>
+            <% } %>
+          </div>
+
+          <!-- Mode 1: Paste text (default) -->
+          <div id="mode-paste">
+            <textarea id="sk-resume" rows="6" class="input-field" placeholder="Paste your resume or list your current skills..."></textarea>
+          </div>
+
+          <!-- Mode 2: Upload file -->
+          <div id="mode-upload" class="hidden">
+            <div id="upload-dropzone" class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center cursor-pointer hover:border-blue-400 dark:hover:border-blue-500 transition-colors">
+              <input type="file" id="sk-file" accept=".pdf,.doc,.docx" class="hidden">
+              <i class="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-2"></i>
+              <p class="text-sm text-gray-500">Click or drag & drop your resume here</p>
+              <p class="text-xs text-gray-400 mt-1">PDF, DOC, DOCX (max 10MB)</p>
+            </div>
+            <div id="upload-status" class="hidden mt-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <div class="flex items-center gap-2">
+                <i id="upload-icon" class="fas fa-spinner fa-spin text-blue-500"></i>
+                <span id="upload-filename" class="text-sm font-medium truncate"></span>
+              </div>
+              <p id="upload-msg" class="text-xs text-gray-500 mt-1"></p>
+            </div>
+          </div>
+
+          <!-- Mode 3: Select saved resume -->
+          <% if (resumes && resumes.length > 0) { %>
+          <div id="mode-select" class="hidden">
+            <div class="space-y-2 max-h-64 overflow-y-auto">
+              <% resumes.forEach(r => { %>
+                <label class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                  <input type="radio" name="saved-resume" value="<%= r.id %>" class="text-blue-600">
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium truncate"><%= r.title || 'Untitled Resume' %></p>
+                    <div class="flex items-center gap-2 text-xs text-gray-500">
+                      <% if (r.is_primary) { %><span class="text-blue-600 font-medium">Primary</span><% } %>
+                      <% if (r.ats_score) { %><span>ATS: <%= r.ats_score %>%</span><% } %>
+                      <span><%= new Date(r.updated_at || r.created_at).toLocaleDateString() %></span>
+                    </div>
+                  </div>
+                  <i class="fas fa-chevron-right text-gray-400"></i>
+                </label>
+              <% }); %>
+            </div>
+          </div>
+          <% } %>
         </div>
         <div>
           <label class="label-field">Target Job Role</label>
@@ -73,17 +131,105 @@
 </div>
 
 <script>
+let currentMode = 'paste';
+let uploadedText = '';
+
+function switchInputMode(mode) {
+  currentMode = mode;
+  // Update tab styles
+  ['paste', 'upload', 'select'].forEach(m => {
+    const tab = document.getElementById('tab-' + m);
+    const panel = document.getElementById('mode-' + m);
+    if (!tab || !panel) return;
+    if (m === mode) {
+      tab.className = 'px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-600 text-white transition-colors';
+      panel.classList.remove('hidden');
+    } else {
+      tab.className = 'px-3 py-1.5 text-xs font-medium rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 transition-colors';
+      panel.classList.add('hidden');
+    }
+  });
+}
+
+// File upload handling
+const dropzone = document.getElementById('upload-dropzone');
+const fileInput = document.getElementById('sk-file');
+
+if (dropzone) {
+  dropzone.addEventListener('click', () => fileInput.click());
+  dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('border-blue-400'); });
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('border-blue-400'));
+  dropzone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropzone.classList.remove('border-blue-400');
+    if (e.dataTransfer.files.length) handleFileUpload(e.dataTransfer.files[0]);
+  });
+  fileInput.addEventListener('change', () => { if (fileInput.files.length) handleFileUpload(fileInput.files[0]); });
+}
+
+async function handleFileUpload(file) {
+  const statusEl = document.getElementById('upload-status');
+  const iconEl = document.getElementById('upload-icon');
+  const filenameEl = document.getElementById('upload-filename');
+  const msgEl = document.getElementById('upload-msg');
+
+  statusEl.classList.remove('hidden');
+  iconEl.className = 'fas fa-spinner fa-spin text-blue-500';
+  filenameEl.textContent = file.name;
+  msgEl.textContent = 'Parsing resume...';
+  uploadedText = '';
+
+  const formData = new FormData();
+  formData.append('resume', file);
+
+  try {
+    const res = await fetch('/skills/upload-parse', { method: 'POST', body: formData });
+    const result = await res.json();
+    if (result.success && result.text) {
+      uploadedText = result.text;
+      iconEl.className = 'fas fa-check-circle text-green-500';
+      msgEl.textContent = 'Resume parsed successfully. Ready to analyze!';
+    } else {
+      throw new Error(result.error || 'Parse failed');
+    }
+  } catch (err) {
+    iconEl.className = 'fas fa-exclamation-circle text-red-500';
+    msgEl.textContent = err.message || 'Failed to parse resume';
+  }
+}
+
+async function getResumeText() {
+  if (currentMode === 'paste') {
+    return document.getElementById('sk-resume').value;
+  }
+  if (currentMode === 'upload') {
+    return uploadedText;
+  }
+  if (currentMode === 'select') {
+    const selected = document.querySelector('input[name="saved-resume"]:checked');
+    if (!selected) return '';
+    try {
+      const res = await fetch('/skills/resume-text/' + selected.value);
+      const result = await res.json();
+      return result.success ? result.text : '';
+    } catch { return ''; }
+  }
+  return '';
+}
+
 async function analyzeSkills() {
   const btn = document.getElementById('sk-btn');
-  const data = { resumeText: document.getElementById('sk-resume').value, targetRole: document.getElementById('sk-role').value };
-  if (!data.resumeText || !data.targetRole) return showToast('Please fill both fields', 'error');
+  const resumeText = await getResumeText();
+  const targetRole = document.getElementById('sk-role').value;
+
+  if (!resumeText || !targetRole) return showToast('Please provide your resume/skills and a target role', 'error');
 
   btn.disabled = true;
   btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Analyzing...';
 
   try {
     const res = await fetch('/skills/analyze', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data),
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ resumeText, targetRole }),
     });
     const result = await res.json();
     if (result.success) location.reload();
