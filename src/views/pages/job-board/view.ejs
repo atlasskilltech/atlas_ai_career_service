@@ -17,7 +17,7 @@
         <!-- Company Logo -->
         <div class="flex-shrink-0 w-16 h-16 rounded-2xl flex items-center justify-center shadow-sm" style="background: <%= logoColor %>15; border: 2px solid <%= logoColor %>30;">
           <% if (job.company_logo) { %>
-            <img src="<%= job.company_logo %>" alt="<%= job.company %>" class="w-12 h-12 rounded-xl object-cover">
+            <img src="<%= job.company_logo %>" alt="<%= job.company %>" class="w-12 h-12 rounded-xl object-cover" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><span class="text-2xl font-bold hidden items-center justify-center w-full h-full" style="color: <%= logoColor %>;"><%= job.company.charAt(0).toUpperCase() %></span>
           <% } else { %>
             <span class="text-2xl font-bold" style="color: <%= logoColor %>;"><%= job.company.charAt(0).toUpperCase() %></span>
           <% } %>

@@ -31,6 +31,16 @@ function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+function getCompanyLogoUrl(companyName) {
+  const domain = companyName
+    .toLowerCase()
+    .replace(/\s*(pvt|private|ltd|limited|inc|corp|corporation|llp|llc|co|company|technologies|tech|software|solutions|consulting|services|india|global)\s*/gi, '')
+    .trim()
+    .replace(/\s+/g, '')
+    + '.com';
+  return `https://logo.clearbit.com/${domain}`;
+}
+
 async function fetchJobDescription(page, url) {
   try {
     await page.goto(url, { waitUntil: 'networkidle2', timeout: 20000 });
@@ -86,7 +96,14 @@ async function fetchJobDescription(page, url) {
         }
       });
 
-      return { description, skills, otherDetails };
+      // Extract company logo
+      const logoEl = document.querySelector('.styles_jhc__comp-logo__img__1jLjp img, [class*="comp-logo"] img, .company-logo img, img[alt*="company"], .jd-header-comp-logo img');
+      let companyLogo = '';
+      if (logoEl && logoEl.src && !logoEl.src.includes('data:image')) {
+        companyLogo = logoEl.src;
+      }
+
+      return { description, skills, otherDetails, companyLogo };
     });
 
     return details;
@@ -131,6 +148,11 @@ async function fetchNaukriJobs() {
         const linkEl = card.querySelector('a.title, a[class*="title"], h2 a, a');
 
         if (titleEl && companyEl) {
+          const logoEl = card.querySelector('[class*="comp-logo"] img, .company-logo img, img[class*="logo"]');
+          let logo = '';
+          if (logoEl && logoEl.src && !logoEl.src.includes('data:image')) {
+            logo = logoEl.src;
+          }
           results.push({
             title: (titleEl.textContent || '').trim(),
             company: (companyEl.textContent || '').trim(),
@@ -138,6 +160,7 @@ async function fetchNaukriJobs() {
             experience: expEl ? (expEl.textContent || '').trim() : '',
             salary: salaryEl ? (salaryEl.textContent || '').trim() : '',
             url: linkEl ? linkEl.href : '',
+            logo,
           });
         }
       });
@@ -156,6 +179,7 @@ async function fetchNaukriJobs() {
 
       let description = `${raw.title} at ${raw.company}.`;
       let pageSkills = [];
+      let companyLogo = raw.logo || '';
 
       // Fetch full description from the job detail page
       if (raw.url) {
@@ -165,9 +189,17 @@ async function fetchNaukriJobs() {
           if (details.skills && details.skills.length > 0) {
             pageSkills = details.skills;
           }
+          if (!companyLogo && details.companyLogo) {
+            companyLogo = details.companyLogo;
+          }
         }
         // Small delay to avoid rate limiting
         await delay(1500 + Math.random() * 1500);
+      }
+
+      // Fallback: use Clearbit logo API based on company name
+      if (!companyLogo) {
+        companyLogo = getCompanyLogoUrl(raw.company);
       }
 
       // Combine skills: page skills + title-extracted skills
@@ -191,6 +223,7 @@ async function fetchNaukriJobs() {
         source: 'naukri',
         sourceUrl: raw.url || searchUrl,
         applyUrl: raw.url || searchUrl,
+        companyLogo,
         postedDate: new Date(),
       });
     }
