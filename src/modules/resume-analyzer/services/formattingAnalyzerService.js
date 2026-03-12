@@ -186,21 +186,10 @@ class FormattingAnalyzerService {
   }
 
   /**
-   * Calculate formatting score (0-100) — primarily deterministic
-   * Uses 80% deterministic + 20% AI to stay consistent while still
-   * benefiting from AI insights
+   * Calculate formatting score (0-100) — fully deterministic for consistency
    */
   calculateScore(analysisResult) {
-    const deterministicScore = Math.min(100, Math.max(0, analysisResult.formatting_score || 0));
-    const aiScore = analysisResult._ai_score;
-
-    // If AI score is available, blend lightly; otherwise use deterministic only
-    if (typeof aiScore === 'number' && aiScore > 0) {
-      const clampedAi = Math.min(100, Math.max(0, aiScore));
-      return Math.round(deterministicScore * 0.8 + clampedAi * 0.2);
-    }
-
-    return deterministicScore;
+    return Math.min(100, Math.max(0, analysisResult.formatting_score || 0));
   }
 }
 

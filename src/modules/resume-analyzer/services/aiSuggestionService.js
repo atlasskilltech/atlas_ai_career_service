@@ -258,35 +258,17 @@ class AiSuggestionService {
   }
 
   /**
-   * Calculate content quality score (0-100)
-   * 80% deterministic + 20% AI
+   * Calculate content quality score (0-100) — fully deterministic for consistency
    */
   calculateContentScore(analysisResult) {
-    const deterministicScore = Math.min(100, Math.max(0, analysisResult.content_score || 0));
-    const aiScore = analysisResult._ai_content_score;
-
-    if (typeof aiScore === 'number' && aiScore > 0) {
-      const clampedAi = Math.min(100, Math.max(0, aiScore));
-      return Math.round(deterministicScore * 0.8 + clampedAi * 0.2);
-    }
-
-    return deterministicScore;
+    return Math.min(100, Math.max(0, analysisResult.content_score || 0));
   }
 
   /**
-   * Calculate experience relevance score (0-100)
-   * 80% deterministic + 20% AI
+   * Calculate experience relevance score (0-100) — fully deterministic for consistency
    */
   calculateExperienceScore(analysisResult) {
-    const deterministicScore = Math.min(100, Math.max(0, analysisResult.relevance_score || 0));
-    const aiScore = analysisResult._ai_relevance_score;
-
-    if (typeof aiScore === 'number' && aiScore > 0) {
-      const clampedAi = Math.min(100, Math.max(0, aiScore));
-      return Math.round(deterministicScore * 0.8 + clampedAi * 0.2);
-    }
-
-    return deterministicScore;
+    return Math.min(100, Math.max(0, analysisResult.relevance_score || 0));
   }
 }
 
