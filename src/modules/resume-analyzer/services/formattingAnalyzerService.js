@@ -6,41 +6,52 @@ class FormattingAnalyzerService {
    * Analyze resume formatting and structure issues
    */
   async analyze(resumeText) {
+    // Always run deterministic analysis first as the baseline
+    const deterministic = this._deterministicAnalysis(resumeText);
+
     try {
       const prompt = formattingAnalysisPrompt(resumeText.substring(0, 5000));
 
       const response = await chatCompletion(systemPrompt, prompt, {
-        temperature: 0.2,
+        temperature: 0.1,
         maxTokens: 1500,
         timeout: 20000,
       });
 
       const parsed = JSON.parse(response.replace(/```json?\n?/g, '').replace(/```/g, '').trim());
 
+      // Merge AI issues with deterministic ones (AI may find additional issues)
+      const aiIssues = parsed.issues || [];
+      const mergedIssues = this._mergeIssues(deterministic.issues, aiIssues);
+
       return {
-        issues: parsed.issues || [],
-        sections_detected: parsed.sections_detected || [],
-        has_bullet_points: parsed.has_bullet_points !== false,
-        has_metrics: parsed.has_metrics !== false,
-        estimated_length: parsed.estimated_length || 'optimal',
-        formatting_score: parsed.formatting_score || 0,
+        issues: mergedIssues,
+        sections_detected: deterministic.sections_detected,
+        has_bullet_points: deterministic.has_bullet_points,
+        has_metrics: deterministic.has_metrics,
+        estimated_length: deterministic.estimated_length,
+        formatting_score: deterministic.formatting_score,
+        _ai_score: parsed.formatting_score || 0,
       };
     } catch (err) {
       console.error('Formatting analysis error:', err.message);
-      return this._fallbackAnalysis(resumeText);
+      return deterministic;
     }
   }
 
   /**
-   * Fallback regex-based formatting analysis
+   * Deterministic formatting analysis — primary scoring source
    */
-  _fallbackAnalysis(text) {
+  _deterministicAnalysis(text) {
     const issues = [];
     const lines = text.split('\n').filter(l => l.trim());
+    const textLower = text.toLowerCase();
+    const wordCount = text.split(/\s+/).filter(Boolean).length;
 
     // Check for bullet points
     const bulletLines = lines.filter(l => /^[\s]*[•·●▪▸►\-*]/.test(l));
-    if (bulletLines.length < 3) {
+    const hasBullets = bulletLines.length >= 3;
+    if (!hasBullets) {
       issues.push({
         type: 'no_bullet_points',
         description: 'Resume lacks bullet points. Use bullet points to highlight achievements and responsibilities.',
@@ -60,7 +71,7 @@ class FormattingAnalyzerService {
 
     // Check for section headers
     const sectionHeaders = ['experience', 'education', 'skills', 'summary', 'projects'];
-    const textLower = text.toLowerCase();
+    const sectionsFound = sectionHeaders.filter(h => textLower.includes(h));
     const missingSections = sectionHeaders.filter(h => !textLower.includes(h));
     if (missingSections.length > 2) {
       issues.push({
@@ -71,7 +82,7 @@ class FormattingAnalyzerService {
     }
 
     // Check for measurable achievements
-    const hasMetrics = /\d+%|\$\d+|\d+\+?\s*(users|clients|projects|team|members)/i.test(text);
+    const hasMetrics = /\d+%|\$[\d,]+|\d+\+?\s*(users|clients|projects|team|members|years|months|applications|tickets|tests|bugs)/i.test(text);
     if (!hasMetrics) {
       issues.push({
         type: 'no_measurable_achievements',
@@ -81,14 +92,16 @@ class FormattingAnalyzerService {
     }
 
     // Check resume length
-    const wordCount = text.split(/\s+/).length;
+    let lengthStatus = 'optimal';
     if (wordCount < 150) {
+      lengthStatus = 'short';
       issues.push({
         type: 'too_short',
         description: 'Resume appears too short. Add more details about your experience and skills.',
         severity: 'medium',
       });
     } else if (wordCount > 1200) {
+      lengthStatus = 'long';
       issues.push({
         type: 'too_long',
         description: 'Resume may be too long. Consider condensing to 1-2 pages.',
@@ -99,7 +112,7 @@ class FormattingAnalyzerService {
     // Check contact info
     const hasEmail = /[\w.+-]+@[\w-]+\.[\w.]+/.test(text);
     const hasPhone = /(?:\+?\d{1,3}[\s-]?)?\(?\d{2,4}\)?[\s.-]?\d{3,4}[\s.-]?\d{3,5}/.test(text);
-    if (!hasEmail || !hasPhone) {
+    if (!hasEmail && !hasPhone) {
       issues.push({
         type: 'missing_contact',
         description: 'Missing contact information (email and/or phone number).',
@@ -107,49 +120,87 @@ class FormattingAnalyzerService {
       });
     }
 
-    const formattingScore = Math.max(0, 100 - issues.length * 15);
+    // Check for action verbs at start of bullets
+    const actionVerbs = /^[\s]*[•·●▪▸►\-*]\s*(developed|designed|implemented|managed|led|created|built|optimized|improved|reduced|increased|achieved|delivered|launched|analyzed|coordinated|collaborated)/i;
+    const actionBullets = lines.filter(l => actionVerbs.test(l));
+    const hasActionVerbs = actionBullets.length >= 2;
+
+    // Calculate deterministic score
+    let score = 0;
+
+    // Bullet points: 0-20
+    if (hasBullets) {
+      score += Math.min(20, bulletLines.length * 2);
+    }
+
+    // Section headers: 0-25
+    score += Math.min(25, sectionsFound.length * 5);
+
+    // Metrics/achievements: 0-15
+    if (hasMetrics) score += 15;
+
+    // Optimal length: 0-15
+    if (lengthStatus === 'optimal') score += 15;
+    else if (lengthStatus === 'long') score += 10;
+    else score += 5;
+
+    // Contact info: 0-10
+    if (hasEmail) score += 5;
+    if (hasPhone) score += 5;
+
+    // Action verbs: 0-10
+    if (hasActionVerbs) score += Math.min(10, actionBullets.length * 2);
+
+    // Low issue penalty
+    const highIssues = issues.filter(i => i.severity === 'high').length;
+    score = Math.max(0, score - highIssues * 5);
+
+    // No long paragraphs bonus: +5
+    if (longParagraphs.length === 0) score += 5;
+
+    score = Math.min(100, Math.max(0, score));
 
     return {
       issues,
-      sections_detected: sectionHeaders.filter(h => textLower.includes(h)),
-      has_bullet_points: bulletLines.length >= 3,
+      sections_detected: sectionsFound,
+      has_bullet_points: hasBullets,
       has_metrics: hasMetrics,
-      estimated_length: wordCount < 150 ? 'short' : wordCount > 1200 ? 'long' : 'optimal',
-      formatting_score: formattingScore,
+      estimated_length: lengthStatus,
+      formatting_score: score,
     };
   }
 
   /**
-   * Deterministic baseline score from structural checks
+   * Merge deterministic and AI issues, deduplicating by type
    */
-  _deterministicBaseline(analysisResult) {
-    let score = 0;
-    // Has bullet points: +25
-    if (analysisResult.has_bullet_points) score += 25;
-    // Has metrics/measurable achievements: +20
-    if (analysisResult.has_metrics) score += 20;
-    // Section coverage: up to +30
-    const sectionCount = (analysisResult.sections_detected || []).length;
-    score += Math.min(30, sectionCount * 6);
-    // Optimal length: +15
-    if (analysisResult.estimated_length === 'optimal') score += 15;
-    else if (analysisResult.estimated_length === 'short') score += 5;
-    else score += 10; // long
-    // Low issue count bonus: +10
-    const issueCount = (analysisResult.issues || []).length;
-    if (issueCount === 0) score += 10;
-    else if (issueCount <= 2) score += 5;
-    return Math.min(100, score);
+  _mergeIssues(deterministicIssues, aiIssues) {
+    const existingTypes = new Set(deterministicIssues.map(i => i.type));
+    const merged = [...deterministicIssues];
+    for (const issue of aiIssues) {
+      if (issue.type && !existingTypes.has(issue.type)) {
+        merged.push(issue);
+        existingTypes.add(issue.type);
+      }
+    }
+    return merged;
   }
 
   /**
-   * Calculate formatting score (0-100)
-   * Blends AI score (60%) with deterministic baseline (40%) to prevent wild swings
+   * Calculate formatting score (0-100) — primarily deterministic
+   * Uses 80% deterministic + 20% AI to stay consistent while still
+   * benefiting from AI insights
    */
   calculateScore(analysisResult) {
-    const aiScore = Math.min(100, Math.max(0, analysisResult.formatting_score || 0));
-    const baseline = this._deterministicBaseline(analysisResult);
-    return Math.round(aiScore * 0.6 + baseline * 0.4);
+    const deterministicScore = Math.min(100, Math.max(0, analysisResult.formatting_score || 0));
+    const aiScore = analysisResult._ai_score;
+
+    // If AI score is available, blend lightly; otherwise use deterministic only
+    if (typeof aiScore === 'number' && aiScore > 0) {
+      const clampedAi = Math.min(100, Math.max(0, aiScore));
+      return Math.round(deterministicScore * 0.8 + clampedAi * 0.2);
+    }
+
+    return deterministicScore;
   }
 }
 
