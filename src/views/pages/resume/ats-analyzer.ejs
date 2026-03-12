@@ -203,28 +203,50 @@
           </div>
         </div>
 
-        <!-- Add Keywords to Resume Action -->
+        <!-- ===== ADD ALL ATS SUGGESTIONS TO RESUME ===== -->
         <div id="add-keywords-section" class="hidden">
-          <div class="card border-2 border-indigo-200 dark:border-indigo-800 bg-indigo-50/50 dark:bg-indigo-900/20">
+          <div class="card border-2 border-indigo-200 dark:border-indigo-800 bg-gradient-to-br from-indigo-50/80 to-purple-50/50 dark:from-indigo-900/20 dark:to-purple-900/10">
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
               <div>
-                <h4 class="font-semibold text-gray-900 dark:text-white flex items-center">
-                  <i class="fas fa-plus-circle mr-2 text-indigo-500"></i>Add Missing Keywords to Resume
+                <h4 class="font-semibold text-gray-900 dark:text-white flex items-center text-base">
+                  <i class="fas fa-magic mr-2 text-indigo-500"></i>Add ATS Suggestions to Resume
                 </h4>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Select keywords and add them directly to your resume's skills section</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Select items below and add them directly to your resume</p>
               </div>
               <div class="flex gap-2">
-                <button onclick="selectAllKeywords()" class="px-3 py-1.5 text-xs font-medium bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                <button onclick="selectAllSuggestions()" class="px-3 py-1.5 text-xs font-medium bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition">
                   <i class="fas fa-check-double mr-1"></i>Select All
                 </button>
-                <button onclick="deselectAllKeywords()" class="px-3 py-1.5 text-xs font-medium bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                <button onclick="deselectAllSuggestions()" class="px-3 py-1.5 text-xs font-medium bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition">
                   <i class="fas fa-times mr-1"></i>Deselect All
                 </button>
               </div>
             </div>
 
-            <!-- Selectable Keywords -->
-            <div id="selectable-keywords" class="flex flex-wrap gap-2 mb-4"></div>
+            <!-- Missing Keywords Group -->
+            <div id="add-group-keywords" class="mb-3 hidden">
+              <p class="text-xs font-semibold text-red-600 dark:text-red-400 mb-1.5 uppercase tracking-wide"><i class="fas fa-key mr-1"></i>Missing Keywords</p>
+              <div id="selectable-keywords" class="flex flex-wrap gap-2"></div>
+            </div>
+
+            <!-- Missing Skills Group -->
+            <div id="add-group-skills" class="mb-3 hidden">
+              <p class="text-xs font-semibold text-orange-600 dark:text-orange-400 mb-1.5 uppercase tracking-wide"><i class="fas fa-exclamation-triangle mr-1"></i>Missing Skills</p>
+              <div id="selectable-missing-skills" class="flex flex-wrap gap-2"></div>
+            </div>
+
+            <!-- Recommended Skills Group -->
+            <div id="add-group-recommended" class="mb-3 hidden">
+              <p class="text-xs font-semibold text-blue-600 dark:text-blue-400 mb-1.5 uppercase tracking-wide"><i class="fas fa-star mr-1"></i>Recommended Skills</p>
+              <div id="selectable-recommended-skills" class="flex flex-wrap gap-2"></div>
+            </div>
+
+            <!-- Selected count -->
+            <div class="flex items-center gap-2 mb-3 mt-4">
+              <span id="selected-count-badge" class="inline-flex items-center px-2.5 py-1 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 rounded-full text-xs font-medium">
+                <i class="fas fa-check-circle mr-1"></i><span id="selected-count">0</span> items selected
+              </span>
+            </div>
 
             <!-- Target Resume Selection -->
             <div class="flex flex-col sm:flex-row gap-3 items-end">
@@ -242,8 +264,8 @@
                 <label class="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">New Resume Title</label>
                 <input type="text" id="new-resume-title" class="input-field text-sm" placeholder="e.g. ATS Optimized Resume" value="ATS Optimized Resume">
               </div>
-              <button onclick="addKeywordsToResume()" id="add-keywords-btn" class="btn-primary px-5 py-2.5 text-sm whitespace-nowrap">
-                <i class="fas fa-plus mr-1"></i>Add Keywords
+              <button onclick="addAllSuggestionsToResume()" id="add-keywords-btn" class="btn-primary px-5 py-2.5 text-sm whitespace-nowrap">
+                <i class="fas fa-plus mr-1"></i>Add to Resume
               </button>
             </div>
 
@@ -280,9 +302,14 @@
           </div>
         </div>
 
-        <!-- Content Quality -->
+        <!-- Content Quality with Apply Buttons -->
         <div class="card">
-          <h4 class="font-semibold text-gray-900 dark:text-white mb-3"><i class="fas fa-magic mr-2 text-green-500"></i>Content Quality Improvements</h4>
+          <div class="flex items-center justify-between mb-3">
+            <h4 class="font-semibold text-gray-900 dark:text-white"><i class="fas fa-magic mr-2 text-green-500"></i>Content Quality Improvements</h4>
+            <button id="apply-all-content-btn" onclick="applyAllContentImprovements()" class="hidden px-3 py-1.5 text-xs font-medium bg-green-500 hover:bg-green-600 text-white rounded-lg transition">
+              <i class="fas fa-check-double mr-1"></i>Apply All to Resume
+            </button>
+          </div>
           <div id="weak-statements" class="space-y-3"></div>
           <div id="weak-statements-empty" class="text-center py-4 text-sm text-green-600 hidden">
             <i class="fas fa-check-circle mr-1"></i> Content quality looks good
@@ -342,6 +369,7 @@
 <script>
 let resumeSource = 'select';
 let selectedFile = null;
+var currentWeakStatements = [];
 
 function setResumeSource(source) {
   resumeSource = source;
@@ -497,13 +525,6 @@ function renderResults(a) {
     '<span class="inline-block px-2.5 py-1 bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-400 rounded-full text-xs font-medium">' + escapeHtml(k.keyword || k) + '</span>'
   ).join('') || '<p class="text-sm text-gray-400">All keywords present</p>';
 
-  // Render selectable keywords for adding to resume
-  if (missing.length > 0) {
-    renderSelectableKeywords(missing);
-  } else {
-    document.getElementById('add-keywords-section').classList.add('hidden');
-  }
-
   // Skills gap
   const existing = a.existing_skills || [];
   document.getElementById('existing-skills').innerHTML = existing.map(s =>
@@ -520,6 +541,9 @@ function renderResults(a) {
   document.getElementById('recommended-skills').innerHTML = recommended.map(s =>
     '<div class="flex items-center gap-2 text-xs"><i class="fas fa-star text-blue-500"></i><span class="text-gray-700 dark:text-gray-300">' + escapeHtml(s.skill || s) + '</span></div>'
   ).join('') || '<p class="text-xs text-gray-400">No recommendations</p>';
+
+  // Render the unified "Add ATS Suggestions" panel with all categories
+  renderAllSelectableSuggestions(missing, missingSkills, recommended);
 
   // Formatting issues
   const issues = a.formatting_issues || [];
@@ -539,21 +563,26 @@ function renderResults(a) {
     }).join('');
   }
 
-  // Content quality - weak statements
+  // Content quality - weak statements with Apply buttons
   const weakStatements = (a.content_quality && a.content_quality.weak_statements) || [];
+  currentWeakStatements = weakStatements;
   const weakEl = document.getElementById('weak-statements');
   const weakEmptyEl = document.getElementById('weak-statements-empty');
+  const applyAllBtn = document.getElementById('apply-all-content-btn');
   if (weakStatements.length === 0) {
     weakEl.classList.add('hidden');
     weakEmptyEl.classList.remove('hidden');
+    applyAllBtn.classList.add('hidden');
   } else {
     weakEl.classList.remove('hidden');
     weakEmptyEl.classList.add('hidden');
-    weakEl.innerHTML = weakStatements.slice(0, 5).map(w =>
-      '<div class="p-3 border border-gray-200 dark:border-gray-700 rounded-lg">' +
-      '<div class="flex items-center gap-2 mb-1"><span class="text-xs font-medium text-red-500 bg-red-100 dark:bg-red-900/40 px-2 py-0.5 rounded">Weak</span><p class="text-sm text-gray-500 line-through">' + escapeHtml(w.original) + '</p></div>' +
-      '<div class="flex items-center gap-2"><span class="text-xs font-medium text-green-500 bg-green-100 dark:bg-green-900/40 px-2 py-0.5 rounded">Strong</span><p class="text-sm text-gray-700 dark:text-gray-300 font-medium">' + escapeHtml(w.improved) + '</p></div>' +
-      '</div>'
+    applyAllBtn.classList.remove('hidden');
+    weakEl.innerHTML = weakStatements.slice(0, 5).map((w, idx) =>
+      '<div class="p-3 border border-gray-200 dark:border-gray-700 rounded-lg" id="weak-item-' + idx + '">' +
+      '<div class="flex items-center gap-2 mb-1"><span class="text-xs font-medium text-red-500 bg-red-100 dark:bg-red-900/40 px-2 py-0.5 rounded">Weak</span><p class="text-sm text-gray-500 line-through flex-1">' + escapeHtml(w.original) + '</p></div>' +
+      '<div class="flex items-center gap-2"><span class="text-xs font-medium text-green-500 bg-green-100 dark:bg-green-900/40 px-2 py-0.5 rounded">Strong</span><p class="text-sm text-gray-700 dark:text-gray-300 font-medium flex-1">' + escapeHtml(w.improved) + '</p>' +
+      '<button onclick="applySingleImprovement(' + idx + ')" class="apply-content-btn flex-shrink-0 px-2.5 py-1 text-xs font-medium bg-green-500 hover:bg-green-600 text-white rounded-lg transition" title="Apply this improvement to resume"><i class="fas fa-check mr-1"></i>Apply</button>' +
+      '</div></div>'
     ).join('');
   }
 
@@ -584,62 +613,94 @@ function animateNumber(elementId, target) {
   }, 30);
 }
 
-// --- Add Keywords to Resume Feature ---
-let selectedKeywords = new Set();
-let allMissingKeywords = [];
+// --- Add All ATS Suggestions to Resume Feature ---
+let selectedItems = new Set(); // unified set: all selected keywords + skills
+let allSuggestionItems = []; // flat array of all items for select/deselect all
 
-function renderSelectableKeywords(missingKeywords) {
-  allMissingKeywords = missingKeywords.map(k => k.keyword || k);
-  selectedKeywords = new Set(allMissingKeywords);
-  const container = document.getElementById('selectable-keywords');
-  container.innerHTML = allMissingKeywords.map(kw =>
-    '<button onclick="toggleKeyword(this, \'' + escapeHtml(kw).replace(/'/g, "\\'") + '\')" data-keyword="' + escapeHtml(kw) + '" class="keyword-chip inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium cursor-pointer transition border-2 border-indigo-500 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300">' +
-    '<i class="fas fa-check text-[10px]"></i>' + escapeHtml(kw) + '</button>'
-  ).join('');
+function renderAllSelectableSuggestions(missingKeywords, missingSkills, recommendedSkills) {
+  selectedItems.clear();
+  allSuggestionItems = [];
 
-  // Show the section
+  const keywordsArr = (missingKeywords || []).map(k => k.keyword || k);
+  const skillsArr = (missingSkills || []).map(s => typeof s === 'string' ? s : s.skill || s.skill_name);
+  const recommendedArr = (recommendedSkills || []).map(s => s.skill || s);
+
+  const hasAny = keywordsArr.length > 0 || skillsArr.length > 0 || recommendedArr.length > 0;
+  if (!hasAny) {
+    document.getElementById('add-keywords-section').classList.add('hidden');
+    return;
+  }
+
+  // Render keyword chips in each group
+  renderChipGroup('selectable-keywords', 'add-group-keywords', keywordsArr, 'kw');
+  renderChipGroup('selectable-missing-skills', 'add-group-skills', skillsArr, 'ms');
+  renderChipGroup('selectable-recommended-skills', 'add-group-recommended', recommendedArr, 'rc');
+
+  // Select all by default
+  allSuggestionItems = [...keywordsArr, ...skillsArr, ...recommendedArr];
+  selectedItems = new Set(allSuggestionItems);
+  updateSelectedCount();
+
   document.getElementById('add-keywords-section').classList.remove('hidden');
 
-  // Auto-select the analyzed resume if it was from "My Resumes"
+  // Auto-select the analyzed resume
   if (resumeSource === 'select') {
     const resumeId = document.getElementById('resume-select').value;
-    if (resumeId) {
-      document.getElementById('keyword-target-resume').value = resumeId;
-    }
+    if (resumeId) document.getElementById('keyword-target-resume').value = resumeId;
   }
   toggleNewResumeTitle();
 }
 
-function toggleKeyword(btn, keyword) {
-  if (selectedKeywords.has(keyword)) {
-    selectedKeywords.delete(keyword);
+function renderChipGroup(containerId, groupId, items, prefix) {
+  const container = document.getElementById(containerId);
+  const group = document.getElementById(groupId);
+  if (!items.length) { group.classList.add('hidden'); container.innerHTML = ''; return; }
+  group.classList.remove('hidden');
+  container.innerHTML = items.map((item, i) => {
+    const id = prefix + '-' + i;
+    return '<button onclick="toggleSuggestionItem(this)" data-item="' + escapeHtml(item) + '" id="chip-' + id + '" class="suggestion-chip inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium cursor-pointer transition border-2 border-indigo-500 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300">' +
+      '<i class="fas fa-check text-[10px]"></i>' + escapeHtml(item) + '</button>';
+  }).join('');
+}
+
+function toggleSuggestionItem(btn) {
+  const item = btn.dataset.item;
+  if (selectedItems.has(item)) {
+    selectedItems.delete(item);
     btn.classList.remove('border-indigo-500', 'bg-indigo-100', 'dark:bg-indigo-900/40', 'text-indigo-700', 'dark:text-indigo-300');
     btn.classList.add('border-gray-300', 'dark:border-gray-600', 'bg-white', 'dark:bg-gray-800', 'text-gray-500', 'dark:text-gray-400');
     btn.querySelector('i').classList.add('hidden');
   } else {
-    selectedKeywords.add(keyword);
+    selectedItems.add(item);
     btn.classList.add('border-indigo-500', 'bg-indigo-100', 'dark:bg-indigo-900/40', 'text-indigo-700', 'dark:text-indigo-300');
     btn.classList.remove('border-gray-300', 'dark:border-gray-600', 'bg-white', 'dark:bg-gray-800', 'text-gray-500', 'dark:text-gray-400');
     btn.querySelector('i').classList.remove('hidden');
   }
+  updateSelectedCount();
 }
 
-function selectAllKeywords() {
-  selectedKeywords = new Set(allMissingKeywords);
-  document.querySelectorAll('#selectable-keywords .keyword-chip').forEach(btn => {
+function selectAllSuggestions() {
+  selectedItems = new Set(allSuggestionItems);
+  document.querySelectorAll('.suggestion-chip').forEach(btn => {
     btn.classList.add('border-indigo-500', 'bg-indigo-100', 'dark:bg-indigo-900/40', 'text-indigo-700', 'dark:text-indigo-300');
     btn.classList.remove('border-gray-300', 'dark:border-gray-600', 'bg-white', 'dark:bg-gray-800', 'text-gray-500', 'dark:text-gray-400');
     btn.querySelector('i').classList.remove('hidden');
   });
+  updateSelectedCount();
 }
 
-function deselectAllKeywords() {
-  selectedKeywords.clear();
-  document.querySelectorAll('#selectable-keywords .keyword-chip').forEach(btn => {
+function deselectAllSuggestions() {
+  selectedItems.clear();
+  document.querySelectorAll('.suggestion-chip').forEach(btn => {
     btn.classList.remove('border-indigo-500', 'bg-indigo-100', 'dark:bg-indigo-900/40', 'text-indigo-700', 'dark:text-indigo-300');
     btn.classList.add('border-gray-300', 'dark:border-gray-600', 'bg-white', 'dark:bg-gray-800', 'text-gray-500', 'dark:text-gray-400');
     btn.querySelector('i').classList.add('hidden');
   });
+  updateSelectedCount();
+}
+
+function updateSelectedCount() {
+  document.getElementById('selected-count').textContent = selectedItems.size;
 }
 
 function toggleNewResumeTitle() {
@@ -647,12 +708,19 @@ function toggleNewResumeTitle() {
   document.getElementById('new-resume-title-wrap').classList.toggle('hidden', val !== 'new');
 }
 
-async function addKeywordsToResume() {
+function getTargetResumeId() {
+  const targetVal = document.getElementById('keyword-target-resume').value;
+  if (!targetVal) return null;
+  if (targetVal === 'new') return 'new';
+  return parseInt(targetVal);
+}
+
+async function addAllSuggestionsToResume() {
   const btn = document.getElementById('add-keywords-btn');
   const resultDiv = document.getElementById('add-keywords-result');
 
-  if (selectedKeywords.size === 0) {
-    return showToast('Please select at least one keyword', 'error');
+  if (selectedItems.size === 0) {
+    return showToast('Please select at least one item to add', 'error');
   }
 
   const targetVal = document.getElementById('keyword-target-resume').value;
@@ -662,8 +730,9 @@ async function addKeywordsToResume() {
 
   const isNew = targetVal === 'new';
   const payload = {
-    keywords: Array.from(selectedKeywords),
+    keywords: Array.from(selectedItems),
     create_new: isNew,
+    section: 'technical',
   };
 
   if (isNew) {
@@ -693,10 +762,10 @@ async function addKeywordsToResume() {
       resultDiv.classList.remove('hidden');
       showToast(data.message, 'success');
     } else {
-      throw new Error(data.error || 'Failed to add keywords');
+      throw new Error(data.error || 'Failed to add items');
     }
   } catch (err) {
-    showToast(err.message || 'Failed to add keywords', 'error');
+    showToast(err.message || 'Failed to add items', 'error');
     resultDiv.className = 'mt-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg';
     resultDiv.innerHTML = '<div class="flex items-center gap-2"><i class="fas fa-exclamation-circle text-red-500"></i>' +
       '<span class="text-sm text-red-700 dark:text-red-400">' + escapeHtml(err.message) + '</span></div>';
@@ -704,7 +773,98 @@ async function addKeywordsToResume() {
   }
 
   btn.disabled = false;
-  btn.innerHTML = '<i class="fas fa-plus mr-1"></i>Add Keywords';
+  btn.innerHTML = '<i class="fas fa-plus mr-1"></i>Add to Resume';
+}
+
+// --- Content Quality Apply Feature ---
+async function applySingleImprovement(idx) {
+  const targetId = getTargetResumeId();
+  let resumeId = targetId;
+  if (!resumeId || resumeId === 'new') {
+    // Try to get from the resume select dropdown
+    if (resumeSource === 'select') {
+      resumeId = parseInt(document.getElementById('resume-select').value);
+    }
+  }
+  if (!resumeId || isNaN(resumeId)) {
+    return showToast('Please select a target resume in the "Add ATS Suggestions" section above', 'error');
+  }
+
+  const w = currentWeakStatements[idx];
+  if (!w) return;
+
+  const btn = document.querySelector('#weak-item-' + idx + ' .apply-content-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+  try {
+    const res = await fetch('/resume/ats/api/apply-content', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ resume_id: resumeId, improvements: [{ original: w.original, improved: w.improved }] }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      btn.innerHTML = '<i class="fas fa-check mr-1"></i>Applied';
+      btn.classList.remove('bg-green-500', 'hover:bg-green-600');
+      btn.classList.add('bg-gray-400', 'cursor-not-allowed');
+      showToast(data.message, 'success');
+    } else {
+      throw new Error(data.error);
+    }
+  } catch (err) {
+    showToast(err.message || 'Failed to apply improvement', 'error');
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-check mr-1"></i>Apply';
+  }
+}
+
+async function applyAllContentImprovements() {
+  const targetId = getTargetResumeId();
+  let resumeId = targetId;
+  if (!resumeId || resumeId === 'new') {
+    if (resumeSource === 'select') {
+      resumeId = parseInt(document.getElementById('resume-select').value);
+    }
+  }
+  if (!resumeId || isNaN(resumeId)) {
+    return showToast('Please select a target resume in the "Add ATS Suggestions" section above', 'error');
+  }
+
+  if (!currentWeakStatements.length) return;
+
+  const btn = document.getElementById('apply-all-content-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Applying...';
+
+  try {
+    const improvements = currentWeakStatements.slice(0, 5).map(w => ({ original: w.original, improved: w.improved }));
+    const res = await fetch('/resume/ats/api/apply-content', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ resume_id: resumeId, improvements }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      btn.innerHTML = '<i class="fas fa-check mr-1"></i>All Applied';
+      btn.classList.remove('bg-green-500', 'hover:bg-green-600');
+      btn.classList.add('bg-gray-400', 'cursor-not-allowed');
+      // Mark all individual buttons as applied
+      document.querySelectorAll('.apply-content-btn').forEach(b => {
+        b.innerHTML = '<i class="fas fa-check mr-1"></i>Applied';
+        b.classList.remove('bg-green-500', 'hover:bg-green-600');
+        b.classList.add('bg-gray-400', 'cursor-not-allowed');
+        b.disabled = true;
+      });
+      showToast(data.message, 'success');
+    } else {
+      throw new Error(data.error);
+    }
+  } catch (err) {
+    showToast(err.message || 'Failed to apply improvements', 'error');
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-check-double mr-1"></i>Apply All to Resume';
+  }
 }
 
 async function loadAnalysis(id) {

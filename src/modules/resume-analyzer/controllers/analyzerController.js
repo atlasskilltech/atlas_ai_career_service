@@ -254,22 +254,24 @@ class AnalyzerController {
   }
 
   /**
-   * POST /resume/ats/api/add-keywords - Add missing keywords to an existing or new resume
+   * POST /resume/ats/api/add-keywords - Add missing keywords/skills to an existing or new resume
+   * Supports: keywords → technical, skills → tools, soft_skills → soft
    */
   async addKeywordsToResume(req, res) {
     try {
       const userId = req.session.user.id;
-      const { keywords, resume_id, create_new, new_title } = req.body;
+      const { keywords, resume_id, create_new, new_title, section } = req.body;
+      // section can be: 'technical' (default), 'tools', 'soft'
 
       if (!keywords || !Array.isArray(keywords) || keywords.length === 0) {
-        return res.status(400).json({ error: 'Please select at least one keyword to add' });
+        return res.status(400).json({ error: 'Please select at least one item to add' });
       }
 
-      let resume;
-      let resumeId;
+      const targetSection = section || 'technical';
 
       if (create_new) {
-        // Create a new resume with the keywords as skills
+        const skillsObj = { technical: '', soft: '', tools: '', languages: '' };
+        skillsObj[targetSection] = keywords.join(', ');
         const newResume = await resumeRepository.create({
           userId,
           title: new_title || 'ATS Optimized Resume',
@@ -277,7 +279,7 @@ class AnalyzerController {
           education: [],
           experience: [],
           projects: [],
-          skills: { technical: keywords.join(', '), soft: '', tools: '', languages: '' },
+          skills: skillsObj,
           achievements: [],
           certifications: [],
           languages: [],
@@ -285,54 +287,150 @@ class AnalyzerController {
           template: 'modern',
           theme_color: '#0a1a4a',
         });
-        resumeId = newResume.id;
-        return res.json({ success: true, resume_id: resumeId, message: 'New resume created with keywords', redirect: `/resume/${resumeId}/edit` });
+        return res.json({ success: true, resume_id: newResume.id, message: 'New resume created with selected items', redirect: `/resume/${newResume.id}/edit` });
       }
 
       if (!resume_id) {
         return res.status(400).json({ error: 'Please select a resume or choose to create a new one' });
       }
 
-      // Get the existing resume
-      resume = await resumeService.getById(resume_id);
+      const resume = await resumeService.getById(resume_id);
       if (!resume) {
         return res.status(404).json({ error: 'Resume not found' });
       }
 
-      // Parse existing skills
       const skills = resume.skills_data || { technical: '', soft: '', tools: '', languages: '' };
-      const existingTechnical = skills.technical ? skills.technical.split(',').map(s => s.trim().toLowerCase()).filter(Boolean) : [];
+      const existingItems = skills[targetSection] ? skills[targetSection].split(',').map(s => s.trim().toLowerCase()).filter(Boolean) : [];
+      const newItems = keywords.filter(k => !existingItems.includes(k.toLowerCase().trim()));
 
-      // Filter out keywords already present
-      const newKeywords = keywords.filter(k => !existingTechnical.includes(k.toLowerCase().trim()));
-
-      if (newKeywords.length === 0) {
-        return res.json({ success: true, resume_id: resume_id, message: 'All selected keywords are already in your resume', redirect: `/resume/${resume_id}/edit` });
+      if (newItems.length === 0) {
+        return res.json({ success: true, resume_id, message: 'All selected items are already in your resume', redirect: `/resume/${resume_id}/edit` });
       }
 
-      // Append new keywords to technical skills
-      const updatedTechnical = skills.technical
-        ? skills.technical + ', ' + newKeywords.join(', ')
-        : newKeywords.join(', ');
+      skills[targetSection] = skills[targetSection]
+        ? skills[targetSection] + ', ' + newItems.join(', ')
+        : newItems.join(', ');
 
-      skills.technical = updatedTechnical;
-
-      // Save version before modifying
-      try { await resumeService.saveVersion(resume_id); } catch (e) { /* ignore if version save fails */ }
-
-      // Update the resume
+      try { await resumeService.saveVersion(resume_id); } catch (e) { /* ignore */ }
       await resumeService.update(resume_id, { skills_data: skills });
 
       return res.json({
         success: true,
-        resume_id: resume_id,
-        added_keywords: newKeywords,
-        message: `${newKeywords.length} keyword${newKeywords.length > 1 ? 's' : ''} added to your resume`,
+        resume_id,
+        added_keywords: newItems,
+        message: `${newItems.length} item${newItems.length > 1 ? 's' : ''} added to your resume`,
         redirect: `/resume/${resume_id}/edit`,
       });
     } catch (err) {
       console.error('Add keywords error:', err.message, err.stack);
-      res.status(500).json({ error: err.message || 'Failed to add keywords' });
+      res.status(500).json({ error: err.message || 'Failed to add items' });
+    }
+  }
+
+  /**
+   * POST /resume/ats/api/apply-content - Apply content improvements (weak→strong rewrites) to resume
+   */
+  async applyContentImprovements(req, res) {
+    try {
+      const { resume_id, improvements } = req.body;
+      // improvements: [{ original: "weak text", improved: "strong text" }]
+
+      if (!resume_id) {
+        return res.status(400).json({ error: 'Please select a resume' });
+      }
+      if (!improvements || !Array.isArray(improvements) || improvements.length === 0) {
+        return res.status(400).json({ error: 'No improvements to apply' });
+      }
+
+      const resume = await resumeService.getById(resume_id);
+      if (!resume) {
+        return res.status(404).json({ error: 'Resume not found' });
+      }
+
+      try { await resumeService.saveVersion(resume_id); } catch (e) { /* ignore */ }
+
+      let appliedCount = 0;
+      const updateData = {};
+
+      // Apply to experience descriptions
+      const experience = resume.experience_data || [];
+      if (experience.length) {
+        experience.forEach(exp => {
+          if (exp.description) {
+            improvements.forEach(imp => {
+              if (exp.description.includes(imp.original)) {
+                exp.description = exp.description.replace(imp.original, imp.improved);
+                appliedCount++;
+              }
+            });
+          }
+        });
+        updateData.experience_data = experience;
+      }
+
+      // Apply to summary
+      const profile = resume.profile_data || {};
+      if (profile.summary) {
+        improvements.forEach(imp => {
+          if (profile.summary.includes(imp.original)) {
+            profile.summary = profile.summary.replace(imp.original, imp.improved);
+            appliedCount++;
+          }
+        });
+        updateData.profile_data = profile;
+      }
+
+      // Apply to achievements
+      const achievements = resume.achievements_data || [];
+      if (achievements.length) {
+        achievements.forEach((a, i) => {
+          const text = typeof a === 'string' ? a : (a.achievement_text || '');
+          improvements.forEach(imp => {
+            if (text.includes(imp.original)) {
+              if (typeof a === 'string') {
+                achievements[i] = text.replace(imp.original, imp.improved);
+              } else {
+                a.achievement_text = text.replace(imp.original, imp.improved);
+              }
+              appliedCount++;
+            }
+          });
+        });
+        updateData.achievements_data = achievements;
+      }
+
+      // Apply to project descriptions
+      const projects = resume.projects_data || [];
+      if (projects.length) {
+        projects.forEach(p => {
+          if (p.description) {
+            improvements.forEach(imp => {
+              if (p.description.includes(imp.original)) {
+                p.description = p.description.replace(imp.original, imp.improved);
+                appliedCount++;
+              }
+            });
+          }
+        });
+        updateData.projects_data = projects;
+      }
+
+      if (Object.keys(updateData).length > 0) {
+        await resumeService.update(resume_id, updateData);
+      }
+
+      return res.json({
+        success: true,
+        resume_id,
+        applied_count: appliedCount,
+        message: appliedCount > 0
+          ? `${appliedCount} improvement${appliedCount > 1 ? 's' : ''} applied to your resume`
+          : 'Improvements saved. Open your resume to review changes.',
+        redirect: `/resume/${resume_id}/edit`,
+      });
+    } catch (err) {
+      console.error('Apply content error:', err.message, err.stack);
+      res.status(500).json({ error: err.message || 'Failed to apply improvements' });
     }
   }
 
