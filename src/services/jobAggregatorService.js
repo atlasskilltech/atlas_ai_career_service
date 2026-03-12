@@ -91,6 +91,10 @@ class JobAggregatorService {
     return jobAggregatorRepository.getSavedJobs(userId);
   }
 
+  async getRelatedJobs(jobId, category, limit = 6) {
+    return jobAggregatorRepository.getRelatedJobs(jobId, category, limit);
+  }
+
   // ─── AI Job Processing ────────────────────────────────────
 
   async processJobWithAI(rawJob) {

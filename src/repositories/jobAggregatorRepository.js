@@ -226,6 +226,21 @@ class JobAggregatorRepository {
     return rows.length > 0;
   }
 
+  // ─── Related Jobs ─────────────────────────────────────────
+
+  async getRelatedJobs(jobId, category, limit = 6) {
+    const [rows] = await pool.execute(
+      `SELECT id, title, company, location, salary_min, salary_max, experience_min, experience_max,
+              job_type, work_mode, category, skills, company_logo, posted_date
+       FROM aicp_aggregated_jobs
+       WHERE is_active = 1 AND id != ? AND category = ?
+       ORDER BY posted_date DESC
+       LIMIT ?`,
+      [jobId, category, String(limit)]
+    );
+    return rows;
+  }
+
   // ─── Scraper Logs ──────────────────────────────────────────
 
   async createScraperLog(source) {

@@ -43,10 +43,12 @@ class JobAggregatorController {
   async viewJob(req, res) {
     try {
       const job = await jobAggregatorService.getJobById(req.params.id, req.session.user.id);
+      const relatedJobs = job.category ? await jobAggregatorService.getRelatedJobs(job.id, job.category, 6) : [];
       res.render('pages/job-board/view', {
         title: `${job.title} at ${job.company}`,
         layout: 'layouts/app',
         job,
+        relatedJobs,
       });
     } catch (err) {
       req.flash('error', err.message);
