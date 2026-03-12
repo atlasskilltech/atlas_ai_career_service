@@ -13,13 +13,12 @@ class AnalyzerController {
    */
   async index(req, res) {
     try {
-      const history = await analysisRepository.findByUserId(req.session.user.id);
       const resumes = await resumeService.getAll(req.session.user.id);
       const averages = await analysisRepository.getUserAverageScores(req.session.user.id);
       res.render('pages/resume/ats-analyzer', {
         title: 'ATS Resume Analyzer',
         layout: 'layouts/app',
-        history,
+        history: [],
         resumes,
         averages,
         analysis: null,
@@ -189,7 +188,13 @@ class AnalyzerController {
    */
   async getHistory(req, res) {
     try {
-      const history = await analysisRepository.findByUserId(req.session.user.id);
+      const resumeId = req.query.resume_id;
+      let history;
+      if (resumeId) {
+        history = await analysisRepository.findByResumeId(req.session.user.id, parseInt(resumeId), 10);
+      } else {
+        history = await analysisRepository.findByUserId(req.session.user.id, 10);
+      }
       res.json({ success: true, history });
     } catch (err) {
       res.status(500).json({ error: err.message });
