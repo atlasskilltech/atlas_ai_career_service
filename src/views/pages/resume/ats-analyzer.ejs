@@ -525,6 +525,12 @@ function renderResults(a) {
   // Add row to history table
   addHistoryRow(a);
 
+  // Update the resume dropdown score if analyzing a selected resume
+  if (resumeSource === 'select') {
+    const resumeId = document.getElementById('resume-select').value;
+    if (resumeId) updateResumeDropdownScore(resumeId, a.ats_score);
+  }
+
   // Animate ATS score circle
   const score = a.ats_score || 0;
   const circle = document.getElementById('score-circle');
@@ -642,6 +648,44 @@ function renderResults(a) {
 
   // Scroll to results
   document.getElementById('results-dashboard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function updateResumeDropdownScore(resumeId, newScore) {
+  if (!resumeId || !newScore) return;
+
+  // Update the main resume-select dropdown
+  const select = document.getElementById('resume-select');
+  if (select) {
+    const option = select.querySelector('option[value="' + resumeId + '"]');
+    if (option) {
+      // Replace existing score or add new one
+      let text = option.textContent;
+      text = text.replace(/\s*\(Score:\s*\d+%\)/, '');
+      option.textContent = text + ' (Score: ' + newScore + '%)';
+    }
+  }
+
+  // Also update the fix-all target dropdown
+  const fixAllSelect = document.getElementById('fix-all-target');
+  if (fixAllSelect) {
+    const option = fixAllSelect.querySelector('option[value="' + resumeId + '"]');
+    if (option) {
+      let text = option.textContent;
+      text = text.replace(/\s*\(Score:\s*\d+%\)/, '');
+      option.textContent = text + ' (Score: ' + newScore + '%)';
+    }
+  }
+
+  // Also update keyword-target-resume dropdown
+  const kwSelect = document.getElementById('keyword-target-resume');
+  if (kwSelect) {
+    const option = kwSelect.querySelector('option[value="' + resumeId + '"]');
+    if (option) {
+      let text = option.textContent;
+      text = text.replace(/\s*\(Score:\s*\d+%\)/, '');
+      option.textContent = text + ' (Score: ' + newScore + '%)';
+    }
+  }
 }
 
 function addHistoryRow(a) {
