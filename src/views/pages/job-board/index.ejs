@@ -127,7 +127,8 @@
             <div class="flex items-start gap-3 mb-3">
               <div class="w-12 h-12 rounded-xl flex-shrink-0 relative overflow-hidden shadow-sm" style="background: <%= cardLogoColor %>;">
                 <span class="absolute inset-0 flex items-center justify-center text-lg font-bold text-white"><%= job.company.charAt(0).toUpperCase() %></span>
-                <img src="https://logo.clearbit.com/<%= job.company.toLowerCase().replace(/\s*(pvt|private|ltd|limited|inc|corp|llp|llc|co|technologies|tech|software|solutions|consulting|services|india|global|group)\s*/gi, '').trim().replace(/\s+/g, '') %>.com" alt="" class="absolute inset-0 w-full h-full object-contain bg-white p-0.5 rounded-xl" onerror="this.remove();">
+                <% const cardLogoUrl = job.company_logo || ('https://logo.clearbit.com/' + job.company.toLowerCase().replace(/\s*(pvt|private|ltd|limited|inc|corp|llp|llc|co|technologies|tech|software|solutions|consulting|services|india|global|group)\s*/gi, '').trim().replace(/\s+/g, '') + '.com'); %>
+                <img src="<%= cardLogoUrl %>" alt="" class="absolute inset-0 w-full h-full object-contain bg-white p-0.5 rounded-xl" onerror="this.remove();">
               </div>
               <div class="flex-1 min-w-0">
                 <h3 class="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-accent transition-colors line-clamp-2 leading-snug"><%= job.title %></h3>
