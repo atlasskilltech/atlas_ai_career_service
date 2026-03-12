@@ -1044,12 +1044,13 @@ async function handleResumeUpload(input) {
       throw new Error(result.error || 'Failed to parse resume.');
     }
 
-    // Fill form with basic regex-extracted data immediately
+    // Fill form with regex-extracted data immediately
     document.getElementById('upload-bar').style.width = '60%';
-    document.getElementById('upload-status-text').textContent = 'Basic data extracted! Enhancing with AI...';
+    document.getElementById('upload-status-text').textContent = 'Data extracted! Enhancing with AI...';
     fillFormWithParsedData(result.data);
 
     // Step 2: AI-enhance in a separate request (if text available)
+    var aiSuccess = false;
     if (result.text) {
       try {
         var aiRes = await fetch('/resume/ai/parse-resume', {
@@ -1060,19 +1061,26 @@ async function handleResumeUpload(input) {
         var aiResult = await aiRes.json();
         if (aiResult.success && aiResult.data) {
           fillFormWithParsedData(aiResult.data);
+          aiSuccess = true;
           document.getElementById('upload-status-text').textContent = 'AI-enhanced data filled!';
+        } else {
+          console.warn('AI parse response:', aiResult.error || 'No data returned');
         }
       } catch(aiErr) {
-        console.log('AI enhancement skipped:', aiErr.message);
+        console.warn('AI enhancement failed:', aiErr.message);
       }
     }
 
     document.getElementById('upload-bar').style.width = '100%';
     document.getElementById('upload-spinner').classList.add('hidden');
 
+    if (!aiSuccess) {
+      document.getElementById('upload-status-text').textContent = 'Data extracted from resume!';
+    }
+
     setTimeout(function() {
       closeUploadModal();
-      showToast('Resume data imported successfully!', 'success');
+      showToast(aiSuccess ? 'Resume data imported with AI enhancement!' : 'Resume data imported successfully!', 'success');
       triggerAutoSave();
     }, 800);
   } catch(err) {
