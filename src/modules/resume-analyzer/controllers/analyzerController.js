@@ -254,6 +254,89 @@ class AnalyzerController {
   }
 
   /**
+   * POST /resume/ats/api/add-keywords - Add missing keywords to an existing or new resume
+   */
+  async addKeywordsToResume(req, res) {
+    try {
+      const userId = req.session.user.id;
+      const { keywords, resume_id, create_new, new_title } = req.body;
+
+      if (!keywords || !Array.isArray(keywords) || keywords.length === 0) {
+        return res.status(400).json({ error: 'Please select at least one keyword to add' });
+      }
+
+      let resume;
+      let resumeId;
+
+      if (create_new) {
+        // Create a new resume with the keywords as skills
+        const newResume = await resumeRepository.create({
+          userId,
+          title: new_title || 'ATS Optimized Resume',
+          profile: {},
+          education: [],
+          experience: [],
+          projects: [],
+          skills: { technical: keywords.join(', '), soft: '', tools: '', languages: '' },
+          achievements: [],
+          certifications: [],
+          languages: [],
+          interests: [],
+          template: 'modern',
+          theme_color: '#0a1a4a',
+        });
+        resumeId = newResume.id;
+        return res.json({ success: true, resume_id: resumeId, message: 'New resume created with keywords', redirect: `/resume/${resumeId}/edit` });
+      }
+
+      if (!resume_id) {
+        return res.status(400).json({ error: 'Please select a resume or choose to create a new one' });
+      }
+
+      // Get the existing resume
+      resume = await resumeService.getById(resume_id);
+      if (!resume) {
+        return res.status(404).json({ error: 'Resume not found' });
+      }
+
+      // Parse existing skills
+      const skills = resume.skills_data || { technical: '', soft: '', tools: '', languages: '' };
+      const existingTechnical = skills.technical ? skills.technical.split(',').map(s => s.trim().toLowerCase()).filter(Boolean) : [];
+
+      // Filter out keywords already present
+      const newKeywords = keywords.filter(k => !existingTechnical.includes(k.toLowerCase().trim()));
+
+      if (newKeywords.length === 0) {
+        return res.json({ success: true, resume_id: resume_id, message: 'All selected keywords are already in your resume', redirect: `/resume/${resume_id}/edit` });
+      }
+
+      // Append new keywords to technical skills
+      const updatedTechnical = skills.technical
+        ? skills.technical + ', ' + newKeywords.join(', ')
+        : newKeywords.join(', ');
+
+      skills.technical = updatedTechnical;
+
+      // Save version before modifying
+      try { await resumeService.saveVersion(resume_id); } catch (e) { /* ignore if version save fails */ }
+
+      // Update the resume
+      await resumeService.update(resume_id, { skills_data: skills });
+
+      return res.json({
+        success: true,
+        resume_id: resume_id,
+        added_keywords: newKeywords,
+        message: `${newKeywords.length} keyword${newKeywords.length > 1 ? 's' : ''} added to your resume`,
+        redirect: `/resume/${resume_id}/edit`,
+      });
+    } catch (err) {
+      console.error('Add keywords error:', err.message, err.stack);
+      res.status(500).json({ error: err.message || 'Failed to add keywords' });
+    }
+  }
+
+  /**
    * Flatten suggestions from multiple categories into a single array
    */
   _flattenSuggestions(suggestions) {
