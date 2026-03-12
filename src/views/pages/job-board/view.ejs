@@ -10,8 +10,6 @@
 
   <!-- Hero Header -->
   <div class="card !p-0 overflow-hidden">
-    <!-- Colored Banner -->
-    <div class="h-2 w-full" style="background: linear-gradient(90deg, <%= logoColor %>, <%= logoColor %>88);"></div>
     <div class="p-5 sm:p-6">
       <div class="flex flex-col sm:flex-row gap-4">
         <!-- Company Logo -->
@@ -201,7 +199,6 @@
           <% const rTypeColor = typeColors[rJob.job_type] || 'gray'; %>
           <% const rLogoColor = logoColors[rJob.company.charCodeAt(0) % logoColors.length]; %>
           <a href="/job-board/view/<%= rJob.id %>" class="card !p-0 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 group block">
-            <div class="h-1 w-full rounded-t-xl" style="background: <%= rLogoColor %>;"></div>
             <div class="p-4">
               <div class="flex items-start gap-3 mb-3">
                 <% const rLogoUrl = rJob.company_logo || ('https://logo.clearbit.com/' + rJob.company.toLowerCase().replace(/\s*(pvt|private|ltd|limited|inc|corp|llp|llc|co|technologies|tech|software|solutions|consulting|services|india|global|group)\s*/gi, '').trim().replace(/\s+/g, '') + '.com'); %>
