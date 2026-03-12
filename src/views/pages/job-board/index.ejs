@@ -1,98 +1,145 @@
 <div class="space-y-6">
   <!-- Header -->
-  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-    <div>
-      <h1 class="text-2xl font-bold">Job Board</h1>
-      <p class="text-sm text-gray-500 mt-1"><%= total %> jobs available</p>
-    </div>
-    <div class="flex gap-2 flex-shrink-0">
-      <a href="/job-board/saved" class="btn-outline text-sm"><i class="fas fa-bookmark mr-1.5"></i> Saved</a>
-      <a href="/job-board/applications" class="btn-primary text-sm"><i class="fas fa-paper-plane mr-1.5"></i> My Applications</a>
+  <div class="card !p-0 overflow-hidden">
+    <div class="h-1.5 w-full" style="background: linear-gradient(90deg, #4F46E5, #0891B2, #059669);"></div>
+    <div class="p-5 sm:p-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2.5">
+            <div class="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center flex-shrink-0">
+              <i class="fas fa-briefcase text-accent"></i>
+            </div>
+            Job Board
+          </h1>
+          <p class="text-sm text-gray-500 mt-1.5 ml-[52px]"><%= total %> opportunities waiting for you</p>
+        </div>
+        <div class="flex gap-2 flex-shrink-0">
+          <a href="/job-board/saved" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"><i class="far fa-bookmark text-xs"></i> Saved</a>
+          <a href="/job-board/applications" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-white text-sm font-medium bg-accent hover:bg-accent/90 transition-colors shadow-sm"><i class="fas fa-paper-plane text-xs"></i> My Applications</a>
+        </div>
+      </div>
     </div>
   </div>
 
   <!-- Stats Row -->
   <div class="grid grid-cols-3 gap-3">
-    <div class="card !p-4 flex items-center gap-3">
-      <div class="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0">
-        <i class="fas fa-briefcase text-accent"></i>
-      </div>
-      <div>
-        <div class="text-xl font-bold"><%= stats.totalJobs || 0 %></div>
-        <p class="text-xs text-gray-500">Total Jobs</p>
-      </div>
-    </div>
-    <div class="card !p-4 flex items-center gap-3">
-      <div class="w-10 h-10 rounded-lg bg-green-50 dark:bg-green-900/20 flex items-center justify-center flex-shrink-0">
-        <i class="fas fa-bolt text-green-600"></i>
-      </div>
-      <div>
-        <div class="text-xl font-bold text-green-600"><%= stats.newToday || 0 %></div>
-        <p class="text-xs text-gray-500">New Today</p>
+    <div class="card !p-0 overflow-hidden">
+      <div class="h-1 w-full bg-accent"></div>
+      <div class="p-4 flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center flex-shrink-0">
+          <i class="fas fa-briefcase text-accent"></i>
+        </div>
+        <div>
+          <div class="text-xl font-bold text-gray-900 dark:text-white"><%= stats.totalJobs || 0 %></div>
+          <p class="text-xs text-gray-500">Total Jobs</p>
+        </div>
       </div>
     </div>
-    <div class="card !p-4 flex items-center gap-3">
-      <div class="w-10 h-10 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center flex-shrink-0">
-        <i class="fas fa-paper-plane text-blue-600"></i>
+    <div class="card !p-0 overflow-hidden">
+      <div class="h-1 w-full bg-green-500"></div>
+      <div class="p-4 flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-green-50 dark:bg-green-900/20 flex items-center justify-center flex-shrink-0">
+          <i class="fas fa-bolt text-green-600"></i>
+        </div>
+        <div>
+          <div class="text-xl font-bold text-green-600"><%= stats.newToday || 0 %></div>
+          <p class="text-xs text-gray-500">New Today</p>
+        </div>
       </div>
-      <div>
-        <div class="text-xl font-bold text-blue-600"><%= stats.totalApplications || 0 %></div>
-        <p class="text-xs text-gray-500">Applications</p>
+    </div>
+    <div class="card !p-0 overflow-hidden">
+      <div class="h-1 w-full bg-blue-500"></div>
+      <div class="p-4 flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center flex-shrink-0">
+          <i class="fas fa-paper-plane text-blue-600"></i>
+        </div>
+        <div>
+          <div class="text-xl font-bold text-blue-600"><%= stats.totalApplications || 0 %></div>
+          <p class="text-xs text-gray-500">Applications</p>
+        </div>
       </div>
     </div>
   </div>
 
   <!-- Search & Filters -->
-  <div class="card !p-5">
-    <form method="GET" action="/job-board" id="search-form">
-      <!-- Search Bar -->
-      <div class="relative">
-        <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
-        <input type="text" name="q" value="<%= filters.query %>" class="input-field !pl-11 !py-3 !text-base" placeholder="Search by job title, company, or keyword...">
-      </div>
+  <div class="card !p-0 overflow-hidden">
+    <div class="p-5">
+      <form method="GET" action="/job-board" id="search-form">
+        <!-- Search Bar -->
+        <div class="relative">
+          <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+          <input type="text" name="q" value="<%= filters.query %>" class="input-field !pl-11 !py-3 !text-base !rounded-xl" placeholder="Search by job title, company, or keyword...">
+        </div>
 
-      <!-- Filter Row -->
-      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mt-3">
-        <select name="location" class="input-field !py-2 text-sm">
-          <option value="">All Locations</option>
-          <% locations.forEach(loc => { %>
-            <option value="<%= loc %>" <%= filters.location === loc ? 'selected' : '' %>><%= loc %></option>
-          <% }); %>
-        </select>
-        <select name="category" class="input-field !py-2 text-sm">
-          <option value="">All Categories</option>
-          <% categories.forEach(cat => { %>
-            <option value="<%= cat %>" <%= filters.category === cat ? 'selected' : '' %>><%= cat %></option>
-          <% }); %>
-        </select>
-        <select name="jobType" class="input-field !py-2 text-sm">
-          <option value="">All Types</option>
-          <option value="full_time" <%= filters.jobType === 'full_time' ? 'selected' : '' %>>Full Time</option>
-          <option value="part_time" <%= filters.jobType === 'part_time' ? 'selected' : '' %>>Part Time</option>
-          <option value="internship" <%= filters.jobType === 'internship' ? 'selected' : '' %>>Internship</option>
-          <option value="contract" <%= filters.jobType === 'contract' ? 'selected' : '' %>>Contract</option>
-          <option value="freelance" <%= filters.jobType === 'freelance' ? 'selected' : '' %>>Freelance</option>
-        </select>
-        <select name="workMode" class="input-field !py-2 text-sm">
-          <option value="">All Modes</option>
-          <option value="onsite" <%= filters.workMode === 'onsite' ? 'selected' : '' %>>Onsite</option>
-          <option value="remote" <%= filters.workMode === 'remote' ? 'selected' : '' %>>Remote</option>
-          <option value="hybrid" <%= filters.workMode === 'hybrid' ? 'selected' : '' %>>Hybrid</option>
-        </select>
-        <button type="submit" class="btn-primary text-sm !py-2"><i class="fas fa-search mr-1.5"></i> Search</button>
+        <!-- Filter Row -->
+        <div class="flex flex-wrap gap-3 mt-3">
+          <select name="location" class="input-field !py-2.5 !rounded-xl text-sm flex-1 min-w-[140px]">
+            <option value="">All Locations</option>
+            <% locations.forEach(loc => { %>
+              <option value="<%= loc %>" <%= filters.location === loc ? 'selected' : '' %>><%= loc %></option>
+            <% }); %>
+          </select>
+          <select name="category" class="input-field !py-2.5 !rounded-xl text-sm flex-1 min-w-[140px]">
+            <option value="">All Categories</option>
+            <% categories.forEach(cat => { %>
+              <option value="<%= cat %>" <%= filters.category === cat ? 'selected' : '' %>><%= cat %></option>
+            <% }); %>
+          </select>
+          <select name="jobType" class="input-field !py-2.5 !rounded-xl text-sm flex-1 min-w-[120px]">
+            <option value="">All Types</option>
+            <option value="full_time" <%= filters.jobType === 'full_time' ? 'selected' : '' %>>Full Time</option>
+            <option value="part_time" <%= filters.jobType === 'part_time' ? 'selected' : '' %>>Part Time</option>
+            <option value="internship" <%= filters.jobType === 'internship' ? 'selected' : '' %>>Internship</option>
+            <option value="contract" <%= filters.jobType === 'contract' ? 'selected' : '' %>>Contract</option>
+            <option value="freelance" <%= filters.jobType === 'freelance' ? 'selected' : '' %>>Freelance</option>
+          </select>
+          <select name="workMode" class="input-field !py-2.5 !rounded-xl text-sm flex-1 min-w-[120px]">
+            <option value="">All Modes</option>
+            <option value="onsite" <%= filters.workMode === 'onsite' ? 'selected' : '' %>>Onsite</option>
+            <option value="remote" <%= filters.workMode === 'remote' ? 'selected' : '' %>>Remote</option>
+            <option value="hybrid" <%= filters.workMode === 'hybrid' ? 'selected' : '' %>>Hybrid</option>
+          </select>
+          <button type="submit" class="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-white text-sm font-medium bg-accent hover:bg-accent/90 transition-colors shadow-sm flex-shrink-0"><i class="fas fa-search text-xs"></i> Search</button>
+        </div>
+      </form>
+    </div>
+    <% if (filters.query || filters.location || filters.category || filters.jobType || filters.workMode) { %>
+      <div class="px-5 py-2.5 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between">
+        <div class="flex flex-wrap items-center gap-2 text-xs">
+          <span class="text-gray-400">Filters:</span>
+          <% if (filters.query) { %>
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-accent/10 text-accent font-medium"><i class="fas fa-search text-[9px]"></i> "<%= filters.query %>"</span>
+          <% } %>
+          <% if (filters.location) { %>
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 font-medium"><i class="fas fa-map-marker-alt text-[9px]"></i> <%= filters.location %></span>
+          <% } %>
+          <% if (filters.category) { %>
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 font-medium"><i class="fas fa-tag text-[9px]"></i> <%= filters.category %></span>
+          <% } %>
+          <% if (filters.jobType) { %>
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-medium capitalize"><%= filters.jobType.replace('_', ' ') %></span>
+          <% } %>
+          <% if (filters.workMode) { %>
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 font-medium capitalize"><%= filters.workMode %></span>
+          <% } %>
+        </div>
+        <a href="/job-board" class="text-xs text-gray-400 hover:text-accent transition-colors font-medium"><i class="fas fa-times mr-1"></i>Clear</a>
       </div>
-    </form>
+    <% } %>
   </div>
 
   <!-- Job Grid -->
   <% if (jobs.length === 0) { %>
-    <div class="card !p-12 text-center">
-      <div class="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mx-auto mb-4">
-        <i class="fas fa-search text-2xl text-gray-300"></i>
+    <div class="card !p-0 overflow-hidden">
+      <div class="h-1 w-full bg-gray-200 dark:bg-gray-700"></div>
+      <div class="p-12 text-center">
+        <div class="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center mx-auto mb-4">
+          <i class="fas fa-search text-2xl text-gray-300"></i>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-600 dark:text-gray-400">No jobs found</h3>
+        <p class="text-sm text-gray-400 mt-1">Try adjusting your search filters or check back later</p>
+        <a href="/job-board" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors mt-4"><i class="fas fa-redo text-xs"></i> Clear Filters</a>
       </div>
-      <h3 class="text-lg font-semibold text-gray-600 dark:text-gray-400">No jobs found</h3>
-      <p class="text-sm text-gray-400 mt-1">Try adjusting your search filters or check back later</p>
-      <a href="/job-board" class="btn-outline text-sm mt-4 inline-flex"><i class="fas fa-redo mr-1.5"></i> Clear Filters</a>
     </div>
   <% } else { %>
     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -100,60 +147,63 @@
         <% let skills = []; try { skills = typeof job.skills === 'string' ? JSON.parse(job.skills) : (job.skills || []); } catch(e) { skills = []; } %>
         <% const typeColors = {full_time: 'blue', part_time: 'yellow', internship: 'green', contract: 'purple', freelance: 'orange'}; %>
         <% const typeColor = typeColors[job.job_type] || 'gray'; %>
-        <div class="card !p-0 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 group flex flex-col">
+        <% const cardLogoColors = ['#4F46E5','#0891B2','#059669','#D97706','#DC2626','#7C3AED','#2563EB','#0D9488','#C026D3','#EA580C']; %>
+        <% const cardLogoColor = cardLogoColors[job.company.charCodeAt(0) % cardLogoColors.length]; %>
+        <div class="card !p-0 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 group flex flex-col overflow-hidden">
+          <!-- Colored Top Bar -->
+          <div class="h-1 w-full" style="background: <%= cardLogoColor %>;"></div>
+
           <!-- Card Body -->
           <div class="p-5 flex-1 flex flex-col">
-            <!-- Header: Logo + Save -->
-            <div class="flex items-start justify-between gap-3 mb-3">
-              <% const cardLogoColors = ['#4F46E5','#0891B2','#059669','#D97706','#DC2626','#7C3AED','#2563EB','#0D9488','#C026D3','#EA580C']; %>
-              <% const cardLogoColor = cardLogoColors[job.company.charCodeAt(0) % cardLogoColors.length]; %>
+            <!-- Header: Logo + Info + Save -->
+            <div class="flex items-start gap-3 mb-3">
               <div class="w-11 h-11 rounded-xl flex-shrink-0 relative overflow-hidden" style="background: <%= cardLogoColor %>;">
                 <span class="absolute inset-0 flex items-center justify-center text-base font-bold text-white"><%= job.company.charAt(0).toUpperCase() %></span>
                 <img src="https://logo.clearbit.com/<%= job.company.toLowerCase().replace(/\s*(pvt|private|ltd|limited|inc|corp|llp|llc|co|technologies|tech|software|solutions|consulting|services|india|global|group)\s*/gi, '').trim().replace(/\s+/g, '') %>.com" alt="" class="absolute inset-0 w-full h-full object-contain bg-white p-0.5 rounded-xl" onerror="this.remove();">
               </div>
-              <button onclick="toggleSaveJob(<%= job.id %>, this)" class="w-8 h-8 rounded-lg border border-gray-200 dark:border-gray-700 flex items-center justify-center text-gray-400 hover:text-accent hover:border-accent transition-colors flex-shrink-0" title="Save job">
+              <div class="flex-1 min-w-0">
+                <a href="/job-board/view/<%= job.id %>" class="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-accent transition-colors line-clamp-2 leading-snug block"><%= job.title %></a>
+                <p class="text-xs text-gray-500 mt-0.5"><%= job.company %></p>
+              </div>
+              <button onclick="event.stopPropagation(); toggleSaveJob(<%= job.id %>, this)" class="w-8 h-8 rounded-lg border border-gray-200 dark:border-gray-700 flex items-center justify-center text-gray-400 hover:text-accent hover:border-accent transition-colors flex-shrink-0" title="Save job">
                 <i class="far fa-bookmark text-sm"></i>
               </button>
             </div>
 
-            <!-- Title & Company -->
-            <a href="/job-board/view/<%= job.id %>" class="text-base font-semibold text-gray-900 dark:text-white hover:text-accent transition-colors line-clamp-2 leading-snug"><%= job.title %></a>
-            <p class="text-sm text-gray-500 mt-1"><%= job.company %></p>
-
             <!-- Tags Row -->
-            <div class="flex flex-wrap gap-1.5 mt-3">
-              <span class="px-2 py-0.5 rounded-md text-xs font-medium bg-<%= typeColor %>-50 text-<%= typeColor %>-700 dark:bg-<%= typeColor %>-900/20 dark:text-<%= typeColor %>-300 border border-<%= typeColor %>-200 dark:border-<%= typeColor %>-800 capitalize"><%= (job.job_type || 'full_time').replace('_', ' ') %></span>
-              <span class="px-2 py-0.5 rounded-md text-xs font-medium bg-gray-50 text-gray-600 dark:bg-gray-800 dark:text-gray-400 border border-gray-200 dark:border-gray-700 capitalize"><%= (job.work_mode || 'onsite').replace('_', ' ') %></span>
+            <div class="flex flex-wrap gap-1.5 mb-3">
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-<%= typeColor %>-50 text-<%= typeColor %>-700 dark:bg-<%= typeColor %>-900/20 dark:text-<%= typeColor %>-300 capitalize"><%= (job.job_type || 'full_time').replace('_', ' ') %></span>
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 capitalize"><%= (job.work_mode || 'onsite').replace('_', ' ') %></span>
               <% if (job.category) { %>
-                <span class="px-2 py-0.5 rounded-md text-xs font-medium bg-accent/8 text-accent border border-accent/15"><%= job.category %></span>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-accent/10 text-accent"><%= job.category %></span>
               <% } %>
             </div>
 
             <!-- Meta Info -->
-            <div class="flex flex-wrap items-center gap-x-3 gap-y-1 mt-3 text-xs text-gray-500">
+            <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500 mb-3">
               <% if (job.location) { %>
-                <span class="inline-flex items-center gap-1"><i class="fas fa-map-marker-alt text-red-400"></i> <%= job.location %></span>
+                <span class="inline-flex items-center gap-1"><i class="fas fa-map-marker-alt text-red-400 text-[10px]"></i> <%= job.location %></span>
               <% } %>
               <% if (job.salary_min || job.salary_max) { %>
-                <span class="inline-flex items-center gap-1"><i class="fas fa-indian-rupee-sign text-green-500"></i>
+                <span class="inline-flex items-center gap-1"><i class="fas fa-indian-rupee-sign text-green-500 text-[10px]"></i>
                   <% if (job.salary_min && job.salary_max) { %><%= (job.salary_min/100000).toFixed(0) %>-<%= (job.salary_max/100000).toFixed(0) %> LPA<% } else if (job.salary_max) { %>Up to <%= (job.salary_max/100000).toFixed(0) %> LPA<% } else { %><%= (job.salary_min/100000).toFixed(0) %>+ LPA<% } %>
                 </span>
               <% } %>
               <% if (job.experience_min !== null || job.experience_max !== null) { %>
-                <span class="inline-flex items-center gap-1"><i class="fas fa-clock text-blue-400"></i> <%= job.experience_min || 0 %>-<%= job.experience_max || 'Any' %> yrs</span>
+                <span class="inline-flex items-center gap-1"><i class="fas fa-clock text-blue-400 text-[10px]"></i> <%= job.experience_min || 0 %>-<%= job.experience_max || 'Any' %> yrs</span>
               <% } %>
             </div>
 
             <!-- Description -->
             <% if (job.description) { %>
-              <p class="text-xs text-gray-400 mt-3 line-clamp-2 leading-relaxed flex-1"><%= job.description.replace(/<[^>]*>/g, '').substring(0, 140) %><%= job.description.length > 140 ? '...' : '' %></p>
+              <p class="text-xs text-gray-400 line-clamp-2 leading-relaxed flex-1"><%= job.description.replace(/<[^>]*>/g, '').substring(0, 140) %><%= job.description.length > 140 ? '...' : '' %></p>
             <% } %>
 
             <!-- Skills -->
             <% if (skills.length > 0 && !(skills.length === 1 && skills[0] === 'General')) { %>
               <div class="flex flex-wrap gap-1 mt-3">
                 <% skills.slice(0, 4).forEach(skill => { %>
-                  <span class="px-1.5 py-0.5 bg-accent/8 text-accent border border-accent/15 rounded text-[11px] font-medium"><%= skill %></span>
+                  <span class="px-1.5 py-0.5 bg-accent/8 text-accent border border-accent/15 rounded-full text-[11px] font-medium"><%= skill %></span>
                 <% }); %>
                 <% if (skills.length > 4) { %><span class="px-1.5 py-0.5 text-gray-400 text-[11px]">+<%= skills.length - 4 %></span><% } %>
               </div>
@@ -161,9 +211,9 @@
           </div>
 
           <!-- Card Footer -->
-          <div class="px-5 py-3 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-100 dark:border-gray-800 rounded-b-xl flex items-center justify-between">
+          <div class="px-5 py-3 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between">
             <% if (job.posted_date) { %>
-              <span class="text-xs text-gray-400"><i class="far fa-calendar mr-1"></i><%= new Date(job.posted_date).toLocaleDateString('en-IN', {day: 'numeric', month: 'short', year: 'numeric'}) %></span>
+              <span class="text-[11px] text-gray-400"><i class="far fa-calendar mr-1"></i><%= new Date(job.posted_date).toLocaleDateString('en-IN', {day: 'numeric', month: 'short', year: 'numeric'}) %></span>
             <% } else { %>
               <span></span>
             <% } %>
@@ -178,13 +228,13 @@
   <% if (totalPages > 1) { %>
     <div class="flex items-center justify-center gap-1.5 pt-2">
       <% if (page > 1) { %>
-        <a href="?<%= new URLSearchParams({...filters, page: page - 1}).toString() %>" class="w-9 h-9 rounded-lg border border-gray-200 dark:border-gray-700 flex items-center justify-center text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"><i class="fas fa-chevron-left text-xs"></i></a>
+        <a href="?<%= new URLSearchParams({...filters, page: page - 1}).toString() %>" class="w-9 h-9 rounded-xl border border-gray-200 dark:border-gray-700 flex items-center justify-center text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"><i class="fas fa-chevron-left text-xs"></i></a>
       <% } %>
       <% for (let i = Math.max(1, page - 2); i <= Math.min(totalPages, page + 2); i++) { %>
-        <a href="?<%= new URLSearchParams({...filters, page: i}).toString() %>" class="w-9 h-9 rounded-lg flex items-center justify-center text-sm font-medium transition-colors <%= i === page ? 'bg-primary text-white' : 'border border-gray-200 dark:border-gray-700 text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800' %>"><%= i %></a>
+        <a href="?<%= new URLSearchParams({...filters, page: i}).toString() %>" class="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-medium transition-colors <%= i === page ? 'bg-accent text-white shadow-sm' : 'border border-gray-200 dark:border-gray-700 text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800' %>"><%= i %></a>
       <% } %>
       <% if (page < totalPages) { %>
-        <a href="?<%= new URLSearchParams({...filters, page: page + 1}).toString() %>" class="w-9 h-9 rounded-lg border border-gray-200 dark:border-gray-700 flex items-center justify-center text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"><i class="fas fa-chevron-right text-xs"></i></a>
+        <a href="?<%= new URLSearchParams({...filters, page: page + 1}).toString() %>" class="w-9 h-9 rounded-xl border border-gray-200 dark:border-gray-700 flex items-center justify-center text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"><i class="fas fa-chevron-right text-xs"></i></a>
       <% } %>
     </div>
   <% } %>
