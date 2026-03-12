@@ -15,11 +15,10 @@
     <div class="p-5 sm:p-6">
       <div class="flex flex-col sm:flex-row gap-4">
         <!-- Company Logo -->
-        <div class="flex-shrink-0 w-16 h-16 rounded-2xl flex items-center justify-center shadow-sm" style="background: <%= logoColor %>15; border: 2px solid <%= logoColor %>30;">
+        <div class="flex-shrink-0 w-16 h-16 rounded-2xl shadow-sm relative overflow-hidden" style="background: <%= logoColor %>15; border: 2px solid <%= logoColor %>30;">
+          <span class="absolute inset-0 flex items-center justify-center text-2xl font-bold" style="color: <%= logoColor %>;"><%= job.company.charAt(0).toUpperCase() %></span>
           <% if (job.company_logo) { %>
-            <img src="<%= job.company_logo %>" alt="<%= job.company %>" class="w-12 h-12 rounded-xl object-cover" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><span class="text-2xl font-bold hidden items-center justify-center w-full h-full" style="color: <%= logoColor %>;"><%= job.company.charAt(0).toUpperCase() %></span>
-          <% } else { %>
-            <span class="text-2xl font-bold" style="color: <%= logoColor %>;"><%= job.company.charAt(0).toUpperCase() %></span>
+            <img src="<%= job.company_logo %>" alt="<%= job.company %>" class="absolute inset-0 w-full h-full object-contain p-1.5 rounded-2xl" onerror="this.remove();">
           <% } %>
         </div>
 
@@ -175,11 +174,10 @@
       <div class="card !p-5">
         <h3 class="font-semibold text-sm mb-3 flex items-center gap-2"><i class="fas fa-building text-accent text-xs"></i> About Company</h3>
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style="background: <%= logoColor %>15;">
+          <div class="w-10 h-10 rounded-xl flex-shrink-0 relative overflow-hidden" style="background: <%= logoColor %>15;">
+            <span class="absolute inset-0 flex items-center justify-center text-base font-bold" style="color: <%= logoColor %>;"><%= job.company.charAt(0).toUpperCase() %></span>
             <% if (job.company_logo) { %>
-              <img src="<%= job.company_logo %>" alt="<%= job.company %>" class="w-8 h-8 rounded-lg object-cover">
-            <% } else { %>
-              <span class="text-base font-bold" style="color: <%= logoColor %>;"><%= job.company.charAt(0).toUpperCase() %></span>
+              <img src="<%= job.company_logo %>" alt="<%= job.company %>" class="absolute inset-0 w-full h-full object-contain p-1 rounded-xl" onerror="this.remove();">
             <% } %>
           </div>
           <div>
@@ -209,11 +207,10 @@
             <div class="h-1 w-full rounded-t-xl" style="background: <%= rLogoColor %>;"></div>
             <div class="p-4">
               <div class="flex items-start gap-3 mb-3">
-                <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style="background: <%= rLogoColor %>15;">
+                <div class="w-10 h-10 rounded-xl flex-shrink-0 relative overflow-hidden" style="background: <%= rLogoColor %>15;">
+                  <span class="absolute inset-0 flex items-center justify-center text-sm font-bold" style="color: <%= rLogoColor %>;"><%= rJob.company.charAt(0).toUpperCase() %></span>
                   <% if (rJob.company_logo) { %>
-                    <img src="<%= rJob.company_logo %>" alt="<%= rJob.company %>" class="w-8 h-8 rounded-lg object-cover">
-                  <% } else { %>
-                    <span class="text-sm font-bold" style="color: <%= rLogoColor %>;"><%= rJob.company.charAt(0).toUpperCase() %></span>
+                    <img src="<%= rJob.company_logo %>" alt="<%= rJob.company %>" class="absolute inset-0 w-full h-full object-contain p-1 rounded-xl" onerror="this.remove();">
                   <% } %>
                 </div>
                 <div class="min-w-0 flex-1">
