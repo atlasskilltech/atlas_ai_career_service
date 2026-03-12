@@ -30,6 +30,69 @@ function getRandomItems(arr, count) {
   return shuffled.slice(0, count);
 }
 
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function fetchJobDescription(page, url) {
+  try {
+    await page.goto(url, { waitUntil: 'networkidle2', timeout: 20000 });
+
+    // Wait for the description section to load
+    await page.waitForSelector('.show-more-less-html__markup, .description__text, .decorated-job-posting__details, [class*="description"], article', { timeout: 8000 }).catch(() => {});
+
+    const details = await page.evaluate(() => {
+      // Extract full description
+      const descEl = document.querySelector('.show-more-less-html__markup') ||
+                     document.querySelector('.description__text') ||
+                     document.querySelector('.decorated-job-posting__details') ||
+                     document.querySelector('[class*="description"] .show-more-less-html__markup') ||
+                     document.querySelector('article .show-more-less-html__markup');
+
+      let description = '';
+      if (descEl) {
+        // Get HTML content and convert to readable text
+        description = descEl.innerHTML
+          .replace(/<br\s*\/?>/gi, '\n')
+          .replace(/<\/p>/gi, '\n\n')
+          .replace(/<\/li>/gi, '\n')
+          .replace(/<li>/gi, '• ')
+          .replace(/<\/h[1-6]>/gi, '\n')
+          .replace(/<[^>]*>/g, '')
+          .replace(/&amp;/g, '&')
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          .replace(/&nbsp;/g, ' ')
+          .replace(/&#39;/g, "'")
+          .replace(/&quot;/g, '"')
+          .replace(/\n{3,}/g, '\n\n')
+          .trim();
+      }
+
+      // Extract skills/criteria from the page
+      const skillEls = document.querySelectorAll('.description__job-criteria-text, .job-criteria__text');
+      const criteria = {};
+      const criteriaLabels = document.querySelectorAll('.description__job-criteria-subheader');
+      criteriaLabels.forEach((label, i) => {
+        const key = (label.textContent || '').trim().toLowerCase();
+        const val = skillEls[i] ? (skillEls[i].textContent || '').trim() : '';
+        if (key && val) criteria[key] = val;
+      });
+
+      // Try to get employment type and seniority
+      const jobType = criteria['employment type'] || '';
+      const seniorityLevel = criteria['seniority level'] || '';
+
+      return { description, jobType, seniorityLevel };
+    });
+
+    return details;
+  } catch (err) {
+    console.log(`[LinkedIn] Failed to fetch description from ${url}: ${err.message}`);
+    return null;
+  }
+}
+
 async function fetchLinkedInJobs() {
   const query = getRandomItems(SEARCH_QUERIES, 1)[0];
   const location = getRandomItems(LOCATIONS, 1)[0];
@@ -78,20 +141,47 @@ async function fetchLinkedInJobs() {
       return results;
     });
 
-    for (const raw of rawJobs) {
+    // Visit each job detail page to get full description (limit to 15 to avoid rate limiting)
+    const jobsToProcess = rawJobs.slice(0, 15);
+    for (let i = 0; i < jobsToProcess.length; i++) {
+      const raw = jobsToProcess[i];
       if (!raw.title || !raw.company) continue;
       const externalId = raw.url ? raw.url.split('?')[0].split('/').pop() : `li-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+      let description = `${raw.title} position at ${raw.company}.`;
+      let detectedJobType = 'full_time';
+
+      // Fetch full description from the job detail page
+      if (raw.url) {
+        const details = await fetchJobDescription(page, raw.url);
+        if (details && details.description && details.description.length > 50) {
+          description = details.description;
+
+          // Map employment type
+          if (details.jobType) {
+            const jt = details.jobType.toLowerCase();
+            if (jt.includes('part')) detectedJobType = 'part_time';
+            else if (jt.includes('intern')) detectedJobType = 'internship';
+            else if (jt.includes('contract')) detectedJobType = 'contract';
+            else if (jt.includes('freelance') || jt.includes('temporary')) detectedJobType = 'freelance';
+          }
+        }
+        // Small delay to avoid rate limiting
+        await delay(1500 + Math.random() * 1500);
+      }
+
+      const allSkills = extractSkillsFromText(raw.title + ' ' + description);
 
       jobs.push({
         externalId,
         title: raw.title,
         company: raw.company,
         location: raw.location || location,
-        description: `${raw.title} position at ${raw.company}. Found on LinkedIn for ${query} in ${location}.`,
-        skills: extractSkillsFromTitle(raw.title),
+        description,
+        skills: allSkills,
         category: categorizeJob(raw.title),
-        jobType: 'full_time',
-        workMode: detectWorkMode(raw.title + ' ' + raw.location),
+        jobType: detectedJobType,
+        workMode: detectWorkMode(raw.title + ' ' + raw.location + ' ' + description),
         source: 'linkedin',
         sourceUrl: raw.url || searchUrl,
         applyUrl: raw.url || searchUrl,
@@ -99,7 +189,7 @@ async function fetchLinkedInJobs() {
       });
     }
 
-    console.log(`[LinkedIn] Fetched ${jobs.length} jobs for "${query}" in ${location}`);
+    console.log(`[LinkedIn] Fetched ${jobs.length} jobs with full descriptions for "${query}" in ${location}`);
   } catch (err) {
     console.error('[LinkedIn] Fetch error:', err.message);
   } finally {
@@ -109,8 +199,8 @@ async function fetchLinkedInJobs() {
   return jobs;
 }
 
-function extractSkillsFromTitle(title) {
-  const t = title.toLowerCase();
+function extractSkillsFromText(text) {
+  const t = text.toLowerCase();
   const skillMap = {
     'react': 'React', 'angular': 'Angular', 'vue': 'Vue.js', 'node': 'Node.js',
     'python': 'Python', 'java ': 'Java', 'javascript': 'JavaScript', 'typescript': 'TypeScript',
@@ -122,10 +212,19 @@ function extractSkillsFromTitle(title) {
     'php': 'PHP', 'laravel': 'Laravel', 'django': 'Django', 'spring': 'Spring Boot',
     'selenium': 'Selenium', 'automation': 'Test Automation', 'manual testing': 'Manual Testing',
     'figma': 'Figma', 'ui': 'UI Design', 'ux': 'UX Design',
+    'redis': 'Redis', 'kafka': 'Kafka', 'rabbitmq': 'RabbitMQ',
+    'git': 'Git', 'ci/cd': 'CI/CD', 'jenkins': 'Jenkins',
+    'pandas': 'Pandas', 'numpy': 'NumPy', 'tensorflow': 'TensorFlow', 'pytorch': 'PyTorch',
+    'rest api': 'REST API', 'graphql': 'GraphQL', 'microservice': 'Microservices',
+    'linux': 'Linux', 'nginx': 'Nginx', 'terraform': 'Terraform', 'ansible': 'Ansible',
+    'html': 'HTML', 'css': 'CSS', 'sass': 'SASS', 'tailwind': 'Tailwind CSS',
+    'next.js': 'Next.js', 'nextjs': 'Next.js', 'express': 'Express.js',
+    'ruby': 'Ruby', 'rails': 'Ruby on Rails', 'scala': 'Scala',
+    'elasticsearch': 'Elasticsearch', 'power bi': 'Power BI', 'tableau': 'Tableau',
   };
   const found = [];
   for (const [key, val] of Object.entries(skillMap)) {
-    if (t.includes(key)) found.push(val);
+    if (t.includes(key) && !found.includes(val)) found.push(val);
   }
   return found.length > 0 ? found : ['General'];
 }
