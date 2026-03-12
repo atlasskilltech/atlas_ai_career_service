@@ -105,12 +105,10 @@
           <div class="p-5 flex-1 flex flex-col">
             <!-- Header: Logo + Save -->
             <div class="flex items-start justify-between gap-3 mb-3">
-              <div class="w-11 h-11 bg-gray-50 dark:bg-gray-800 rounded-xl flex items-center justify-center border border-gray-100 dark:border-gray-700 flex-shrink-0">
+              <div class="w-11 h-11 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 flex-shrink-0 relative overflow-hidden">
+                <span class="absolute inset-0 flex items-center justify-center text-base font-bold text-gray-400"><%= job.company.charAt(0).toUpperCase() %></span>
                 <% if (job.company_logo) { %>
-                  <img src="<%= job.company_logo %>" alt="<%= job.company %>" class="w-9 h-9 rounded-lg object-cover" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
-                  <span class="text-base font-bold text-gray-400 hidden"><%= job.company.charAt(0).toUpperCase() %></span>
-                <% } else { %>
-                  <span class="text-base font-bold text-gray-400"><%= job.company.charAt(0).toUpperCase() %></span>
+                  <img src="<%= job.company_logo %>" alt="<%= job.company %>" class="absolute inset-0 w-full h-full object-contain p-1 rounded-xl" onerror="this.remove();">
                 <% } %>
               </div>
               <button onclick="toggleSaveJob(<%= job.id %>, this)" class="w-8 h-8 rounded-lg border border-gray-200 dark:border-gray-700 flex items-center justify-center text-gray-400 hover:text-accent hover:border-accent transition-colors flex-shrink-0" title="Save job">
