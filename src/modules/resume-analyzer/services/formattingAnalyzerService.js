@@ -120,10 +120,36 @@ class FormattingAnalyzerService {
   }
 
   /**
+   * Deterministic baseline score from structural checks
+   */
+  _deterministicBaseline(analysisResult) {
+    let score = 0;
+    // Has bullet points: +25
+    if (analysisResult.has_bullet_points) score += 25;
+    // Has metrics/measurable achievements: +20
+    if (analysisResult.has_metrics) score += 20;
+    // Section coverage: up to +30
+    const sectionCount = (analysisResult.sections_detected || []).length;
+    score += Math.min(30, sectionCount * 6);
+    // Optimal length: +15
+    if (analysisResult.estimated_length === 'optimal') score += 15;
+    else if (analysisResult.estimated_length === 'short') score += 5;
+    else score += 10; // long
+    // Low issue count bonus: +10
+    const issueCount = (analysisResult.issues || []).length;
+    if (issueCount === 0) score += 10;
+    else if (issueCount <= 2) score += 5;
+    return Math.min(100, score);
+  }
+
+  /**
    * Calculate formatting score (0-100)
+   * Blends AI score (60%) with deterministic baseline (40%) to prevent wild swings
    */
   calculateScore(analysisResult) {
-    return Math.min(100, Math.max(0, analysisResult.formatting_score || 0));
+    const aiScore = Math.min(100, Math.max(0, analysisResult.formatting_score || 0));
+    const baseline = this._deterministicBaseline(analysisResult);
+    return Math.round(aiScore * 0.6 + baseline * 0.4);
   }
 }
 
