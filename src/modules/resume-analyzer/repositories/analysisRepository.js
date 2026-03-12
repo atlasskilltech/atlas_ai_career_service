@@ -116,6 +116,17 @@ class AnalysisRepository {
   }
 
   /**
+   * Get analysis history for a specific resume
+   */
+  async findByResumeId(userId, resumeId, limit = 10) {
+    const [rows] = await pool.execute(
+      'SELECT id, resume_id, ats_score, keyword_match_score, skills_match_score, formatting_score, content_score, experience_score, created_at FROM aicp_resume_analysis WHERE user_id = ? AND resume_id = ? ORDER BY created_at DESC LIMIT ?',
+      [userId, resumeId, limit]
+    );
+    return rows;
+  }
+
+  /**
    * Delete an analysis and all related data (cascade handles it)
    */
   async delete(id) {
