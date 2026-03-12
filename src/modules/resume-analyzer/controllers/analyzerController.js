@@ -435,6 +435,171 @@ class AnalyzerController {
   }
 
   /**
+   * POST /resume/ats/api/fix-all - Apply ALL ATS suggestions at once to existing or new resume
+   * Handles: missing keywords, missing skills, recommended skills, content rewrites, formatting via AI
+   */
+  async fixAll(req, res) {
+    try {
+      const userId = req.session.user.id;
+      const { resume_id, create_new, new_title, missing_keywords, missing_skills, recommended_skills, content_improvements, suggestions, job_description } = req.body;
+
+      if (!resume_id && !create_new) {
+        return res.status(400).json({ error: 'Please select a resume or choose to create a new one' });
+      }
+
+      let resume;
+      let targetId = resume_id;
+      const results = { skills_added: 0, content_applied: 0, sections_updated: [] };
+
+      if (create_new) {
+        // Create new resume with all the skills pre-loaded
+        const allSkills = [
+          ...(missing_keywords || []),
+          ...(missing_skills || []),
+          ...(recommended_skills || []),
+        ];
+        const newResume = await resumeRepository.create({
+          userId,
+          title: new_title || 'ATS Optimized Resume',
+          profile: {},
+          education: [],
+          experience: [],
+          projects: [],
+          skills: { technical: allSkills.join(', '), soft: '', tools: '', languages: '' },
+          achievements: [],
+          certifications: [],
+          languages: [],
+          interests: [],
+          template: 'ats-friendly',
+          theme_color: '#0a1a4a',
+        });
+        targetId = newResume.id;
+        results.skills_added = allSkills.length;
+        results.sections_updated.push('skills');
+        return res.json({
+          success: true,
+          resume_id: targetId,
+          results,
+          message: `New ATS-optimized resume created with ${allSkills.length} skills`,
+          redirect: `/resume/${targetId}/edit`,
+        });
+      }
+
+      // Working with existing resume
+      resume = await resumeService.getById(targetId);
+      if (!resume) return res.status(404).json({ error: 'Resume not found' });
+
+      // Save version before any modifications
+      try { await resumeService.saveVersion(targetId); } catch (e) { /* ignore */ }
+
+      const updateData = {};
+
+      // 1. Add all missing keywords + skills + recommended to technical skills
+      const allNewSkills = [
+        ...(missing_keywords || []),
+        ...(missing_skills || []),
+        ...(recommended_skills || []),
+      ];
+
+      if (allNewSkills.length > 0) {
+        const skills = resume.skills_data || { technical: '', soft: '', tools: '', languages: '' };
+        const existingTechnical = skills.technical ? skills.technical.split(',').map(s => s.trim().toLowerCase()).filter(Boolean) : [];
+        const newItems = allNewSkills.filter(k => !existingTechnical.includes(k.toLowerCase().trim()));
+
+        if (newItems.length > 0) {
+          skills.technical = skills.technical
+            ? skills.technical + ', ' + newItems.join(', ')
+            : newItems.join(', ');
+          updateData.skills_data = skills;
+          results.skills_added = newItems.length;
+          results.sections_updated.push('skills');
+        }
+      }
+
+      // 2. Apply content improvements (weak → strong rewrites)
+      if (content_improvements && content_improvements.length > 0) {
+        // Experience
+        const experience = resume.experience_data || [];
+        experience.forEach(exp => {
+          if (exp.description) {
+            content_improvements.forEach(imp => {
+              if (exp.description.includes(imp.original)) {
+                exp.description = exp.description.replace(imp.original, imp.improved);
+                results.content_applied++;
+              }
+            });
+          }
+        });
+        updateData.experience_data = experience;
+
+        // Summary
+        const profile = resume.profile_data || {};
+        if (profile.summary) {
+          content_improvements.forEach(imp => {
+            if (profile.summary.includes(imp.original)) {
+              profile.summary = profile.summary.replace(imp.original, imp.improved);
+              results.content_applied++;
+            }
+          });
+          updateData.profile_data = profile;
+        }
+
+        // Achievements
+        const achievements = resume.achievements_data || [];
+        achievements.forEach((a, i) => {
+          const text = typeof a === 'string' ? a : (a.achievement_text || '');
+          content_improvements.forEach(imp => {
+            if (text.includes(imp.original)) {
+              if (typeof a === 'string') {
+                achievements[i] = text.replace(imp.original, imp.improved);
+              } else {
+                a.achievement_text = text.replace(imp.original, imp.improved);
+              }
+              results.content_applied++;
+            }
+          });
+        });
+        updateData.achievements_data = achievements;
+
+        // Projects
+        const projects = resume.projects_data || [];
+        projects.forEach(p => {
+          if (p.description) {
+            content_improvements.forEach(imp => {
+              if (p.description.includes(imp.original)) {
+                p.description = p.description.replace(imp.original, imp.improved);
+                results.content_applied++;
+              }
+            });
+          }
+        });
+        updateData.projects_data = projects;
+
+        if (results.content_applied > 0) results.sections_updated.push('content');
+      }
+
+      // 3. Save all updates
+      if (Object.keys(updateData).length > 0) {
+        await resumeService.update(targetId, updateData);
+      }
+
+      const totalFixes = results.skills_added + results.content_applied;
+      return res.json({
+        success: true,
+        resume_id: targetId,
+        results,
+        message: totalFixes > 0
+          ? `${totalFixes} fix${totalFixes > 1 ? 'es' : ''} applied: ${results.skills_added} skills added, ${results.content_applied} content improvements`
+          : 'All suggestions already applied to your resume',
+        redirect: `/resume/${targetId}/edit`,
+      });
+    } catch (err) {
+      console.error('Fix all error:', err.message, err.stack);
+      res.status(500).json({ error: err.message || 'Failed to apply fixes' });
+    }
+  }
+
+  /**
    * Flatten suggestions from multiple categories into a single array
    */
   _flattenSuggestions(suggestions) {
