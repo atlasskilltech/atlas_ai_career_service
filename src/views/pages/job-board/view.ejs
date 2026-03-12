@@ -1,86 +1,97 @@
+<% const typeColors = {full_time: 'blue', part_time: 'yellow', internship: 'green', contract: 'purple', freelance: 'orange'}; %>
+<% const typeColor = typeColors[job.job_type] || 'gray'; %>
+<% let skills = []; try { skills = typeof job.skills === 'string' ? JSON.parse(job.skills) : (job.skills || []); } catch(e) { skills = []; } %>
+<% const logoColors = ['#4F46E5','#0891B2','#059669','#D97706','#DC2626','#7C3AED','#2563EB','#0D9488','#C026D3','#EA580C']; %>
+<% const logoColor = logoColors[job.company.charCodeAt(0) % logoColors.length]; %>
+
 <div class="max-w-5xl mx-auto space-y-5">
   <!-- Back -->
   <a href="/job-board" class="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-accent transition-colors"><i class="fas fa-arrow-left text-xs"></i> Back to Job Board</a>
 
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
-    <!-- Main Content (Left 2/3) -->
-    <div class="lg:col-span-2 space-y-5">
+  <!-- Hero Header -->
+  <div class="card !p-0 overflow-hidden">
+    <!-- Colored Banner -->
+    <div class="h-2 w-full" style="background: linear-gradient(90deg, <%= logoColor %>, <%= logoColor %>88);"></div>
+    <div class="p-5 sm:p-6">
+      <div class="flex flex-col sm:flex-row gap-4">
+        <!-- Company Logo -->
+        <div class="flex-shrink-0 w-16 h-16 rounded-2xl flex items-center justify-center shadow-sm" style="background: <%= logoColor %>15; border: 2px solid <%= logoColor %>30;">
+          <% if (job.company_logo) { %>
+            <img src="<%= job.company_logo %>" alt="<%= job.company %>" class="w-12 h-12 rounded-xl object-cover">
+          <% } else { %>
+            <span class="text-2xl font-bold" style="color: <%= logoColor %>;"><%= job.company.charAt(0).toUpperCase() %></span>
+          <% } %>
+        </div>
 
-      <!-- Job Header Card -->
-      <div class="card !p-0 overflow-hidden">
-        <div class="p-5 sm:p-6">
-          <div class="flex flex-col sm:flex-row gap-4">
-            <!-- Company Logo -->
-            <div class="flex-shrink-0 w-14 h-14 bg-gray-50 dark:bg-gray-800 rounded-xl flex items-center justify-center border border-gray-100 dark:border-gray-700">
-              <% if (job.company_logo) { %>
-                <img src="<%= job.company_logo %>" alt="<%= job.company %>" class="w-11 h-11 rounded-lg object-cover">
-              <% } else { %>
-                <span class="text-xl font-bold text-gray-400"><%= job.company.charAt(0).toUpperCase() %></span>
-              <% } %>
-            </div>
+        <!-- Title & Company -->
+        <div class="flex-1 min-w-0">
+          <h1 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white leading-tight"><%= job.title %></h1>
+          <p class="text-base text-gray-500 mt-1 font-medium"><%= job.company %></p>
 
-            <!-- Job Title & Meta -->
-            <div class="flex-1 min-w-0">
-              <h1 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white"><%= job.title %></h1>
-              <p class="text-base text-gray-500 mt-1"><%= job.company %></p>
-
-              <!-- Key Info Pills -->
-              <div class="flex flex-wrap items-center gap-3 mt-3 text-sm text-gray-600 dark:text-gray-400">
-                <% if (job.location) { %>
-                  <span class="inline-flex items-center gap-1.5"><i class="fas fa-map-marker-alt text-red-400 text-xs"></i> <%= job.location %></span>
-                <% } %>
-                <% if (job.salary_min || job.salary_max) { %>
-                  <span class="inline-flex items-center gap-1.5"><i class="fas fa-indian-rupee-sign text-green-500 text-xs"></i>
-                    <% if (job.salary_min && job.salary_max) { %><%= (job.salary_min/100000).toFixed(0) %>-<%= (job.salary_max/100000).toFixed(0) %> LPA<% } else if (job.salary_max) { %>Up to <%= (job.salary_max/100000).toFixed(0) %> LPA<% } else { %><%= (job.salary_min/100000).toFixed(0) %>+ LPA<% } %>
-                  </span>
-                <% } %>
-                <% if (job.experience_min !== null) { %>
-                  <span class="inline-flex items-center gap-1.5"><i class="fas fa-clock text-blue-400 text-xs"></i> <%= job.experience_min || 0 %>-<%= job.experience_max || 'Any' %> years</span>
-                <% } %>
-              </div>
-
-              <!-- Tags -->
-              <div class="flex flex-wrap gap-2 mt-3">
-                <% const typeColors = {full_time: 'blue', part_time: 'yellow', internship: 'green', contract: 'purple', freelance: 'orange'}; %>
-                <% const typeColor = typeColors[job.job_type] || 'gray'; %>
-                <span class="px-2.5 py-1 rounded-md text-xs font-medium bg-<%= typeColor %>-50 text-<%= typeColor %>-700 dark:bg-<%= typeColor %>-900/20 dark:text-<%= typeColor %>-300 border border-<%= typeColor %>-200 dark:border-<%= typeColor %>-800 capitalize"><%= (job.job_type || 'full_time').replace('_', ' ') %></span>
-                <span class="px-2.5 py-1 rounded-md text-xs font-medium bg-gray-50 text-gray-700 dark:bg-gray-800 dark:text-gray-300 border border-gray-200 dark:border-gray-700 capitalize"><i class="fas fa-laptop-house mr-1 text-purple-400"></i><%= (job.work_mode || 'onsite').replace('_', ' ') %></span>
-                <% if (job.category) { %>
-                  <span class="px-2.5 py-1 rounded-md text-xs font-medium bg-accent/10 text-accent border border-accent/20"><%= job.category %></span>
-                <% } %>
-                <% if (job.is_verified) { %><span class="px-2.5 py-1 rounded-md text-xs font-medium bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-300 border border-green-200 dark:border-green-800"><i class="fas fa-check-circle mr-1"></i>Verified</span><% } %>
-              </div>
-            </div>
+          <!-- Info Chips -->
+          <div class="flex flex-wrap items-center gap-2 mt-3">
+            <% if (job.location) { %>
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"><i class="fas fa-map-marker-alt text-red-400 text-[10px]"></i> <%= job.location %></span>
+            <% } %>
+            <% if (job.salary_min || job.salary_max) { %>
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300"><i class="fas fa-indian-rupee-sign text-[10px]"></i>
+                <% if (job.salary_min && job.salary_max) { %><%= (job.salary_min/100000).toFixed(0) %>-<%= (job.salary_max/100000).toFixed(0) %> LPA<% } else if (job.salary_max) { %>Up to <%= (job.salary_max/100000).toFixed(0) %> LPA<% } else { %><%= (job.salary_min/100000).toFixed(0) %>+ LPA<% } %>
+              </span>
+            <% } %>
+            <% if (job.experience_min !== null) { %>
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300"><i class="fas fa-clock text-[10px]"></i> <%= job.experience_min || 0 %>-<%= job.experience_max || 'Any' %> yrs</span>
+            <% } %>
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-<%= typeColor %>-50 dark:bg-<%= typeColor %>-900/20 text-<%= typeColor %>-700 dark:text-<%= typeColor %>-300 capitalize"><%= (job.job_type || 'full_time').replace('_', ' ') %></span>
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 capitalize"><i class="fas fa-laptop-house text-[10px]"></i> <%= (job.work_mode || 'onsite').replace('_', ' ') %></span>
+            <% if (job.category) { %>
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-accent/10 text-accent"><%= job.category %></span>
+            <% } %>
+            <% if (job.is_verified) { %><span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-300"><i class="fas fa-check-circle text-[10px]"></i> Verified</span><% } %>
           </div>
         </div>
 
-        <!-- Action Bar -->
-        <div class="px-5 sm:px-6 py-4 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-100 dark:border-gray-800 flex flex-wrap gap-2.5">
-          <% if (job.hasApplied) { %>
-            <button disabled class="btn-primary text-sm !opacity-60"><i class="fas fa-check mr-1.5"></i> Applied</button>
-          <% } else if (job.apply_url) { %>
-            <a href="<%= job.apply_url %>" target="_blank" rel="noopener noreferrer" class="btn-primary text-sm"><i class="fas fa-external-link-alt mr-1.5"></i> Apply Externally</a>
-          <% } %>
-          <% if (!job.hasApplied) { %>
-            <button onclick="openApplyModal()" class="btn-outline text-sm"><i class="fas fa-paper-plane mr-1.5"></i> Quick Apply</button>
-          <% } %>
-          <button onclick="toggleSave()" id="save-btn" class="btn-outline text-sm">
-            <i class="<%= job.isSaved ? 'fas' : 'far' %> fa-bookmark mr-1.5"></i> <%= job.isSaved ? 'Saved' : 'Save' %>
+        <!-- Action Buttons (right aligned on desktop) -->
+        <div class="flex sm:flex-col gap-2 flex-shrink-0 sm:items-end">
+          <button onclick="toggleSave()" id="save-btn" class="w-9 h-9 rounded-xl border border-gray-200 dark:border-gray-700 flex items-center justify-center text-gray-400 hover:text-accent hover:border-accent transition-colors" title="<%= job.isSaved ? 'Saved' : 'Save' %>">
+            <i class="<%= job.isSaved ? 'fas text-accent' : 'far' %> fa-bookmark text-sm"></i>
           </button>
-          <button onclick="openMatchModal()" class="btn-outline text-sm"><i class="fas fa-chart-pie mr-1.5"></i> Match Score</button>
+          <button onclick="openMatchModal()" class="w-9 h-9 rounded-xl border border-gray-200 dark:border-gray-700 flex items-center justify-center text-gray-400 hover:text-blue-500 hover:border-blue-500 transition-colors" title="Match Score">
+            <i class="fas fa-chart-pie text-sm"></i>
+          </button>
         </div>
       </div>
+    </div>
+
+    <!-- Action Bar - Clean -->
+    <div class="px-5 sm:px-6 py-3.5 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-100 dark:border-gray-800 flex flex-wrap items-center gap-3">
+      <% if (job.hasApplied) { %>
+        <button disabled class="inline-flex items-center gap-1.5 px-5 py-2 rounded-lg bg-green-600 text-white text-sm font-medium opacity-80 cursor-not-allowed"><i class="fas fa-check text-xs"></i> Applied</button>
+      <% } else { %>
+        <% if (job.apply_url) { %>
+          <a href="<%= job.apply_url %>" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-5 py-2 rounded-lg text-white text-sm font-medium transition-all hover:shadow-md" style="background: <%= logoColor %>;"><i class="fas fa-external-link-alt text-xs"></i> Apply Now</a>
+        <% } %>
+        <button onclick="openApplyModal()" class="inline-flex items-center gap-1.5 px-5 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"><i class="fas fa-paper-plane text-xs text-gray-400"></i> Quick Apply</button>
+      <% } %>
+      <div class="flex items-center gap-2 ml-auto">
+        <button onclick="copyJobLink()" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" title="Copy link"><i class="fas fa-link text-[10px]"></i> Share</button>
+        <a href="https://wa.me/?text=<%= encodeURIComponent(job.title + ' at ' + job.company + ' - ' + 'https://careerservice.atlasskilltech.app/job-board/view/' + job.id) %>" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-xs font-medium text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors" title="WhatsApp"><i class="fab fa-whatsapp text-sm"></i></a>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+    <!-- Main Content -->
+    <div class="lg:col-span-2 space-y-5">
 
       <!-- Description Card -->
       <% if (job.description) { %>
         <div class="card !p-6">
           <h3 class="font-semibold text-base mb-4 flex items-center gap-2"><i class="fas fa-file-alt text-accent text-sm"></i> Job Description</h3>
-          <div class="job-description text-sm leading-relaxed text-gray-700 dark:text-gray-300" id="job-desc-content"><%- job.description.replace(/</g, '&lt;').replace(/>/g, '&gt;') %></div>
+          <div class="job-description text-sm text-gray-700 dark:text-gray-300" id="job-desc-content"><%- job.description.replace(/</g, '&lt;').replace(/>/g, '&gt;') %></div>
         </div>
       <% } %>
 
       <!-- Skills Card -->
-      <% let skills = []; try { skills = typeof job.skills === 'string' ? JSON.parse(job.skills) : (job.skills || []); } catch(e) { skills = []; } %>
       <% if (skills.length > 0 && !(skills.length === 1 && skills[0] === 'General')) { %>
         <div class="card !p-6">
           <h3 class="font-semibold text-base mb-4 flex items-center gap-2"><i class="fas fa-tools text-accent text-sm"></i> Required Skills</h3>
@@ -91,122 +102,90 @@
           </div>
         </div>
       <% } %>
-
     </div>
 
-    <!-- Sidebar (Right 1/3) -->
+    <!-- Sidebar -->
     <div class="space-y-5">
-
-      <!-- Job Details Card -->
+      <!-- Job Overview Card -->
       <div class="card !p-5">
-        <h3 class="font-semibold text-sm mb-4 flex items-center gap-2"><i class="fas fa-info-circle text-accent text-xs"></i> Job Details</h3>
-        <div class="space-y-4">
-          <% if (job.category) { %>
-            <div class="flex items-center gap-3">
-              <div class="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0">
-                <i class="fas fa-tag text-accent text-xs"></i>
-              </div>
-              <div>
-                <p class="text-xs text-gray-400">Category</p>
-                <p class="text-sm font-medium"><%= job.category %></p>
-              </div>
-            </div>
-          <% } %>
-          <% if (job.location) { %>
-            <div class="flex items-center gap-3">
-              <div class="w-8 h-8 rounded-lg bg-red-50 dark:bg-red-900/20 flex items-center justify-center flex-shrink-0">
-                <i class="fas fa-map-marker-alt text-red-400 text-xs"></i>
-              </div>
-              <div>
-                <p class="text-xs text-gray-400">Location</p>
-                <p class="text-sm font-medium"><%= job.location %></p>
-              </div>
-            </div>
-          <% } %>
-          <% if (job.salary_min || job.salary_max) { %>
-            <div class="flex items-center gap-3">
-              <div class="w-8 h-8 rounded-lg bg-green-50 dark:bg-green-900/20 flex items-center justify-center flex-shrink-0">
-                <i class="fas fa-indian-rupee-sign text-green-500 text-xs"></i>
-              </div>
-              <div>
-                <p class="text-xs text-gray-400">Salary</p>
-                <p class="text-sm font-medium">
-                  <% if (job.salary_min && job.salary_max) { %><%= (job.salary_min/100000).toFixed(0) %>-<%= (job.salary_max/100000).toFixed(0) %> LPA<% } else if (job.salary_max) { %>Up to <%= (job.salary_max/100000).toFixed(0) %> LPA<% } else { %><%= (job.salary_min/100000).toFixed(0) %>+ LPA<% } %>
-                </p>
-              </div>
-            </div>
-          <% } %>
-          <% if (job.experience_min !== null) { %>
-            <div class="flex items-center gap-3">
-              <div class="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center flex-shrink-0">
-                <i class="fas fa-clock text-blue-400 text-xs"></i>
-              </div>
-              <div>
-                <p class="text-xs text-gray-400">Experience</p>
-                <p class="text-sm font-medium"><%= job.experience_min || 0 %>-<%= job.experience_max || 'Any' %> years</p>
-              </div>
-            </div>
-          <% } %>
-          <div class="flex items-center gap-3">
-            <div class="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center flex-shrink-0">
-              <i class="fas fa-briefcase text-blue-500 text-xs"></i>
-            </div>
-            <div>
-              <p class="text-xs text-gray-400">Job Type</p>
-              <p class="text-sm font-medium capitalize"><%= (job.job_type || 'full_time').replace('_', ' ') %></p>
-            </div>
-          </div>
-          <div class="flex items-center gap-3">
-            <div class="w-8 h-8 rounded-lg bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center flex-shrink-0">
-              <i class="fas fa-laptop-house text-purple-500 text-xs"></i>
-            </div>
-            <div>
-              <p class="text-xs text-gray-400">Work Mode</p>
-              <p class="text-sm font-medium capitalize"><%= (job.work_mode || 'onsite').replace('_', ' ') %></p>
-            </div>
-          </div>
+        <h3 class="font-semibold text-sm mb-4 flex items-center gap-2"><i class="fas fa-info-circle text-accent text-xs"></i> Job Overview</h3>
+        <div class="grid grid-cols-2 gap-3">
           <% if (job.posted_date) { %>
-            <div class="flex items-center gap-3">
-              <div class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
-                <i class="far fa-calendar text-gray-500 text-xs"></i>
-              </div>
-              <div>
-                <p class="text-xs text-gray-400">Posted</p>
-                <p class="text-sm font-medium"><%= new Date(job.posted_date).toLocaleDateString('en-IN', {day: 'numeric', month: 'short', year: 'numeric'}) %></p>
-              </div>
+            <div class="p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 text-center">
+              <i class="far fa-calendar text-gray-400 text-sm mb-1.5 block"></i>
+              <p class="text-[11px] text-gray-400 mb-0.5">Posted</p>
+              <p class="text-xs font-semibold"><%= new Date(job.posted_date).toLocaleDateString('en-IN', {day: 'numeric', month: 'short', year: 'numeric'}) %></p>
             </div>
           <% } %>
           <% if (job.expires_at) { %>
-            <div class="flex items-center gap-3">
-              <div class="w-8 h-8 rounded-lg bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center flex-shrink-0">
-                <i class="fas fa-hourglass-half text-orange-500 text-xs"></i>
-              </div>
-              <div>
-                <p class="text-xs text-gray-400">Expires</p>
-                <p class="text-sm font-medium"><%= new Date(job.expires_at).toLocaleDateString('en-IN', {day: 'numeric', month: 'short', year: 'numeric'}) %></p>
-              </div>
+            <div class="p-3 rounded-xl bg-orange-50 dark:bg-orange-900/10 text-center">
+              <i class="fas fa-hourglass-half text-orange-400 text-sm mb-1.5 block"></i>
+              <p class="text-[11px] text-gray-400 mb-0.5">Expires</p>
+              <p class="text-xs font-semibold"><%= new Date(job.expires_at).toLocaleDateString('en-IN', {day: 'numeric', month: 'short', year: 'numeric'}) %></p>
+            </div>
+          <% } %>
+          <div class="p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 text-center">
+            <i class="fas fa-briefcase text-blue-400 text-sm mb-1.5 block"></i>
+            <p class="text-[11px] text-gray-400 mb-0.5">Job Type</p>
+            <p class="text-xs font-semibold capitalize"><%= (job.job_type || 'full_time').replace('_', ' ') %></p>
+          </div>
+          <div class="p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 text-center">
+            <i class="fas fa-laptop-house text-purple-400 text-sm mb-1.5 block"></i>
+            <p class="text-[11px] text-gray-400 mb-0.5">Work Mode</p>
+            <p class="text-xs font-semibold capitalize"><%= (job.work_mode || 'onsite').replace('_', ' ') %></p>
+          </div>
+          <% if (job.experience_min !== null) { %>
+            <div class="p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 text-center">
+              <i class="fas fa-clock text-blue-400 text-sm mb-1.5 block"></i>
+              <p class="text-[11px] text-gray-400 mb-0.5">Experience</p>
+              <p class="text-xs font-semibold"><%= job.experience_min || 0 %>-<%= job.experience_max || 'Any' %> yrs</p>
+            </div>
+          <% } %>
+          <% if (job.category) { %>
+            <div class="p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 text-center">
+              <i class="fas fa-tag text-accent text-sm mb-1.5 block"></i>
+              <p class="text-[11px] text-gray-400 mb-0.5">Category</p>
+              <p class="text-xs font-semibold"><%= job.category %></p>
+            </div>
+          <% } %>
+          <% if (job.salary_min || job.salary_max) { %>
+            <div class="col-span-2 p-3 rounded-xl bg-green-50 dark:bg-green-900/10 text-center">
+              <i class="fas fa-indian-rupee-sign text-green-500 text-sm mb-1.5 block"></i>
+              <p class="text-[11px] text-gray-400 mb-0.5">Salary Range</p>
+              <p class="text-sm font-semibold text-green-700 dark:text-green-300">
+                <% if (job.salary_min && job.salary_max) { %><%= (job.salary_min/100000).toFixed(0) %>-<%= (job.salary_max/100000).toFixed(0) %> LPA<% } else if (job.salary_max) { %>Up to <%= (job.salary_max/100000).toFixed(0) %> LPA<% } else { %><%= (job.salary_min/100000).toFixed(0) %>+ LPA<% } %>
+              </p>
             </div>
           <% } %>
         </div>
 
-        <!-- Apply CTA in sidebar -->
-        <div class="mt-5 pt-5 border-t border-gray-100 dark:border-gray-800">
+        <!-- Sidebar Apply CTA -->
+        <div class="mt-4">
           <% if (job.hasApplied) { %>
-            <button disabled class="btn-primary w-full text-sm !opacity-60"><i class="fas fa-check mr-1.5"></i> Already Applied</button>
+            <button disabled class="w-full py-2.5 rounded-xl bg-green-600 text-white text-sm font-medium opacity-80 cursor-not-allowed"><i class="fas fa-check mr-1.5"></i> Already Applied</button>
           <% } else if (job.apply_url) { %>
-            <a href="<%= job.apply_url %>" target="_blank" rel="noopener noreferrer" class="btn-primary w-full text-sm text-center block"><i class="fas fa-external-link-alt mr-1.5"></i> Apply Now</a>
+            <a href="<%= job.apply_url %>" target="_blank" rel="noopener noreferrer" class="w-full py-2.5 rounded-xl text-white text-sm font-medium text-center block transition-all hover:shadow-md" style="background: <%= logoColor %>;"><i class="fas fa-external-link-alt mr-1.5"></i> Apply Now</a>
           <% } else { %>
             <button onclick="openApplyModal()" class="btn-primary w-full text-sm"><i class="fas fa-paper-plane mr-1.5"></i> Quick Apply</button>
           <% } %>
         </div>
       </div>
 
-      <!-- Share Card -->
+      <!-- Company Info Card -->
       <div class="card !p-5">
-        <h3 class="font-semibold text-sm mb-3 flex items-center gap-2"><i class="fas fa-share-alt text-accent text-xs"></i> Share this Job</h3>
-        <div class="flex gap-2">
-          <button onclick="copyJobLink()" class="flex-1 btn-outline text-xs !py-2" title="Copy link"><i class="fas fa-link mr-1"></i> Copy Link</button>
-          <a href="https://wa.me/?text=<%= encodeURIComponent(job.title + ' at ' + job.company + ' - ' + 'https://careerservice.atlasskilltech.app/job-board/view/' + job.id) %>" target="_blank" class="flex-1 btn-outline text-xs !py-2 text-center" title="Share on WhatsApp"><i class="fab fa-whatsapp mr-1"></i> WhatsApp</a>
+        <h3 class="font-semibold text-sm mb-3 flex items-center gap-2"><i class="fas fa-building text-accent text-xs"></i> About Company</h3>
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style="background: <%= logoColor %>15;">
+            <% if (job.company_logo) { %>
+              <img src="<%= job.company_logo %>" alt="<%= job.company %>" class="w-8 h-8 rounded-lg object-cover">
+            <% } else { %>
+              <span class="text-base font-bold" style="color: <%= logoColor %>;"><%= job.company.charAt(0).toUpperCase() %></span>
+            <% } %>
+          </div>
+          <div>
+            <p class="text-sm font-semibold"><%= job.company %></p>
+            <% if (job.location) { %><p class="text-xs text-gray-400"><%= job.location %></p><% } %>
+          </div>
         </div>
       </div>
     </div>
@@ -214,27 +193,27 @@
 
   <!-- Related Jobs Section -->
   <% if (relatedJobs && relatedJobs.length > 0) { %>
-    <div class="space-y-4">
+    <div class="space-y-4 pt-2">
       <div class="flex items-center justify-between">
         <h2 class="text-lg font-bold flex items-center gap-2"><i class="fas fa-th-large text-accent text-sm"></i> Related Jobs</h2>
         <% if (job.category) { %>
-          <a href="/job-board?category=<%= encodeURIComponent(job.category) %>" class="text-sm text-accent hover:underline">View all <i class="fas fa-arrow-right text-xs ml-0.5"></i></a>
+          <a href="/job-board?category=<%= encodeURIComponent(job.category) %>" class="text-sm text-accent hover:underline font-medium">View all <i class="fas fa-arrow-right text-xs ml-0.5"></i></a>
         <% } %>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         <% relatedJobs.forEach(rJob => { %>
           <% let rSkills = []; try { rSkills = typeof rJob.skills === 'string' ? JSON.parse(rJob.skills) : (rJob.skills || []); } catch(e) { rSkills = []; } %>
-          <% const rTypeColors = {full_time: 'blue', part_time: 'yellow', internship: 'green', contract: 'purple', freelance: 'orange'}; %>
-          <% const rTypeColor = rTypeColors[rJob.job_type] || 'gray'; %>
+          <% const rTypeColor = typeColors[rJob.job_type] || 'gray'; %>
+          <% const rLogoColor = logoColors[rJob.company.charCodeAt(0) % logoColors.length]; %>
           <a href="/job-board/view/<%= rJob.id %>" class="card !p-0 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 group block">
+            <div class="h-1 w-full rounded-t-xl" style="background: <%= rLogoColor %>;"></div>
             <div class="p-4">
-              <!-- Header -->
               <div class="flex items-start gap-3 mb-3">
-                <div class="w-10 h-10 bg-gray-50 dark:bg-gray-800 rounded-xl flex items-center justify-center border border-gray-100 dark:border-gray-700 flex-shrink-0">
+                <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style="background: <%= rLogoColor %>15;">
                   <% if (rJob.company_logo) { %>
                     <img src="<%= rJob.company_logo %>" alt="<%= rJob.company %>" class="w-8 h-8 rounded-lg object-cover">
                   <% } else { %>
-                    <span class="text-sm font-bold text-gray-400"><%= rJob.company.charAt(0).toUpperCase() %></span>
+                    <span class="text-sm font-bold" style="color: <%= rLogoColor %>;"><%= rJob.company.charAt(0).toUpperCase() %></span>
                   <% } %>
                 </div>
                 <div class="min-w-0 flex-1">
@@ -243,28 +222,20 @@
                 </div>
               </div>
 
-              <!-- Tags -->
               <div class="flex flex-wrap gap-1.5 mb-2.5">
-                <span class="px-2 py-0.5 rounded text-[11px] font-medium bg-<%= rTypeColor %>-50 text-<%= rTypeColor %>-700 dark:bg-<%= rTypeColor %>-900/20 dark:text-<%= rTypeColor %>-300 border border-<%= rTypeColor %>-200 dark:border-<%= rTypeColor %>-800 capitalize"><%= (rJob.job_type || 'full_time').replace('_', ' ') %></span>
-                <span class="px-2 py-0.5 rounded text-[11px] font-medium bg-gray-50 text-gray-600 dark:bg-gray-800 dark:text-gray-400 border border-gray-200 dark:border-gray-700 capitalize"><%= (rJob.work_mode || 'onsite').replace('_', ' ') %></span>
+                <span class="px-2 py-0.5 rounded-full text-[11px] font-medium bg-<%= rTypeColor %>-50 text-<%= rTypeColor %>-700 dark:bg-<%= rTypeColor %>-900/20 dark:text-<%= rTypeColor %>-300 capitalize"><%= (rJob.job_type || 'full_time').replace('_', ' ') %></span>
+                <span class="px-2 py-0.5 rounded-full text-[11px] font-medium bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 capitalize"><%= (rJob.work_mode || 'onsite').replace('_', ' ') %></span>
               </div>
 
-              <!-- Meta -->
               <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">
                 <% if (rJob.location) { %>
-                  <span class="inline-flex items-center gap-1"><i class="fas fa-map-marker-alt text-red-400"></i> <%= rJob.location %></span>
-                <% } %>
-                <% if (rJob.salary_min || rJob.salary_max) { %>
-                  <span class="inline-flex items-center gap-1"><i class="fas fa-indian-rupee-sign text-green-500"></i>
-                    <% if (rJob.salary_min && rJob.salary_max) { %><%= (rJob.salary_min/100000).toFixed(0) %>-<%= (rJob.salary_max/100000).toFixed(0) %> LPA<% } else if (rJob.salary_max) { %>Up to <%= (rJob.salary_max/100000).toFixed(0) %> LPA<% } else { %><%= (rJob.salary_min/100000).toFixed(0) %>+ LPA<% } %>
-                  </span>
+                  <span class="inline-flex items-center gap-1"><i class="fas fa-map-marker-alt text-red-400 text-[10px]"></i> <%= rJob.location %></span>
                 <% } %>
                 <% if (rJob.experience_min !== null || rJob.experience_max !== null) { %>
-                  <span class="inline-flex items-center gap-1"><i class="fas fa-clock text-blue-400"></i> <%= rJob.experience_min || 0 %>-<%= rJob.experience_max || 'Any' %> yrs</span>
+                  <span class="inline-flex items-center gap-1"><i class="fas fa-clock text-blue-400 text-[10px]"></i> <%= rJob.experience_min || 0 %>-<%= rJob.experience_max || 'Any' %> yrs</span>
                 <% } %>
               </div>
 
-              <!-- Skills -->
               <% if (rSkills.length > 0 && !(rSkills.length === 1 && rSkills[0] === 'General')) { %>
                 <div class="flex flex-wrap gap-1 mt-2.5">
                   <% rSkills.slice(0, 3).forEach(skill => { %>
@@ -275,13 +246,10 @@
               <% } %>
             </div>
 
-            <!-- Footer -->
             <div class="px-4 py-2.5 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-100 dark:border-gray-800 rounded-b-xl flex items-center justify-between">
               <% if (rJob.posted_date) { %>
                 <span class="text-[11px] text-gray-400"><i class="far fa-calendar mr-1"></i><%= new Date(rJob.posted_date).toLocaleDateString('en-IN', {day: 'numeric', month: 'short'}) %></span>
-              <% } else { %>
-                <span></span>
-              <% } %>
+              <% } else { %><span></span><% } %>
               <span class="text-xs font-medium text-accent">View Details <i class="fas fa-arrow-right text-[10px] ml-0.5"></i></span>
             </div>
           </a>
@@ -322,21 +290,11 @@
 </div>
 
 <style>
-  .job-description { line-height: 1.75; }
-  .job-description h1, .job-description h2, .job-description h3,
-  .job-description h4, .job-description h5, .job-description h6 {
-    font-weight: 600;
-    margin-top: 1.25em;
-    margin-bottom: 0.5em;
-    color: var(--tw-prose-headings, #1a202c);
-  }
-  .dark .job-description h1, .dark .job-description h2, .dark .job-description h3,
-  .dark .job-description h4, .dark .job-description h5, .dark .job-description h6 {
-    color: #e2e8f0;
-  }
-  .job-description p { margin-bottom: 0.75em; }
-  .job-description ul, .job-description ol { margin: 0.5em 0; padding-left: 0; }
-  .job-description li { margin-bottom: 0.35em; }
+  .job-description { line-height: 1.8; }
+  .job-description h4 { font-weight: 600; margin-top: 1.5em; margin-bottom: 0.5em; font-size: 0.9375rem; }
+  .job-description p { margin-bottom: 0.5em; }
+  .job-description ul { margin: 0.5em 0; padding-left: 0; }
+  .job-description li { margin-bottom: 0.25em; }
 </style>
 
 <script>
@@ -348,8 +306,6 @@ let isSaved = <%= job.isSaved ? 'true' : 'false' %>;
   var el = document.getElementById('job-desc-content');
   if (!el) return;
   var text = el.textContent || '';
-
-  // Split into lines and process
   var lines = text.split('\n');
   var html = '';
   var inList = false;
@@ -361,23 +317,20 @@ let isSaved = <%= job.isSaved ? 'true' : 'false' %>;
       continue;
     }
 
-    // Detect bullet points (•, -, *, ●, ■, ◆, ►, ▪)
     var bulletMatch = line.match(/^[\u2022\u2023\u25E6\u2043\u2219\u25CF\u25CB\u25AA\u25AB\u25A0\u25A1\u25C6\u25BA\u25B8\u2013\u2014\-\*\>]\s*(.*)/);
     if (bulletMatch) {
-      if (!inList) { html += '<ul class="space-y-1.5 my-3 ml-1">'; inList = true; }
-      html += '<li class="flex gap-2 items-start"><span class="text-accent mt-1.5 text-[6px]"><i class="fas fa-circle"></i></span><span>' + bulletMatch[1] + '</span></li>';
+      if (!inList) { html += '<ul class="space-y-2 my-3">'; inList = true; }
+      html += '<li class="flex gap-2.5 items-start"><span class="text-accent mt-1.5 text-[5px] flex-shrink-0"><i class="fas fa-circle"></i></span><span>' + bulletMatch[1] + '</span></li>';
     } else {
       if (inList) { html += '</ul>'; inList = false; }
-      // Check if line looks like a heading (short, no period at end, possibly bold-like)
-      if (line.length < 80 && !line.endsWith('.') && !line.endsWith(',') && (line.endsWith(':') || /^[A-Z][^.]*$/.test(line) && line.split(' ').length <= 8)) {
-        html += '<h4 class="text-sm font-semibold text-gray-900 dark:text-white mt-4 mb-2">' + line + '</h4>';
+      if (line.length < 80 && !line.endsWith('.') && !line.endsWith(',') && (line.endsWith(':') || (/^[A-Z]/.test(line) && line.split(' ').length <= 8 && !/[.;,]$/.test(line)))) {
+        html += '<h4 class="text-sm font-semibold text-gray-900 dark:text-white mt-5 mb-2">' + line + '</h4>';
       } else {
-        html += '<p class="mb-2">' + line + '</p>';
+        html += '<p class="mb-2 leading-relaxed">' + line + '</p>';
       }
     }
   }
   if (inList) html += '</ul>';
-
   if (html.trim()) el.innerHTML = html;
 })();
 
@@ -400,7 +353,7 @@ async function toggleSave() {
     await fetch('/job-board/api/' + JOB_ID + '/save', { method });
     isSaved = !isSaved;
     var btn = document.getElementById('save-btn');
-    btn.innerHTML = '<i class="' + (isSaved ? 'fas' : 'far') + ' fa-bookmark mr-1.5"></i> ' + (isSaved ? 'Saved' : 'Save');
+    btn.querySelector('i').className = (isSaved ? 'fas text-accent' : 'far') + ' fa-bookmark text-sm';
     showToast(isSaved ? 'Job saved!' : 'Job unsaved', 'success');
   } catch { showToast('Failed', 'error'); }
 }
