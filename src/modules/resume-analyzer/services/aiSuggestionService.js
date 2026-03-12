@@ -127,9 +127,37 @@ class AiSuggestionService {
 
   /**
    * Calculate experience relevance score (0-100)
+   * Blends AI score with deterministic baseline to prevent wild swings
    */
   calculateExperienceScore(analysisResult) {
-    return Math.min(100, Math.max(0, analysisResult.relevance_score || 0));
+    const aiScore = Math.min(100, Math.max(0, analysisResult.relevance_score || 0));
+
+    // Deterministic baseline from structured data
+    let baseline = 0;
+    const relevant = (analysisResult.relevant_experiences || []).length;
+    const irrelevant = (analysisResult.irrelevant_experiences || []).length;
+    const gaps = (analysisResult.experience_gaps || []).length;
+    const total = relevant + irrelevant;
+
+    if (total > 0) {
+      // Ratio of relevant to total experiences: up to 60 points
+      baseline += Math.round((relevant / total) * 60);
+    } else if (relevant > 0) {
+      baseline += 60;
+    }
+
+    // Fewer gaps is better: up to 30 points
+    if (gaps === 0) baseline += 30;
+    else if (gaps <= 2) baseline += 20;
+    else if (gaps <= 4) baseline += 10;
+
+    // Has any relevant experience at all: +10
+    if (relevant > 0) baseline += 10;
+
+    baseline = Math.min(100, baseline);
+
+    // Blend: 60% AI, 40% deterministic
+    return Math.round(aiScore * 0.6 + baseline * 0.4);
   }
 }
 

@@ -202,52 +202,98 @@ class AnalyzerController {
   _resumeToText(resume) {
     const parts = [];
     const p = resume.profile_data || {};
+
+    // Contact / header section
     if (p.name) parts.push(p.name);
     if (p.headline) parts.push(p.headline);
-    if (p.email) parts.push(p.email);
-    if (p.phone) parts.push(p.phone);
-    if (p.summary) parts.push('Summary: ' + p.summary);
+    const contact = [p.email, p.phone, p.location, p.linkedin].filter(Boolean);
+    if (contact.length) parts.push(contact.join(' | '));
+    parts.push('');
 
-    const skills = resume.skills_data || {};
-    if (skills.technical) parts.push('Technical Skills: ' + skills.technical);
-    if (skills.tools) parts.push('Tools: ' + skills.tools);
-    if (skills.soft) parts.push('Soft Skills: ' + skills.soft);
+    // Summary
+    if (p.summary) {
+      parts.push('SUMMARY');
+      parts.push(p.summary);
+      parts.push('');
+    }
 
+    // Experience
     const exp = resume.experience_data || [];
     if (exp.length) {
-      parts.push('Experience:');
+      parts.push('EXPERIENCE');
       exp.forEach(e => {
-        parts.push(`${e.title || e.role || ''} at ${e.company || ''} (${e.startDate || e.start_date || ''} - ${e.endDate || e.end_date || 'Present'})`);
-        if (e.description) parts.push(e.description);
+        const title = e.title || e.role || '';
+        const company = e.company || '';
+        const start = e.startDate || e.start_date || '';
+        const end = e.endDate || e.end_date || 'Present';
+        parts.push(`${title} at ${company} (${start} - ${end})`);
+        if (e.description) {
+          // Convert description into bullet points if not already
+          const lines = e.description.split(/\n/).map(l => l.trim()).filter(Boolean);
+          lines.forEach(line => {
+            if (/^[•·●▪▸►\-*]/.test(line)) {
+              parts.push(line);
+            } else {
+              parts.push('• ' + line);
+            }
+          });
+        }
+        parts.push('');
       });
     }
 
+    // Education
     const edu = resume.education_data || [];
     if (edu.length) {
-      parts.push('Education:');
+      parts.push('EDUCATION');
       edu.forEach(e => {
         parts.push(`${e.degree || ''} ${e.field ? 'in ' + e.field : ''} from ${e.institution || ''} (${e.year || ''})`);
       });
+      parts.push('');
     }
 
+    // Skills
+    const skills = resume.skills_data || {};
+    const hasSkills = skills.technical || skills.tools || skills.soft || skills.languages;
+    if (hasSkills) {
+      parts.push('SKILLS');
+      if (skills.technical) parts.push('• Technical Skills: ' + skills.technical);
+      if (skills.tools) parts.push('• Tools: ' + skills.tools);
+      if (skills.soft) parts.push('• Soft Skills: ' + skills.soft);
+      if (skills.languages) parts.push('• Languages: ' + skills.languages);
+      parts.push('');
+    }
+
+    // Projects
     const projects = resume.projects_data || [];
     if (projects.length) {
-      parts.push('Projects:');
-      projects.forEach(p => {
-        parts.push(`${p.name || p.project_name || ''}: ${p.description || ''} (${p.technologies || ''})`);
+      parts.push('PROJECTS');
+      projects.forEach(proj => {
+        const name = proj.name || proj.project_name || '';
+        const tech = proj.technologies ? ` (${proj.technologies})` : '';
+        parts.push(`${name}${tech}`);
+        if (proj.description) parts.push('• ' + proj.description);
       });
+      parts.push('');
     }
 
+    // Achievements
     const achievements = resume.achievements_data || [];
     if (achievements.length) {
-      parts.push('Achievements:');
-      achievements.forEach(a => parts.push(typeof a === 'string' ? a : a.achievement_text || ''));
+      parts.push('ACHIEVEMENTS');
+      achievements.forEach(a => {
+        const text = typeof a === 'string' ? a : (a.achievement_text || '');
+        if (text) parts.push('• ' + text);
+      });
+      parts.push('');
     }
 
+    // Certifications
     const certs = resume.certifications_data || [];
     if (certs.length) {
-      parts.push('Certifications:');
-      certs.forEach(c => parts.push(`${c.name || c.cert_name || ''} - ${c.organization || ''}`));
+      parts.push('CERTIFICATIONS');
+      certs.forEach(c => parts.push('• ' + (c.name || c.cert_name || '') + (c.organization ? ' - ' + c.organization : '')));
+      parts.push('');
     }
 
     return parts.join('\n');
