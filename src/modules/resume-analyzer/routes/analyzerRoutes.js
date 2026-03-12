@@ -25,4 +25,7 @@ router.get('/api/analyze/:id', analyzerController.getAnalysis.bind(analyzerContr
 // API: Get analysis history
 router.get('/api/history', analyzerController.getHistory.bind(analyzerController));
 
+// API: Add missing keywords to resume
+router.post('/api/add-keywords', analyzerController.addKeywordsToResume.bind(analyzerController));
+
 module.exports = router;
