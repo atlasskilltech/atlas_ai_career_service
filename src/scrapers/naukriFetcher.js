@@ -27,6 +27,75 @@ function getRandomItem(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function fetchJobDescription(page, url) {
+  try {
+    await page.goto(url, { waitUntil: 'networkidle2', timeout: 20000 });
+
+    // Wait for description to load
+    await page.waitForSelector('.styles_JDC__dang-inner-html__h0K4t, .job-desc, .dang-inner-html, [class*="jd-header-comp-name"], [class*="JobDetail"]', { timeout: 8000 }).catch(() => {});
+
+    const details = await page.evaluate(() => {
+      // Extract full job description
+      const descEl = document.querySelector('.styles_JDC__dang-inner-html__h0K4t') ||
+                     document.querySelector('.dang-inner-html') ||
+                     document.querySelector('.job-desc') ||
+                     document.querySelector('[class*="job-desc"]') ||
+                     document.querySelector('[class*="JobDetail"] [class*="description"]');
+
+      let description = '';
+      if (descEl) {
+        description = descEl.innerHTML
+          .replace(/<br\s*\/?>/gi, '\n')
+          .replace(/<\/p>/gi, '\n\n')
+          .replace(/<\/li>/gi, '\n')
+          .replace(/<li>/gi, '• ')
+          .replace(/<\/h[1-6]>/gi, '\n')
+          .replace(/<[^>]*>/g, '')
+          .replace(/&amp;/g, '&')
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          .replace(/&nbsp;/g, ' ')
+          .replace(/&#39;/g, "'")
+          .replace(/&quot;/g, '"')
+          .replace(/\n{3,}/g, '\n\n')
+          .trim();
+      }
+
+      // Extract key skills from the skills section
+      const skillEls = document.querySelectorAll('.chip_chip__sBWWc, .chip, .key-skill, [class*="chip"] a, [class*="keyskill"], .tag-li');
+      const skills = [];
+      skillEls.forEach(el => {
+        const skill = (el.textContent || '').trim();
+        if (skill && skill.length < 40 && !skills.includes(skill)) {
+          skills.push(skill);
+        }
+      });
+
+      // Extract additional details (education, role category, industry, etc.)
+      const otherDetails = {};
+      const detailRows = document.querySelectorAll('.styles_details__Y424J .styles_detail-row__RGpyG, .details .detail-row, [class*="detail"] [class*="row"], .other-details .details-section');
+      detailRows.forEach(row => {
+        const label = row.querySelector('label, .label, [class*="label"]');
+        const value = row.querySelector('span:not(label), .value, [class*="value"]');
+        if (label && value) {
+          otherDetails[(label.textContent || '').trim().toLowerCase()] = (value.textContent || '').trim();
+        }
+      });
+
+      return { description, skills, otherDetails };
+    });
+
+    return details;
+  } catch (err) {
+    console.log(`[Naukri] Failed to fetch description from ${url}: ${err.message}`);
+    return null;
+  }
+}
+
 async function fetchNaukriJobs() {
   const query = getRandomItem(SEARCH_QUERIES);
   const jobs = [];
@@ -75,23 +144,46 @@ async function fetchNaukriJobs() {
       return results;
     });
 
-    for (const raw of rawJobs) {
+    // Visit each job detail page to get full description (limit to 15)
+    const jobsToProcess = rawJobs.slice(0, 15);
+    for (let i = 0; i < jobsToProcess.length; i++) {
+      const raw = jobsToProcess[i];
       if (!raw.title || !raw.company) continue;
       const externalId = raw.url ? raw.url.split('?')[0].split('/').pop().replace(/\.html$/, '') : `nk-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
       const { expMin, expMax } = parseExperience(raw.experience);
       const { salMin, salMax } = parseSalary(raw.salary);
 
+      let description = `${raw.title} at ${raw.company}.`;
+      let pageSkills = [];
+
+      // Fetch full description from the job detail page
+      if (raw.url) {
+        const details = await fetchJobDescription(page, raw.url);
+        if (details && details.description && details.description.length > 50) {
+          description = details.description;
+          if (details.skills && details.skills.length > 0) {
+            pageSkills = details.skills;
+          }
+        }
+        // Small delay to avoid rate limiting
+        await delay(1500 + Math.random() * 1500);
+      }
+
+      // Combine skills: page skills + title-extracted skills
+      const titleSkills = extractSkillsFromText(raw.title + ' ' + description);
+      const allSkills = pageSkills.length > 0 ? [...new Set([...pageSkills, ...titleSkills])] : titleSkills;
+
       jobs.push({
         externalId,
         title: raw.title,
         company: raw.company,
         location: raw.location || 'India',
-        description: `${raw.title} at ${raw.company}. ${raw.experience ? 'Experience: ' + raw.experience + '.' : ''} ${raw.salary ? 'Salary: ' + raw.salary + '.' : ''} Found on Naukri.`,
-        skills: extractSkillsFromTitle(raw.title),
+        description,
+        skills: allSkills,
         category: categorizeJob(raw.title),
         jobType: 'full_time',
-        workMode: detectWorkMode(raw.title + ' ' + raw.location),
+        workMode: detectWorkMode(raw.title + ' ' + raw.location + ' ' + description),
         experienceMin: expMin,
         experienceMax: expMax,
         salaryMin: salMin,
@@ -103,7 +195,7 @@ async function fetchNaukriJobs() {
       });
     }
 
-    console.log(`[Naukri] Fetched ${jobs.length} jobs for "${query}"`);
+    console.log(`[Naukri] Fetched ${jobs.length} jobs with full descriptions for "${query}"`);
   } catch (err) {
     console.error('[Naukri] Fetch error:', err.message);
   } finally {
@@ -124,27 +216,34 @@ function parseExperience(text) {
 
 function parseSalary(text) {
   if (!text) return { salMin: null, salMax: null };
-  // "8-12 Lacs PA" or "Not disclosed"
   const match = text.match(/([\d.]+)\s*[-–to]+\s*([\d.]+)\s*(lacs?|lakhs?)/i);
   if (match) return { salMin: Math.round(parseFloat(match[1]) * 100000), salMax: Math.round(parseFloat(match[2]) * 100000) };
   return { salMin: null, salMax: null };
 }
 
-function extractSkillsFromTitle(title) {
-  const t = title.toLowerCase();
+function extractSkillsFromText(text) {
+  const t = text.toLowerCase();
   const skillMap = {
     'react': 'React', 'angular': 'Angular', 'vue': 'Vue.js', 'node': 'Node.js',
     'python': 'Python', 'java ': 'Java', 'javascript': 'JavaScript', 'typescript': 'TypeScript',
     'aws': 'AWS', 'azure': 'Azure', 'docker': 'Docker', 'kubernetes': 'Kubernetes',
-    'sql': 'SQL', 'mongodb': 'MongoDB', 'postgres': 'PostgreSQL',
+    'sql': 'SQL', 'mongodb': 'MongoDB', 'postgres': 'PostgreSQL', 'mysql': 'MySQL',
     'devops': 'DevOps', 'selenium': 'Selenium', 'automation': 'Test Automation',
     'php': 'PHP', 'laravel': 'Laravel', 'django': 'Django', 'spring': 'Spring Boot',
     'flutter': 'Flutter', 'android': 'Android', 'ios': 'iOS', '.net': '.NET',
     'figma': 'Figma', 'ml': 'Machine Learning', 'data': 'Data Analysis',
+    'redis': 'Redis', 'kafka': 'Kafka', 'rabbitmq': 'RabbitMQ',
+    'git': 'Git', 'ci/cd': 'CI/CD', 'jenkins': 'Jenkins',
+    'pandas': 'Pandas', 'numpy': 'NumPy', 'tensorflow': 'TensorFlow', 'pytorch': 'PyTorch',
+    'rest api': 'REST API', 'graphql': 'GraphQL', 'microservice': 'Microservices',
+    'linux': 'Linux', 'nginx': 'Nginx', 'terraform': 'Terraform',
+    'html': 'HTML', 'css': 'CSS', 'tailwind': 'Tailwind CSS',
+    'next.js': 'Next.js', 'nextjs': 'Next.js', 'express': 'Express.js',
+    'ruby': 'Ruby', 'scala': 'Scala', 'power bi': 'Power BI', 'tableau': 'Tableau',
   };
   const found = [];
   for (const [key, val] of Object.entries(skillMap)) {
-    if (t.includes(key)) found.push(val);
+    if (t.includes(key) && !found.includes(val)) found.push(val);
   }
   return found.length > 0 ? found : ['General'];
 }
