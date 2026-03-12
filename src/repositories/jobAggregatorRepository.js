@@ -89,8 +89,8 @@ class JobAggregatorRepository {
     const existing = await this.findByExternalId(data.source, data.externalId);
     if (existing) {
       await pool.execute(
-        `UPDATE aicp_aggregated_jobs SET title = ?, company = ?, location = ?, salary_min = ?, salary_max = ?, description = ?, skills = ?, category = ?, apply_url = ?, is_active = 1, updated_at = NOW() WHERE id = ?`,
-        [data.title, data.company, data.location || null, data.salaryMin || null, data.salaryMax || null, data.description || null, JSON.stringify(data.skills || []), data.category || null, data.applyUrl || null, existing.id]
+        `UPDATE aicp_aggregated_jobs SET title = ?, company = ?, location = ?, salary_min = ?, salary_max = ?, description = ?, skills = ?, category = ?, apply_url = ?, company_logo = COALESCE(?, company_logo), is_active = 1, updated_at = NOW() WHERE id = ?`,
+        [data.title, data.company, data.location || null, data.salaryMin || null, data.salaryMax || null, data.description || null, JSON.stringify(data.skills || []), data.category || null, data.applyUrl || null, data.companyLogo || null, existing.id]
       );
       return { id: existing.id, updated: true };
     }

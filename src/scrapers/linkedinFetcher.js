@@ -34,6 +34,17 @@ function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+function getCompanyLogoUrl(companyName) {
+  // Generate a logo URL using logo.clearbit.com (free, no API key needed)
+  const domain = companyName
+    .toLowerCase()
+    .replace(/\s*(pvt|private|ltd|limited|inc|corp|corporation|llp|llc|co|company|technologies|tech|software|solutions|consulting|services|india|global)\s*/gi, '')
+    .trim()
+    .replace(/\s+/g, '')
+    + '.com';
+  return `https://logo.clearbit.com/${domain}`;
+}
+
 async function fetchJobDescription(page, url) {
   try {
     await page.goto(url, { waitUntil: 'networkidle2', timeout: 20000 });
@@ -83,7 +94,14 @@ async function fetchJobDescription(page, url) {
       const jobType = criteria['employment type'] || '';
       const seniorityLevel = criteria['seniority level'] || '';
 
-      return { description, jobType, seniorityLevel };
+      // Extract company logo from detail page
+      const logoEl = document.querySelector('.artdeco-entity-image[src], .job-details-jobs-unified-top-card__company-logo img, .top-card-layout__entity-image, img[alt*="logo"], .show-more-less-html img');
+      let companyLogo = '';
+      if (logoEl && logoEl.src && !logoEl.src.includes('data:image') && !logoEl.src.includes('static.licdn.com/aero')) {
+        companyLogo = logoEl.src;
+      }
+
+      return { description, jobType, seniorityLevel, companyLogo };
     });
 
     return details;
@@ -129,12 +147,19 @@ async function fetchLinkedInJobs() {
         const dateEl = card.querySelector('time');
 
         if (titleEl && companyEl) {
+          const logoEl = card.querySelector('.artdeco-entity-image, img[data-delayed-url], img[data-ghost-url], .search-entity-media img, img');
+          let logo = '';
+          if (logoEl) {
+            logo = logoEl.getAttribute('data-delayed-url') || logoEl.getAttribute('data-ghost-url') || logoEl.src || '';
+            if (logo && (logo.includes('data:image') || logo.includes('static.licdn.com/aero'))) logo = '';
+          }
           results.push({
             title: (titleEl.textContent || '').trim(),
             company: (companyEl.textContent || '').trim(),
             location: locationEl ? (locationEl.textContent || '').trim() : '',
             url: linkEl ? linkEl.href : '',
             postedDate: dateEl ? dateEl.getAttribute('datetime') : null,
+            logo,
           });
         }
       });
@@ -150,6 +175,7 @@ async function fetchLinkedInJobs() {
 
       let description = `${raw.title} position at ${raw.company}.`;
       let detectedJobType = 'full_time';
+      let companyLogo = raw.logo || '';
 
       // Fetch full description from the job detail page
       if (raw.url) {
@@ -165,9 +191,19 @@ async function fetchLinkedInJobs() {
             else if (jt.includes('contract')) detectedJobType = 'contract';
             else if (jt.includes('freelance') || jt.includes('temporary')) detectedJobType = 'freelance';
           }
+
+          // Use logo from detail page if listing card didn't have one
+          if (!companyLogo && details.companyLogo) {
+            companyLogo = details.companyLogo;
+          }
         }
         // Small delay to avoid rate limiting
         await delay(1500 + Math.random() * 1500);
+      }
+
+      // Fallback: use Clearbit logo API based on company name
+      if (!companyLogo) {
+        companyLogo = getCompanyLogoUrl(raw.company);
       }
 
       const allSkills = extractSkillsFromText(raw.title + ' ' + description);
@@ -185,6 +221,7 @@ async function fetchLinkedInJobs() {
         source: 'linkedin',
         sourceUrl: raw.url || searchUrl,
         applyUrl: raw.url || searchUrl,
+        companyLogo,
         postedDate: raw.postedDate ? new Date(raw.postedDate) : new Date(),
       });
     }
