@@ -15,9 +15,10 @@
     <div class="p-5 sm:p-6">
       <div class="flex flex-col sm:flex-row gap-4">
         <!-- Company Logo -->
+        <% const heroLogoUrl = job.company_logo || ('https://logo.clearbit.com/' + job.company.toLowerCase().replace(/\s*(pvt|private|ltd|limited|inc|corp|llp|llc|co|technologies|tech|software|solutions|consulting|services|india|global|group)\s*/gi, '').trim().replace(/\s+/g, '') + '.com'); %>
         <div class="flex-shrink-0 w-14 h-14 rounded-2xl relative overflow-hidden" style="background: <%= logoColor %>;">
           <span class="absolute inset-0 flex items-center justify-center text-2xl font-bold text-white"><%= job.company.charAt(0).toUpperCase() %></span>
-          <img src="https://logo.clearbit.com/<%= job.company.toLowerCase().replace(/\s*(pvt|private|ltd|limited|inc|corp|llp|llc|co|technologies|tech|software|solutions|consulting|services|india|global|group)\s*/gi, '').trim().replace(/\s+/g, '') %>.com" alt="" class="absolute inset-0 w-full h-full object-contain bg-white p-1 rounded-2xl" onerror="this.remove();">
+          <img src="<%= heroLogoUrl %>" alt="" class="absolute inset-0 w-full h-full object-contain bg-white p-1 rounded-2xl" onerror="this.remove();">
         </div>
 
         <!-- Title & Company -->
@@ -174,7 +175,7 @@
         <div class="flex items-center gap-3">
           <div class="w-10 h-10 rounded-xl flex-shrink-0 relative overflow-hidden" style="background: <%= logoColor %>;">
             <span class="absolute inset-0 flex items-center justify-center text-sm font-bold text-white"><%= job.company.charAt(0).toUpperCase() %></span>
-            <img src="https://logo.clearbit.com/<%= job.company.toLowerCase().replace(/\s*(pvt|private|ltd|limited|inc|corp|llp|llc|co|technologies|tech|software|solutions|consulting|services|india|global|group)\s*/gi, '').trim().replace(/\s+/g, '') %>.com" alt="" class="absolute inset-0 w-full h-full object-contain bg-white p-0.5 rounded-xl" onerror="this.remove();">
+            <img src="<%= heroLogoUrl %>" alt="" class="absolute inset-0 w-full h-full object-contain bg-white p-0.5 rounded-xl" onerror="this.remove();">
           </div>
           <div>
             <p class="text-sm font-semibold"><%= job.company %></p>
@@ -203,9 +204,10 @@
             <div class="h-1 w-full rounded-t-xl" style="background: <%= rLogoColor %>;"></div>
             <div class="p-4">
               <div class="flex items-start gap-3 mb-3">
+                <% const rLogoUrl = rJob.company_logo || ('https://logo.clearbit.com/' + rJob.company.toLowerCase().replace(/\s*(pvt|private|ltd|limited|inc|corp|llp|llc|co|technologies|tech|software|solutions|consulting|services|india|global|group)\s*/gi, '').trim().replace(/\s+/g, '') + '.com'); %>
                 <div class="w-10 h-10 rounded-xl flex-shrink-0 relative overflow-hidden" style="background: <%= rLogoColor %>;">
                   <span class="absolute inset-0 flex items-center justify-center text-sm font-bold text-white"><%= rJob.company.charAt(0).toUpperCase() %></span>
-                  <img src="https://logo.clearbit.com/<%= rJob.company.toLowerCase().replace(/\s*(pvt|private|ltd|limited|inc|corp|llp|llc|co|technologies|tech|software|solutions|consulting|services|india|global|group)\s*/gi, '').trim().replace(/\s+/g, '') %>.com" alt="" class="absolute inset-0 w-full h-full object-contain bg-white p-0.5 rounded-xl" onerror="this.remove();">
+                  <img src="<%= rLogoUrl %>" alt="" class="absolute inset-0 w-full h-full object-contain bg-white p-0.5 rounded-xl" onerror="this.remove();">
                 </div>
                 <div class="min-w-0 flex-1">
                   <h4 class="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-accent transition-colors line-clamp-1"><%= rJob.title %></h4>
