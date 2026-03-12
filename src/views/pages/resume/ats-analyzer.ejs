@@ -359,8 +359,7 @@
   </div>
 
   <!-- Analysis History -->
-  <% if (history && history.length > 0) { %>
-  <div class="card">
+  <div id="history-section" class="card <%= (history && history.length > 0) ? '' : 'hidden' %>">
     <h3 class="font-semibold text-gray-900 dark:text-white mb-4"><i class="fas fa-history mr-2 text-gray-400"></i>Analysis History</h3>
     <div class="overflow-x-auto">
       <table class="w-full text-sm">
@@ -375,8 +374,8 @@
             <th class="text-center py-3 px-3 font-medium text-gray-500">Experience</th>
           </tr>
         </thead>
-        <tbody>
-          <% history.forEach(h => { %>
+        <tbody id="history-tbody">
+          <% if (history && history.length > 0) { history.forEach(h => { %>
           <tr class="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer" onclick="loadAnalysis(<%= h.id %>)">
             <td class="py-3 px-3 text-gray-600 dark:text-gray-400"><%= new Date(h.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) %></td>
             <td class="py-3 px-3 text-center">
@@ -391,12 +390,11 @@
             <td class="py-3 px-3 text-center text-gray-600 dark:text-gray-400"><%= h.content_score || 0 %>%</td>
             <td class="py-3 px-3 text-center text-gray-600 dark:text-gray-400"><%= h.experience_score || 0 %>%</td>
           </tr>
-          <% }); %>
+          <% }); } %>
         </tbody>
       </table>
     </div>
   </div>
-  <% } %>
 </div>
 
 <script>
@@ -521,6 +519,12 @@ function renderResults(a) {
   // Store analysis globally for fix-all
   currentAnalysis = a;
 
+  // Reset any disabled buttons from previous Fix All
+  resetFixAllState();
+
+  // Add row to history table
+  addHistoryRow(a);
+
   // Animate ATS score circle
   const score = a.ats_score || 0;
   const circle = document.getElementById('score-circle');
@@ -638,6 +642,79 @@ function renderResults(a) {
 
   // Scroll to results
   document.getElementById('results-dashboard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function addHistoryRow(a) {
+  const section = document.getElementById('history-section');
+  const tbody = document.getElementById('history-tbody');
+  section.classList.remove('hidden');
+
+  const score = a.ats_score || 0;
+  const colorClass = score >= 70
+    ? 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400'
+    : score >= 40
+    ? 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-400'
+    : 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-400';
+
+  const date = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+  const analysisId = a.id || '';
+
+  const row = document.createElement('tr');
+  row.className = 'border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer';
+  if (analysisId) row.setAttribute('onclick', 'loadAnalysis(' + analysisId + ')');
+  row.innerHTML =
+    '<td class="py-3 px-3 text-gray-600 dark:text-gray-400">' + date + '</td>' +
+    '<td class="py-3 px-3 text-center"><span class="inline-flex items-center justify-center w-10 h-10 rounded-full text-sm font-bold ' + colorClass + '">' + score + '</span></td>' +
+    '<td class="py-3 px-3 text-center text-gray-600 dark:text-gray-400">' + (a.keyword_match || 0) + '%</td>' +
+    '<td class="py-3 px-3 text-center text-gray-600 dark:text-gray-400">' + (a.skills_match || 0) + '%</td>' +
+    '<td class="py-3 px-3 text-center text-gray-600 dark:text-gray-400">' + (a.formatting_score || 0) + '%</td>' +
+    '<td class="py-3 px-3 text-center text-gray-600 dark:text-gray-400">' + (a.content_score || 0) + '%</td>' +
+    '<td class="py-3 px-3 text-center text-gray-600 dark:text-gray-400">' + (a.experience_score || 0) + '%</td>';
+
+  // Insert at the top of the table
+  tbody.insertBefore(row, tbody.firstChild);
+}
+
+function resetFixAllState() {
+  // Reset Fix All button
+  const fixAllBtn = document.getElementById('fix-all-btn');
+  if (fixAllBtn) {
+    fixAllBtn.disabled = false;
+    fixAllBtn.innerHTML = '<i class="fas fa-bolt" style="margin-right: 0.25rem;"></i>Fix All Now';
+    fixAllBtn.classList.remove('opacity-75');
+    fixAllBtn.style.background = '#fff';
+  }
+
+  // Reset Fix All result
+  const fixAllResult = document.getElementById('fix-all-result');
+  if (fixAllResult) {
+    fixAllResult.classList.add('hidden');
+    fixAllResult.innerHTML = '';
+  }
+
+  // Reset content apply buttons (they get re-created in renderResults anyway)
+  document.querySelectorAll('.apply-content-btn').forEach(b => {
+    b.disabled = false;
+    b.innerHTML = '<i class="fas fa-check mr-1"></i>Apply';
+    b.classList.remove('bg-gray-400', 'cursor-not-allowed');
+    b.classList.add('bg-green-500', 'hover:bg-green-600');
+  });
+
+  // Reset apply all content button
+  const applyAllBtn = document.getElementById('apply-all-content-btn');
+  if (applyAllBtn) {
+    applyAllBtn.disabled = false;
+    applyAllBtn.innerHTML = '<i class="fas fa-magic mr-1"></i>Apply All';
+    applyAllBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+    applyAllBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+  }
+
+  // Reset add-keywords button
+  const addKeywordsBtn = document.getElementById('add-selected-btn');
+  if (addKeywordsBtn) {
+    addKeywordsBtn.disabled = false;
+    addKeywordsBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+  }
 }
 
 function animateNumber(elementId, target) {
