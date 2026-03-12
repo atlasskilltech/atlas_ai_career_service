@@ -31,4 +31,7 @@ router.post('/api/add-keywords', analyzerController.addKeywordsToResume.bind(ana
 // API: Apply content improvements (weak→strong rewrites) to resume
 router.post('/api/apply-content', analyzerController.applyContentImprovements.bind(analyzerController));
 
+// API: Fix ALL ATS issues at once (keywords + skills + content + formatting)
+router.post('/api/fix-all', analyzerController.fixAll.bind(analyzerController));
+
 module.exports = router;
