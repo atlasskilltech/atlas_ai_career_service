@@ -105,11 +105,11 @@
           <div class="p-5 flex-1 flex flex-col">
             <!-- Header: Logo + Save -->
             <div class="flex items-start justify-between gap-3 mb-3">
-              <div class="w-11 h-11 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 flex-shrink-0 relative overflow-hidden">
-                <span class="absolute inset-0 flex items-center justify-center text-base font-bold text-gray-400"><%= job.company.charAt(0).toUpperCase() %></span>
-                <% if (job.company_logo) { %>
-                  <img src="<%= job.company_logo %>" alt="<%= job.company %>" class="absolute inset-0 w-full h-full object-contain p-1 rounded-xl" onerror="this.remove();">
-                <% } %>
+              <% const cardLogoColors = ['#4F46E5','#0891B2','#059669','#D97706','#DC2626','#7C3AED','#2563EB','#0D9488','#C026D3','#EA580C']; %>
+              <% const cardLogoColor = cardLogoColors[job.company.charCodeAt(0) % cardLogoColors.length]; %>
+              <div class="w-11 h-11 rounded-xl flex-shrink-0 relative overflow-hidden" style="background: <%= cardLogoColor %>;">
+                <span class="absolute inset-0 flex items-center justify-center text-base font-bold text-white"><%= job.company.charAt(0).toUpperCase() %></span>
+                <img src="https://logo.clearbit.com/<%= job.company.toLowerCase().replace(/\s*(pvt|private|ltd|limited|inc|corp|llp|llc|co|technologies|tech|software|solutions|consulting|services|india|global|group)\s*/gi, '').trim().replace(/\s+/g, '') %>.com" alt="" class="absolute inset-0 w-full h-full object-contain bg-white p-0.5 rounded-xl" onerror="this.remove();">
               </div>
               <button onclick="toggleSaveJob(<%= job.id %>, this)" class="w-8 h-8 rounded-lg border border-gray-200 dark:border-gray-700 flex items-center justify-center text-gray-400 hover:text-accent hover:border-accent transition-colors flex-shrink-0" title="Save job">
                 <i class="far fa-bookmark text-sm"></i>
