@@ -24,10 +24,10 @@ jobs:
           chmod 600 ~/.ssh/key.pem
 
           ssh -i ~/.ssh/key.pem -o StrictHostKeyChecking=no $EC2_USER@$EC2_HOST << 'EOF'
-            cd /home/ubuntu/infra
+            cd /home/ubuntu/atlas_ai_career_service
             git pull origin main
             npm ci --only=production
-            pm2 restart career-service || pm2 start server.js --name career-service
+            pm2 restart atlas_ai_career_service || pm2 start server.js --name atlas_ai_career_service
             pm2 save
           EOF
 
