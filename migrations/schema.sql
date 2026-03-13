@@ -1,9 +1,12 @@
 -- ============================================================
 -- Atlas AI Career Service - Complete Database Schema
--- Run this file: mysql -u root -p atlas_career < migrations/schema.sql
+-- Single file containing ALL tables and migrations
+-- Run: mysql -u root -p atlas_career < migrations/schema.sql
 -- ============================================================
 
--- Users
+-- =====================
+-- 1. USERS
+-- =====================
 CREATE TABLE IF NOT EXISTS aicp_users (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
@@ -23,7 +26,9 @@ CREATE TABLE IF NOT EXISTS aicp_users (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
--- Resumes
+-- =====================
+-- 2. RESUMES
+-- =====================
 CREATE TABLE IF NOT EXISTS aicp_resumes (
   id INT AUTO_INCREMENT PRIMARY KEY,
   user_id INT NOT NULL,
@@ -34,6 +39,11 @@ CREATE TABLE IF NOT EXISTS aicp_resumes (
   projects_data JSON,
   skills_data JSON,
   achievements_data JSON,
+  certifications_data JSON,
+  languages_data JSON,
+  interests_data JSON,
+  section_order JSON,
+  theme_color VARCHAR(20) DEFAULT '#0a1a4a',
   template VARCHAR(100) DEFAULT 'modern',
   ats_score INT DEFAULT 0,
   file_path VARCHAR(500),
@@ -43,14 +53,27 @@ CREATE TABLE IF NOT EXISTS aicp_resumes (
   FOREIGN KEY (user_id) REFERENCES aicp_users(id) ON DELETE CASCADE
 );
 
--- Cover Letters
+CREATE TABLE IF NOT EXISTS aicp_resume_versions (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  resume_id INT NOT NULL,
+  version_number INT DEFAULT 1,
+  snapshot_json JSON NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (resume_id) REFERENCES aicp_resumes(id) ON DELETE CASCADE
+);
+
+-- =====================
+-- 3. COVER LETTERS
+-- =====================
 CREATE TABLE IF NOT EXISTS aicp_cover_letters (
   id INT AUTO_INCREMENT PRIMARY KEY,
   user_id INT NOT NULL,
+  resume_id INT,
   title VARCHAR(255),
   company_name VARCHAR(255),
   job_title VARCHAR(255),
   content TEXT,
+  tone VARCHAR(50) DEFAULT 'professional',
   job_description TEXT,
   version INT DEFAULT 1,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -58,7 +81,28 @@ CREATE TABLE IF NOT EXISTS aicp_cover_letters (
   FOREIGN KEY (user_id) REFERENCES aicp_users(id) ON DELETE CASCADE
 );
 
--- LinkedIn Profiles
+CREATE TABLE IF NOT EXISTS aicp_cover_letter_versions (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  cover_letter_id INT NOT NULL,
+  version_number INT DEFAULT 1,
+  content_snapshot TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (cover_letter_id) REFERENCES aicp_cover_letters(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS aicp_cover_letter_jobs (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  cover_letter_id INT NOT NULL,
+  job_description TEXT,
+  company_name VARCHAR(255),
+  job_role VARCHAR(255),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (cover_letter_id) REFERENCES aicp_cover_letters(id) ON DELETE CASCADE
+);
+
+-- =====================
+-- 4. LINKEDIN PROFILES
+-- =====================
 CREATE TABLE IF NOT EXISTS aicp_linkedin_profiles (
   id INT AUTO_INCREMENT PRIMARY KEY,
   user_id INT NOT NULL,
@@ -74,7 +118,9 @@ CREATE TABLE IF NOT EXISTS aicp_linkedin_profiles (
   FOREIGN KEY (user_id) REFERENCES aicp_users(id) ON DELETE CASCADE
 );
 
--- Jobs
+-- =====================
+-- 5. JOB TRACKER
+-- =====================
 CREATE TABLE IF NOT EXISTS aicp_jobs (
   id INT AUTO_INCREMENT PRIMARY KEY,
   user_id INT NOT NULL,
@@ -93,7 +139,6 @@ CREATE TABLE IF NOT EXISTS aicp_jobs (
   FOREIGN KEY (user_id) REFERENCES aicp_users(id) ON DELETE CASCADE
 );
 
--- Job Tasks
 CREATE TABLE IF NOT EXISTS aicp_job_tasks (
   id INT AUTO_INCREMENT PRIMARY KEY,
   job_id INT NOT NULL,
@@ -104,7 +149,9 @@ CREATE TABLE IF NOT EXISTS aicp_job_tasks (
   FOREIGN KEY (job_id) REFERENCES aicp_jobs(id) ON DELETE CASCADE
 );
 
--- Contacts
+-- =====================
+-- 6. NETWORKING / CONTACTS
+-- =====================
 CREATE TABLE IF NOT EXISTS aicp_contacts (
   id INT AUTO_INCREMENT PRIMARY KEY,
   user_id INT NOT NULL,
@@ -123,7 +170,6 @@ CREATE TABLE IF NOT EXISTS aicp_contacts (
   FOREIGN KEY (user_id) REFERENCES aicp_users(id) ON DELETE CASCADE
 );
 
--- Interaction Logs
 CREATE TABLE IF NOT EXISTS aicp_interaction_logs (
   id INT AUTO_INCREMENT PRIMARY KEY,
   contact_id INT NOT NULL,
@@ -136,7 +182,9 @@ CREATE TABLE IF NOT EXISTS aicp_interaction_logs (
   FOREIGN KEY (user_id) REFERENCES aicp_users(id) ON DELETE CASCADE
 );
 
--- Interviews
+-- =====================
+-- 7. MOCK INTERVIEWS
+-- =====================
 CREATE TABLE IF NOT EXISTS aicp_interviews (
   id INT AUTO_INCREMENT PRIMARY KEY,
   user_id INT NOT NULL,
@@ -155,7 +203,6 @@ CREATE TABLE IF NOT EXISTS aicp_interviews (
   FOREIGN KEY (user_id) REFERENCES aicp_users(id) ON DELETE CASCADE
 );
 
--- Interview Questions
 CREATE TABLE IF NOT EXISTS aicp_interview_questions (
   id INT AUTO_INCREMENT PRIMARY KEY,
   interview_id INT NOT NULL,
@@ -167,7 +214,6 @@ CREATE TABLE IF NOT EXISTS aicp_interview_questions (
   FOREIGN KEY (interview_id) REFERENCES aicp_interviews(id) ON DELETE CASCADE
 );
 
--- Interview Answers
 CREATE TABLE IF NOT EXISTS aicp_interview_answers (
   id INT AUTO_INCREMENT PRIMARY KEY,
   question_id INT NOT NULL,
@@ -181,7 +227,6 @@ CREATE TABLE IF NOT EXISTS aicp_interview_answers (
   FOREIGN KEY (interview_id) REFERENCES aicp_interviews(id) ON DELETE CASCADE
 );
 
--- Interview Results
 CREATE TABLE IF NOT EXISTS aicp_interview_results (
   id INT AUTO_INCREMENT PRIMARY KEY,
   interview_id INT NOT NULL,
@@ -201,7 +246,9 @@ CREATE TABLE IF NOT EXISTS aicp_interview_results (
   FOREIGN KEY (user_id) REFERENCES aicp_users(id) ON DELETE CASCADE
 );
 
--- Skill Analyses
+-- =====================
+-- 8. SKILL GAP ANALYZER
+-- =====================
 CREATE TABLE IF NOT EXISTS aicp_skill_analyses (
   id INT AUTO_INCREMENT PRIMARY KEY,
   user_id INT NOT NULL,
@@ -215,7 +262,9 @@ CREATE TABLE IF NOT EXISTS aicp_skill_analyses (
   FOREIGN KEY (user_id) REFERENCES aicp_users(id) ON DELETE CASCADE
 );
 
--- Documents
+-- =====================
+-- 9. DOCUMENT HUB
+-- =====================
 CREATE TABLE IF NOT EXISTS aicp_documents (
   id INT AUTO_INCREMENT PRIMARY KEY,
   user_id INT NOT NULL,
@@ -233,7 +282,9 @@ CREATE TABLE IF NOT EXISTS aicp_documents (
   FOREIGN KEY (user_id) REFERENCES aicp_users(id) ON DELETE CASCADE
 );
 
--- ATS Analyses (Legacy)
+-- =====================
+-- 10. ATS ANALYZER (Legacy)
+-- =====================
 CREATE TABLE IF NOT EXISTS aicp_ats_analyses (
   id INT AUTO_INCREMENT PRIMARY KEY,
   user_id INT NOT NULL,
@@ -249,34 +300,9 @@ CREATE TABLE IF NOT EXISTS aicp_ats_analyses (
   FOREIGN KEY (resume_id) REFERENCES aicp_resumes(id) ON DELETE SET NULL
 );
 
--- ============================================================
--- ALTER TABLE statements (for existing databases)
--- ============================================================
-
-ALTER TABLE aicp_resumes
-  ADD COLUMN IF NOT EXISTS certifications_data JSON AFTER achievements_data,
-  ADD COLUMN IF NOT EXISTS languages_data JSON AFTER certifications_data,
-  ADD COLUMN IF NOT EXISTS interests_data JSON AFTER languages_data,
-  ADD COLUMN IF NOT EXISTS section_order JSON AFTER interests_data,
-  ADD COLUMN IF NOT EXISTS theme_color VARCHAR(20) DEFAULT '#0a1a4a' AFTER section_order;
-
--- Resume Versions
-CREATE TABLE IF NOT EXISTS aicp_resume_versions (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  resume_id INT NOT NULL,
-  version_number INT DEFAULT 1,
-  snapshot_json JSON NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (resume_id) REFERENCES aicp_resumes(id) ON DELETE CASCADE
-);
-
--- S3 storage column for documents
-ALTER TABLE aicp_documents ADD COLUMN IF NOT EXISTS s3_key VARCHAR(500) AFTER notes;
-
--- ============================================================
--- ATS Resume Analyzer Module Tables
--- ============================================================
-
+-- =====================
+-- 11. ATS RESUME ANALYZER (Advanced)
+-- =====================
 CREATE TABLE IF NOT EXISTS aicp_resume_analysis (
   id INT AUTO_INCREMENT PRIMARY KEY,
   user_id INT NOT NULL,
@@ -329,3 +355,121 @@ CREATE TABLE IF NOT EXISTS aicp_resume_suggestions (
   priority INT DEFAULT 0,
   FOREIGN KEY (analysis_id) REFERENCES aicp_resume_analysis(id) ON DELETE CASCADE
 );
+
+-- =====================
+-- 12. JOB AGGREGATOR
+-- =====================
+CREATE TABLE IF NOT EXISTS aicp_aggregated_jobs (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  external_id VARCHAR(255),
+  title VARCHAR(500) NOT NULL,
+  company VARCHAR(255) NOT NULL,
+  location VARCHAR(255),
+  salary_min INT,
+  salary_max INT,
+  salary_currency VARCHAR(10) DEFAULT 'INR',
+  experience_min INT DEFAULT 0,
+  experience_max INT,
+  description TEXT,
+  skills JSON,
+  category VARCHAR(100),
+  job_type ENUM('full_time','part_time','internship','contract','freelance') DEFAULT 'full_time',
+  work_mode ENUM('onsite','remote','hybrid') DEFAULT 'onsite',
+  source ENUM('linkedin','naukri','company','api','manual') NOT NULL,
+  source_url VARCHAR(1000),
+  apply_url VARCHAR(1000),
+  company_logo VARCHAR(500),
+  is_active TINYINT(1) DEFAULT 1,
+  is_verified TINYINT(1) DEFAULT 0,
+  posted_date DATETIME,
+  expires_at DATETIME,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY unique_source_job (source, external_id)
+);
+
+CREATE TABLE IF NOT EXISTS aicp_job_companies (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  logo VARCHAR(500),
+  website VARCHAR(500),
+  industry VARCHAR(100),
+  description TEXT,
+  is_verified TINYINT(1) DEFAULT 0,
+  created_by INT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (created_by) REFERENCES aicp_users(id) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS aicp_job_applications (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  job_id INT NOT NULL,
+  status ENUM('applied','reviewed','shortlisted','interview','offered','rejected') DEFAULT 'applied',
+  resume_id INT,
+  cover_letter TEXT,
+  applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES aicp_users(id) ON DELETE CASCADE,
+  FOREIGN KEY (job_id) REFERENCES aicp_aggregated_jobs(id) ON DELETE CASCADE,
+  FOREIGN KEY (resume_id) REFERENCES aicp_resumes(id) ON DELETE SET NULL,
+  UNIQUE KEY unique_application (user_id, job_id)
+);
+
+CREATE TABLE IF NOT EXISTS aicp_saved_jobs (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  job_id INT NOT NULL,
+  saved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES aicp_users(id) ON DELETE CASCADE,
+  FOREIGN KEY (job_id) REFERENCES aicp_aggregated_jobs(id) ON DELETE CASCADE,
+  UNIQUE KEY unique_saved (user_id, job_id)
+);
+
+CREATE TABLE IF NOT EXISTS aicp_scraper_logs (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  source VARCHAR(50) NOT NULL,
+  status ENUM('running','completed','failed') DEFAULT 'running',
+  jobs_found INT DEFAULT 0,
+  jobs_added INT DEFAULT 0,
+  jobs_updated INT DEFAULT 0,
+  error_message TEXT,
+  started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  completed_at TIMESTAMP
+);
+
+-- ============================================================
+-- INDEXES for search performance
+-- ============================================================
+CREATE INDEX IF NOT EXISTS idx_agg_jobs_title ON aicp_aggregated_jobs(title);
+CREATE INDEX IF NOT EXISTS idx_agg_jobs_company ON aicp_aggregated_jobs(company);
+CREATE INDEX IF NOT EXISTS idx_agg_jobs_location ON aicp_aggregated_jobs(location);
+CREATE INDEX IF NOT EXISTS idx_agg_jobs_category ON aicp_aggregated_jobs(category);
+CREATE INDEX IF NOT EXISTS idx_agg_jobs_source ON aicp_aggregated_jobs(source);
+CREATE INDEX IF NOT EXISTS idx_agg_jobs_active ON aicp_aggregated_jobs(is_active);
+CREATE INDEX IF NOT EXISTS idx_agg_jobs_posted ON aicp_aggregated_jobs(posted_date);
+CREATE INDEX IF NOT EXISTS idx_job_apps_user ON aicp_job_applications(user_id);
+CREATE INDEX IF NOT EXISTS idx_job_apps_status ON aicp_job_applications(status);
+
+-- ============================================================
+-- ALTER TABLE statements (for upgrading existing databases)
+-- ============================================================
+
+ALTER TABLE aicp_users
+  ADD COLUMN IF NOT EXISTS google_id VARCHAR(255) UNIQUE AFTER password,
+  MODIFY COLUMN password VARCHAR(255) NULL;
+
+ALTER TABLE aicp_resumes
+  ADD COLUMN IF NOT EXISTS certifications_data JSON AFTER achievements_data,
+  ADD COLUMN IF NOT EXISTS languages_data JSON AFTER certifications_data,
+  ADD COLUMN IF NOT EXISTS interests_data JSON AFTER languages_data,
+  ADD COLUMN IF NOT EXISTS section_order JSON AFTER interests_data,
+  ADD COLUMN IF NOT EXISTS theme_color VARCHAR(20) DEFAULT '#0a1a4a' AFTER section_order;
+
+ALTER TABLE aicp_cover_letters
+  ADD COLUMN IF NOT EXISTS resume_id INT AFTER user_id,
+  ADD COLUMN IF NOT EXISTS tone VARCHAR(50) DEFAULT 'professional' AFTER content;
+
+ALTER TABLE aicp_documents
+  ADD COLUMN IF NOT EXISTS s3_key VARCHAR(500) AFTER notes;
