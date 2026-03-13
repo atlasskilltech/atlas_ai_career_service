@@ -46,8 +46,8 @@
   <div class="card">
     <form method="GET" action="/job-board" id="search-form">
       <div class="relative mb-3">
-        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
-        <input type="text" name="q" value="<%= filters.query %>" class="input-field pl-10" placeholder="Search by job title, company, or keyword..." style="padding-left: 2.5rem;">
+        <i class="fas fa-search absolute text-gray-400 text-sm" style="left: 0.75rem; top: 50%; transform: translateY(-50%);"></i>
+        <input type="text" name="q" value="<%= filters.query %>" class="input-field" placeholder="Search by job title, company, or keyword..." style="padding-left: 2.5rem;">
       </div>
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <select name="location" class="input-field text-sm">

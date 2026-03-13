@@ -94,7 +94,8 @@ class AuthController {
 
   googleRedirect(req, res) {
     const clientId = process.env.GOOGLE_CLIENT_ID;
-    const redirectUri = process.env.APP_URL + '/auth/google/callback';
+    const baseUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
+    const redirectUri = baseUrl + '/auth/google/callback';
     const scope = encodeURIComponent('openid email profile');
     const url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${scope}&prompt=select_account`;
     res.redirect(url);
@@ -114,7 +115,7 @@ class AuthController {
           code,
           client_id: process.env.GOOGLE_CLIENT_ID,
           client_secret: process.env.GOOGLE_CLIENT_SECRET,
-          redirect_uri: process.env.APP_URL + '/auth/google/callback',
+          redirect_uri: (process.env.APP_URL || `${req.protocol}://${req.get('host')}`) + '/auth/google/callback',
           grant_type: 'authorization_code',
         }).toString();
 
