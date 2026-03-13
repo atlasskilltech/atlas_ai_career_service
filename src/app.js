@@ -28,6 +28,9 @@ const io = new Server(server, {
 // Make io accessible to routes
 app.set('io', io);
 
+// Trust proxy (for correct req.protocol behind reverse proxy)
+app.set('trust proxy', 1);
+
 // View engine
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
