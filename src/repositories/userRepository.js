@@ -75,6 +75,26 @@ class UserRepository {
     const [rows] = await pool.execute("SELECT department, COUNT(*) as count FROM aicp_users WHERE role = 'student' GROUP BY department");
     return rows;
   }
+
+  /**
+   * Check if user is active in dice_students (for students) or dice_staff (for staff/admin).
+   * Returns true if active, false if inactive.
+   */
+  async isUserActive(email, role) {
+    if (role === 'student') {
+      const [rows] = await pool.execute(
+        'SELECT * FROM dice_students WHERE student_email = ? AND student_active = 1',
+        [email]
+      );
+      return rows.length > 0;
+    } else {
+      const [rows] = await pool.execute(
+        'SELECT * FROM dice_staff WHERE staff_email = ? AND staff_active = 1',
+        [email]
+      );
+      return rows.length > 0;
+    }
+  }
 }
 
 module.exports = new UserRepository();
