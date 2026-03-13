@@ -37,6 +37,15 @@ app.use(expressLayouts);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+
+// Method override via query string ?_method=DELETE/PUT/PATCH
+app.use(function(req, res, next) {
+  if (req.query._method) {
+    req.method = req.query._method.toUpperCase();
+    delete req.query._method;
+  }
+  next();
+});
 app.use(express.static(path.join(__dirname, '../public')));
 
 // Session
