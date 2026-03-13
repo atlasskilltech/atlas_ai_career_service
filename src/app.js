@@ -109,7 +109,7 @@ setupInterviewSocket(io);
 const jobScheduler = require('./scrapers/jobScheduler');
 app.set('jobScheduler', jobScheduler);
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 6700;
 // Increase server timeout to 60s for long AI operations (upload-parse, etc.)
 server.keepAliveTimeout = 65000;
 server.headersTimeout = 66000;
