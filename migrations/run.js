@@ -6,7 +6,8 @@ const tables = [
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL,
+    password VARCHAR(255),
+    google_id VARCHAR(255) UNIQUE,
     role ENUM('student','placement_admin','super_admin') DEFAULT 'student',
     avatar VARCHAR(500),
     department VARCHAR(255),
@@ -394,6 +395,10 @@ const tables = [
     started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     completed_at TIMESTAMP
   )`,
+
+  `ALTER TABLE aicp_users
+    ADD COLUMN IF NOT EXISTS google_id VARCHAR(255) UNIQUE AFTER password,
+    MODIFY COLUMN password VARCHAR(255) NULL`,
 ];
 
 async function runMigrations() {
