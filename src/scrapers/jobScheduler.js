@@ -27,7 +27,7 @@ class JobScheduler {
    */
   start() {
     if (this.timer) return;
-    console.log('[JobScheduler] Starting auto-fetch every 5 minutes (LinkedIn + Naukri)...');
+    console.log('[JobScheduler] Starting auto-fetch every 5 minutes (Remotive + Arbeitnow APIs)...');
 
     // Run first fetch after 30 seconds (let the app boot)
     setTimeout(() => this.runCycle(), 30000);

@@ -1,41 +1,39 @@
-const puppeteer = require('puppeteer');
+const https = require('https');
 
 /**
- * LinkedIn Job Fetcher - Scrapes public LinkedIn job search pages.
- * No API key needed. Uses Puppeteer for headless browsing.
+ * Job Fetcher - Uses Remotive API (free, no API key needed).
+ * Returns remote & hybrid jobs from real companies.
+ * Replaces old Puppeteer-based LinkedIn scraper.
  */
 
-const SEARCH_QUERIES = [
-  'software engineer',
-  'web developer',
-  'data analyst',
-  'software tester',
-  'frontend developer',
-  'backend developer',
-  'full stack developer',
-  'devops engineer',
-  'ui ux designer',
-  'product manager',
-  'business analyst',
-  'machine learning engineer',
-  'python developer',
-  'java developer',
-  'react developer',
+const CATEGORIES = [
+  'software-dev',
+  'design',
+  'data',
+  'product',
+  'devops-sysadmin',
+  'qa',
+  'marketing',
+  'customer-support',
 ];
 
-const LOCATIONS = ['India', 'Mumbai', 'Bangalore', 'Delhi', 'Pune', 'Hyderabad'];
-
-function getRandomItems(arr, count) {
-  const shuffled = [...arr].sort(() => 0.5 - Math.random());
-  return shuffled.slice(0, count);
+function getRandomItem(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
 }
 
-function delay(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+function httpsGet(url) {
+  return new Promise((resolve, reject) => {
+    https.get(url, { headers: { 'User-Agent': 'AtlasCareerService/1.0' } }, (res) => {
+      let body = '';
+      res.on('data', (chunk) => body += chunk);
+      res.on('end', () => {
+        try { resolve(JSON.parse(body)); } catch (e) { reject(new Error('Failed to parse response')); }
+      });
+    }).on('error', reject);
+  });
 }
 
 function getCompanyLogoUrl(companyName) {
-  // Generate a logo URL using logo.clearbit.com (free, no API key needed)
   const domain = companyName
     .toLowerCase()
     .replace(/\s*(pvt|private|ltd|limited|inc|corp|corporation|llp|llc|co|company|technologies|tech|software|solutions|consulting|services|india|global)\s*/gi, '')
@@ -45,192 +43,94 @@ function getCompanyLogoUrl(companyName) {
   return `https://logo.clearbit.com/${domain}`;
 }
 
-async function fetchJobDescription(page, url) {
-  try {
-    await page.goto(url, { waitUntil: 'networkidle2', timeout: 20000 });
-
-    // Wait for the description section to load
-    await page.waitForSelector('.show-more-less-html__markup, .description__text, .decorated-job-posting__details, [class*="description"], article', { timeout: 8000 }).catch(() => {});
-
-    const details = await page.evaluate(() => {
-      // Extract full description
-      const descEl = document.querySelector('.show-more-less-html__markup') ||
-                     document.querySelector('.description__text') ||
-                     document.querySelector('.decorated-job-posting__details') ||
-                     document.querySelector('[class*="description"] .show-more-less-html__markup') ||
-                     document.querySelector('article .show-more-less-html__markup');
-
-      let description = '';
-      if (descEl) {
-        // Get HTML content and convert to readable text
-        description = descEl.innerHTML
-          .replace(/<br\s*\/?>/gi, '\n')
-          .replace(/<\/p>/gi, '\n\n')
-          .replace(/<\/li>/gi, '\n')
-          .replace(/<li>/gi, '• ')
-          .replace(/<\/h[1-6]>/gi, '\n')
-          .replace(/<[^>]*>/g, '')
-          .replace(/&amp;/g, '&')
-          .replace(/&lt;/g, '<')
-          .replace(/&gt;/g, '>')
-          .replace(/&nbsp;/g, ' ')
-          .replace(/&#39;/g, "'")
-          .replace(/&quot;/g, '"')
-          .replace(/\n{3,}/g, '\n\n')
-          .trim();
-      }
-
-      // Extract skills/criteria from the page
-      const skillEls = document.querySelectorAll('.description__job-criteria-text, .job-criteria__text');
-      const criteria = {};
-      const criteriaLabels = document.querySelectorAll('.description__job-criteria-subheader');
-      criteriaLabels.forEach((label, i) => {
-        const key = (label.textContent || '').trim().toLowerCase();
-        const val = skillEls[i] ? (skillEls[i].textContent || '').trim() : '';
-        if (key && val) criteria[key] = val;
-      });
-
-      // Try to get employment type and seniority
-      const jobType = criteria['employment type'] || '';
-      const seniorityLevel = criteria['seniority level'] || '';
-
-      // Extract company logo from detail page
-      const logoEl = document.querySelector('.artdeco-entity-image[src], .job-details-jobs-unified-top-card__company-logo img, .top-card-layout__entity-image, img[alt*="logo"], .show-more-less-html img');
-      let companyLogo = '';
-      if (logoEl && logoEl.src && !logoEl.src.includes('data:image') && !logoEl.src.includes('static.licdn.com/aero')) {
-        companyLogo = logoEl.src;
-      }
-
-      return { description, jobType, seniorityLevel, companyLogo };
-    });
-
-    return details;
-  } catch (err) {
-    console.log(`[LinkedIn] Failed to fetch description from ${url}: ${err.message}`);
-    return null;
-  }
-}
-
 async function fetchLinkedInJobs() {
-  const query = getRandomItems(SEARCH_QUERIES, 1)[0];
-  const location = getRandomItems(LOCATIONS, 1)[0];
+  const category = getRandomItem(CATEGORIES);
   const jobs = [];
 
-  let browser;
   try {
-    browser = await puppeteer.launch({
-      headless: 'new',
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
-      timeout: 30000,
-    });
+    const url = `https://remotive.com/api/remote-jobs?category=${category}&limit=25`;
+    console.log(`[JobFetcher/Remotive] Fetching category: ${category}`);
+    const data = await httpsGet(url);
 
-    const page = await browser.newPage();
-    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
-    await page.setViewport({ width: 1280, height: 800 });
+    if (!data.jobs || !Array.isArray(data.jobs)) {
+      console.log('[JobFetcher/Remotive] No jobs returned');
+      return jobs;
+    }
 
-    const searchUrl = `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(query)}&location=${encodeURIComponent(location)}&f_TPR=r86400&position=1&pageNum=0`;
-    await page.goto(searchUrl, { waitUntil: 'networkidle2', timeout: 30000 });
+    for (const job of data.jobs) {
+      if (!job.title || !job.company_name) continue;
 
-    // Wait for job cards to load
-    await page.waitForSelector('.base-card, .job-search-card, .jobs-search__results-list li', { timeout: 10000 }).catch(() => {});
+      const externalId = `remotive-${job.id}`;
+      const description = (job.description || '')
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<\/p>/gi, '\n\n')
+        .replace(/<\/li>/gi, '\n')
+        .replace(/<li>/gi, '• ')
+        .replace(/<\/h[1-6]>/gi, '\n')
+        .replace(/<[^>]*>/g, '')
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&#39;/g, "'")
+        .replace(/&quot;/g, '"')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
 
-    // Extract job listings
-    const rawJobs = await page.evaluate(() => {
-      const cards = document.querySelectorAll('.base-card, .job-search-card, .jobs-search__results-list li');
-      const results = [];
-      cards.forEach((card, idx) => {
-        if (idx >= 25) return; // max 25 per run
-        const titleEl = card.querySelector('.base-search-card__title, .base-card__full-link, h3');
-        const companyEl = card.querySelector('.base-search-card__subtitle, h4, .hidden-nested-link');
-        const locationEl = card.querySelector('.job-search-card__location, .base-search-card__metadata span');
-        const linkEl = card.querySelector('a.base-card__full-link, a');
-        const dateEl = card.querySelector('time');
+      const companyLogo = job.company_logo || getCompanyLogoUrl(job.company_name);
 
-        if (titleEl && companyEl) {
-          const logoEl = card.querySelector('.artdeco-entity-image, img[data-delayed-url], img[data-ghost-url], .search-entity-media img, img');
-          let logo = '';
-          if (logoEl) {
-            logo = logoEl.getAttribute('data-delayed-url') || logoEl.getAttribute('data-ghost-url') || logoEl.src || '';
-            if (logo && (logo.includes('data:image') || logo.includes('static.licdn.com/aero'))) logo = '';
-          }
-          results.push({
-            title: (titleEl.textContent || '').trim(),
-            company: (companyEl.textContent || '').trim(),
-            location: locationEl ? (locationEl.textContent || '').trim() : '',
-            url: linkEl ? linkEl.href : '',
-            postedDate: dateEl ? dateEl.getAttribute('datetime') : null,
-            logo,
-          });
-        }
-      });
-      return results;
-    });
-
-    // Visit each job detail page to get full description (limit to 15 to avoid rate limiting)
-    const jobsToProcess = rawJobs.slice(0, 15);
-    for (let i = 0; i < jobsToProcess.length; i++) {
-      const raw = jobsToProcess[i];
-      if (!raw.title || !raw.company) continue;
-      const externalId = raw.url ? raw.url.split('?')[0].split('/').pop() : `li-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-
-      let description = `${raw.title} position at ${raw.company}.`;
-      let detectedJobType = 'full_time';
-      let companyLogo = raw.logo || '';
-
-      // Fetch full description from the job detail page
-      if (raw.url) {
-        const details = await fetchJobDescription(page, raw.url);
-        if (details && details.description && details.description.length > 50) {
-          description = details.description;
-
-          // Map employment type
-          if (details.jobType) {
-            const jt = details.jobType.toLowerCase();
-            if (jt.includes('part')) detectedJobType = 'part_time';
-            else if (jt.includes('intern')) detectedJobType = 'internship';
-            else if (jt.includes('contract')) detectedJobType = 'contract';
-            else if (jt.includes('freelance') || jt.includes('temporary')) detectedJobType = 'freelance';
-          }
-
-          // Use logo from detail page if listing card didn't have one
-          if (!companyLogo && details.companyLogo) {
-            companyLogo = details.companyLogo;
-          }
-        }
-        // Small delay to avoid rate limiting
-        await delay(1500 + Math.random() * 1500);
+      // Map job type
+      let jobType = 'full_time';
+      if (job.job_type) {
+        const jt = job.job_type.toLowerCase();
+        if (jt.includes('part')) jobType = 'part_time';
+        else if (jt.includes('intern')) jobType = 'internship';
+        else if (jt.includes('contract')) jobType = 'contract';
+        else if (jt.includes('freelance')) jobType = 'freelance';
       }
 
-      // Fallback: use Clearbit logo API based on company name
-      if (!companyLogo) {
-        companyLogo = getCompanyLogoUrl(raw.company);
-      }
+      // Detect work mode
+      const locationText = (job.candidate_required_location || '').toLowerCase();
+      let workMode = 'remote';
+      if (/hybrid/.test(locationText)) workMode = 'hybrid';
+      else if (/onsite|on-site|office/.test(locationText)) workMode = 'onsite';
 
-      const allSkills = extractSkillsFromText(raw.title + ' ' + description);
+      const allSkills = extractSkillsFromText(job.title + ' ' + description + ' ' + (job.tags || []).join(' '));
+
+      // Parse salary if present
+      let salaryMin = null;
+      let salaryMax = null;
+      if (job.salary) {
+        const salMatch = job.salary.match(/([\d,]+)\s*[-–to]+\s*([\d,]+)/);
+        if (salMatch) {
+          salaryMin = parseInt(salMatch[1].replace(/,/g, ''));
+          salaryMax = parseInt(salMatch[2].replace(/,/g, ''));
+        }
+      }
 
       jobs.push({
         externalId,
-        title: raw.title,
-        company: raw.company,
-        location: raw.location || location,
-        description,
+        title: job.title,
+        company: job.company_name,
+        location: job.candidate_required_location || 'Remote',
+        description: description || `${job.title} position at ${job.company_name}.`,
         skills: allSkills,
-        category: categorizeJob(raw.title),
-        jobType: detectedJobType,
-        workMode: detectWorkMode(raw.title + ' ' + raw.location + ' ' + description),
+        category: categorizeJob(job.title),
+        jobType,
+        workMode,
+        salaryMin,
+        salaryMax,
         source: 'linkedin',
-        sourceUrl: raw.url || searchUrl,
-        applyUrl: raw.url || searchUrl,
+        sourceUrl: job.url || `https://remotive.com/remote-jobs/${category}`,
+        applyUrl: job.url || `https://remotive.com/remote-jobs/${category}`,
         companyLogo,
-        postedDate: raw.postedDate ? new Date(raw.postedDate) : new Date(),
+        postedDate: job.publication_date ? new Date(job.publication_date) : new Date(),
       });
     }
 
-    console.log(`[LinkedIn] Fetched ${jobs.length} jobs with full descriptions for "${query}" in ${location}`);
+    console.log(`[JobFetcher/Remotive] Fetched ${jobs.length} jobs for category "${category}"`);
   } catch (err) {
-    console.error('[LinkedIn] Fetch error:', err.message);
-  } finally {
-    if (browser) await browser.close().catch(() => {});
+    console.error('[JobFetcher/Remotive] Fetch error:', err.message);
   }
 
   return jobs;
@@ -283,13 +183,6 @@ function categorizeJob(title) {
   if (/full.?stack/.test(t)) return 'Full Stack Development';
   if (/ml|machine|deep|nlp|ai/.test(t)) return 'AI/ML';
   return 'Engineering';
-}
-
-function detectWorkMode(text) {
-  const t = text.toLowerCase();
-  if (/remote/.test(t)) return 'remote';
-  if (/hybrid/.test(t)) return 'hybrid';
-  return 'onsite';
 }
 
 module.exports = { fetchLinkedInJobs };

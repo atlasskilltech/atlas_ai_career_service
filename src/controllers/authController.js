@@ -1,5 +1,6 @@
 const https = require('https');
 const authService = require('../services/authService');
+const userRepository = require('../repositories/userRepository');
 
 class AuthController {
   getLogin(req, res) {
@@ -19,6 +20,13 @@ class AuthController {
         req.flash('error', 'Passwords do not match');
         return res.redirect('/auth/register');
       }
+
+      // Check if user is active in dice_students before allowing registration
+      const isActive = await userRepository.isUserActive(email, 'student');
+      if (!isActive) {
+        return res.render('pages/auth/access-denied', { title: 'Access Denied', layout: 'layouts/auth', userEmail: email });
+      }
+
       await authService.register({ name, email, password, department, yearOfStudy });
       req.flash('success', 'Registration successful! Please check your email to verify your account.');
       res.redirect('/auth/login');
@@ -32,6 +40,14 @@ class AuthController {
     try {
       const { email, password } = req.body;
       const user = await authService.login(email, password);
+
+      // Check if user is active in dice_students/dice_staff
+      const isActive = await userRepository.isUserActive(email, user.role);
+      if (!isActive) {
+        req.session.destroy();
+        return res.render('pages/auth/access-denied', { title: 'Access Denied', layout: 'layouts/auth', userEmail: email });
+      }
+
       req.session.user = user;
       req.flash('success', `Welcome back, ${user.name}!`);
       if (user.role === 'super_admin' || user.role === 'placement_admin') {
@@ -158,6 +174,13 @@ class AuthController {
       }
 
       const user = await authService.googleLogin(googleUser);
+
+      // Check if user is active in dice_students/dice_staff
+      const isActive = await userRepository.isUserActive(user.email, user.role);
+      if (!isActive) {
+        return res.render('pages/auth/access-denied', { title: 'Access Denied', layout: 'layouts/auth', userEmail: user.email });
+      }
+
       req.session.user = user;
       req.flash('success', `Welcome, ${user.name}!`);
 
