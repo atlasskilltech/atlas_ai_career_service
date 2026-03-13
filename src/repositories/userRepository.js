@@ -78,6 +78,7 @@ class UserRepository {
 
   /**
    * Check if user is active in dice_students (for students) or dice_staff (for staff/admin).
+   * In these tables: 0 = active, 1 = inactive.
    * Returns true if active, false if inactive.
    */
   async isUserActive(email, role) {
@@ -86,13 +87,15 @@ class UserRepository {
         'SELECT * FROM dice_students WHERE student_email = ? AND student_active = 1',
         [email]
       );
-      return rows.length > 0;
+      // student_active=1 means INACTIVE, so if found → user is inactive
+      return rows.length === 0;
     } else {
       const [rows] = await pool.execute(
         'SELECT * FROM dice_staff WHERE staff_email = ? AND staff_active = 1',
         [email]
       );
-      return rows.length > 0;
+      // staff_active=1 means INACTIVE, so if found → user is inactive
+      return rows.length === 0;
     }
   }
 }
