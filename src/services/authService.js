@@ -102,6 +102,47 @@ class AuthService {
     return user;
   }
 
+  async googleLogin(googleUser) {
+    // Check if user exists by google_id
+    let user = await userRepository.findByGoogleId(googleUser.id);
+    if (user) {
+      return {
+        id: user.id, name: user.name, email: user.email,
+        role: user.role, department: user.department, avatar: user.avatar,
+      };
+    }
+
+    // Check if user exists by email (link google account)
+    user = await userRepository.findByEmail(googleUser.email);
+    if (user) {
+      await userRepository.linkGoogleId(user.id, googleUser.id);
+      if (googleUser.picture && !user.avatar) {
+        await userRepository.update(user.id, { avatar: googleUser.picture });
+      }
+      return {
+        id: user.id, name: user.name, email: user.email,
+        role: user.role, department: user.department, avatar: user.avatar || googleUser.picture,
+      };
+    }
+
+    // Create new user (default role: student)
+    const newUser = await userRepository.create({
+      name: googleUser.name,
+      email: googleUser.email,
+      password: null,
+      role: 'student',
+    });
+    await userRepository.linkGoogleId(newUser.id, googleUser.id);
+    if (googleUser.picture) {
+      await userRepository.update(newUser.id, { avatar: googleUser.picture });
+    }
+
+    return {
+      id: newUser.id, name: newUser.name, email: newUser.email,
+      role: 'student', department: null, avatar: googleUser.picture,
+    };
+  }
+
   async updateProfile(userId, data) {
     await userRepository.update(userId, data);
     return userRepository.findById(userId);

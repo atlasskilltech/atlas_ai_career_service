@@ -11,6 +11,8 @@ router.get('/forgot-password', authController.getForgotPassword);
 router.post('/forgot-password', authController.postForgotPassword);
 router.get('/reset-password/:token', authController.getResetPassword);
 router.post('/reset-password/:token', authController.postResetPassword);
+router.get('/google', authController.googleRedirect);
+router.get('/google/callback', authController.googleCallback);
 router.get('/logout', authController.logout);
 
 module.exports = router;

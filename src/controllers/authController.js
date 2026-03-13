@@ -1,3 +1,4 @@
+const https = require('https');
 const authService = require('../services/authService');
 
 class AuthController {
@@ -88,6 +89,85 @@ class AuthController {
     } catch (err) {
       req.flash('error', err.message);
       res.redirect('/auth/forgot-password');
+    }
+  }
+
+  googleRedirect(req, res) {
+    const clientId = process.env.GOOGLE_CLIENT_ID;
+    const redirectUri = process.env.APP_URL + '/auth/google/callback';
+    const scope = encodeURIComponent('openid email profile');
+    const url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${scope}&prompt=select_account`;
+    res.redirect(url);
+  }
+
+  async googleCallback(req, res) {
+    try {
+      const { code } = req.query;
+      if (!code) {
+        req.flash('error', 'Google sign-in was cancelled');
+        return res.redirect('/auth/login');
+      }
+
+      // Exchange code for tokens
+      const tokenData = await new Promise((resolve, reject) => {
+        const postData = new URLSearchParams({
+          code,
+          client_id: process.env.GOOGLE_CLIENT_ID,
+          client_secret: process.env.GOOGLE_CLIENT_SECRET,
+          redirect_uri: process.env.APP_URL + '/auth/google/callback',
+          grant_type: 'authorization_code',
+        }).toString();
+
+        const reqOpts = {
+          hostname: 'oauth2.googleapis.com',
+          path: '/token',
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Content-Length': Buffer.byteLength(postData) },
+        };
+
+        const tokenReq = https.request(reqOpts, (tokenRes) => {
+          let body = '';
+          tokenRes.on('data', (chunk) => body += chunk);
+          tokenRes.on('end', () => {
+            try { resolve(JSON.parse(body)); } catch (e) { reject(new Error('Failed to parse token response')); }
+          });
+        });
+        tokenReq.on('error', reject);
+        tokenReq.write(postData);
+        tokenReq.end();
+      });
+
+      if (tokenData.error) {
+        throw new Error(tokenData.error_description || 'Failed to get access token');
+      }
+
+      // Get user info
+      const googleUser = await new Promise((resolve, reject) => {
+        https.get(`https://www.googleapis.com/oauth2/v2/userinfo?access_token=${tokenData.access_token}`, (userRes) => {
+          let body = '';
+          userRes.on('data', (chunk) => body += chunk);
+          userRes.on('end', () => {
+            try { resolve(JSON.parse(body)); } catch (e) { reject(new Error('Failed to parse user info')); }
+          });
+        }).on('error', reject);
+      });
+
+      if (!googleUser.email) {
+        throw new Error('Could not get email from Google');
+      }
+
+      const user = await authService.googleLogin(googleUser);
+      req.session.user = user;
+      req.flash('success', `Welcome, ${user.name}!`);
+
+      if (user.role === 'super_admin' || user.role === 'placement_admin') {
+        return res.redirect('/admin');
+      }
+      res.redirect('/dashboard');
+    } catch (err) {
+      console.error('Google OAuth error:', err.message);
+      req.flash('error', 'Google sign-in failed. Please try again.');
+      res.redirect('/auth/login');
     }
   }
 

@@ -11,6 +11,15 @@ class UserRepository {
     return rows[0];
   }
 
+  async findByGoogleId(googleId) {
+    const [rows] = await pool.execute('SELECT * FROM aicp_users WHERE google_id = ?', [googleId]);
+    return rows[0];
+  }
+
+  async linkGoogleId(userId, googleId) {
+    await pool.execute('UPDATE aicp_users SET google_id = ?, email_verified = 1 WHERE id = ?', [googleId, userId]);
+  }
+
   async create(data) {
     const [result] = await pool.execute(
       'INSERT INTO aicp_users (name, email, password, role, department, year_of_study, verification_token) VALUES (?, ?, ?, ?, ?, ?, ?)',
