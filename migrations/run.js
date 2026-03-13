@@ -2,6 +2,7 @@ const pool = require('../src/config/database');
 require('dotenv').config();
 
 const tables = [
+  // 1. Users
   `CREATE TABLE IF NOT EXISTS aicp_users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
@@ -21,6 +22,7 @@ const tables = [
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
   )`,
 
+  // 2. Resumes
   `CREATE TABLE IF NOT EXISTS aicp_resumes (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
@@ -31,6 +33,11 @@ const tables = [
     projects_data JSON,
     skills_data JSON,
     achievements_data JSON,
+    certifications_data JSON,
+    languages_data JSON,
+    interests_data JSON,
+    section_order JSON,
+    theme_color VARCHAR(20) DEFAULT '#0a1a4a',
     template VARCHAR(100) DEFAULT 'modern',
     ats_score INT DEFAULT 0,
     file_path VARCHAR(500),
@@ -40,13 +47,25 @@ const tables = [
     FOREIGN KEY (user_id) REFERENCES aicp_users(id) ON DELETE CASCADE
   )`,
 
+  `CREATE TABLE IF NOT EXISTS aicp_resume_versions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    resume_id INT NOT NULL,
+    version_number INT DEFAULT 1,
+    snapshot_json JSON NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (resume_id) REFERENCES aicp_resumes(id) ON DELETE CASCADE
+  )`,
+
+  // 3. Cover Letters
   `CREATE TABLE IF NOT EXISTS aicp_cover_letters (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
+    resume_id INT,
     title VARCHAR(255),
     company_name VARCHAR(255),
     job_title VARCHAR(255),
     content TEXT,
+    tone VARCHAR(50) DEFAULT 'professional',
     job_description TEXT,
     version INT DEFAULT 1,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -54,6 +73,26 @@ const tables = [
     FOREIGN KEY (user_id) REFERENCES aicp_users(id) ON DELETE CASCADE
   )`,
 
+  `CREATE TABLE IF NOT EXISTS aicp_cover_letter_versions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    cover_letter_id INT NOT NULL,
+    version_number INT DEFAULT 1,
+    content_snapshot TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (cover_letter_id) REFERENCES aicp_cover_letters(id) ON DELETE CASCADE
+  )`,
+
+  `CREATE TABLE IF NOT EXISTS aicp_cover_letter_jobs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    cover_letter_id INT NOT NULL,
+    job_description TEXT,
+    company_name VARCHAR(255),
+    job_role VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (cover_letter_id) REFERENCES aicp_cover_letters(id) ON DELETE CASCADE
+  )`,
+
+  // 4. LinkedIn Profiles
   `CREATE TABLE IF NOT EXISTS aicp_linkedin_profiles (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
@@ -69,6 +108,7 @@ const tables = [
     FOREIGN KEY (user_id) REFERENCES aicp_users(id) ON DELETE CASCADE
   )`,
 
+  // 5. Job Tracker
   `CREATE TABLE IF NOT EXISTS aicp_jobs (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
@@ -97,6 +137,7 @@ const tables = [
     FOREIGN KEY (job_id) REFERENCES aicp_jobs(id) ON DELETE CASCADE
   )`,
 
+  // 6. Networking / Contacts
   `CREATE TABLE IF NOT EXISTS aicp_contacts (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
@@ -127,6 +168,7 @@ const tables = [
     FOREIGN KEY (user_id) REFERENCES aicp_users(id) ON DELETE CASCADE
   )`,
 
+  // 7. Mock Interviews
   `CREATE TABLE IF NOT EXISTS aicp_interviews (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
@@ -188,6 +230,7 @@ const tables = [
     FOREIGN KEY (user_id) REFERENCES aicp_users(id) ON DELETE CASCADE
   )`,
 
+  // 8. Skill Gap Analyzer
   `CREATE TABLE IF NOT EXISTS aicp_skill_analyses (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
@@ -201,6 +244,7 @@ const tables = [
     FOREIGN KEY (user_id) REFERENCES aicp_users(id) ON DELETE CASCADE
   )`,
 
+  // 9. Document Hub
   `CREATE TABLE IF NOT EXISTS aicp_documents (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
@@ -212,11 +256,13 @@ const tables = [
     mime_type VARCHAR(100),
     version INT DEFAULT 1,
     notes TEXT,
+    s3_key VARCHAR(500),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES aicp_users(id) ON DELETE CASCADE
   )`,
 
+  // 10. ATS Analyzer (Legacy)
   `CREATE TABLE IF NOT EXISTS aicp_ats_analyses (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
@@ -232,36 +278,7 @@ const tables = [
     FOREIGN KEY (resume_id) REFERENCES aicp_resumes(id) ON DELETE SET NULL
   )`,
 
-  `ALTER TABLE aicp_resumes
-    ADD COLUMN IF NOT EXISTS certifications_data JSON AFTER achievements_data,
-    ADD COLUMN IF NOT EXISTS languages_data JSON AFTER certifications_data,
-    ADD COLUMN IF NOT EXISTS interests_data JSON AFTER languages_data,
-    ADD COLUMN IF NOT EXISTS section_order JSON AFTER interests_data,
-    ADD COLUMN IF NOT EXISTS theme_color VARCHAR(20) DEFAULT '#0a1a4a' AFTER section_order`,
-
-  `CREATE TABLE IF NOT EXISTS aicp_resume_versions (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    resume_id INT NOT NULL,
-    version_number INT DEFAULT 1,
-    snapshot_json JSON NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (resume_id) REFERENCES aicp_resumes(id) ON DELETE CASCADE
-  )`,
-
-  `ALTER TABLE aicp_cover_letters
-    ADD COLUMN IF NOT EXISTS resume_id INT AFTER user_id,
-    ADD COLUMN IF NOT EXISTS tone VARCHAR(50) DEFAULT 'professional' AFTER content`,
-
-  `CREATE TABLE IF NOT EXISTS aicp_cover_letter_versions (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    cover_letter_id INT NOT NULL,
-    version_number INT DEFAULT 1,
-    content_snapshot TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (cover_letter_id) REFERENCES aicp_cover_letters(id) ON DELETE CASCADE
-  )`,
-
- 
+  // 11. ATS Resume Analyzer (Advanced)
   `CREATE TABLE IF NOT EXISTS aicp_resume_analysis (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
@@ -315,7 +332,7 @@ const tables = [
     FOREIGN KEY (analysis_id) REFERENCES aicp_resume_analysis(id) ON DELETE CASCADE
   )`,
 
-  // Job Aggregator System
+  // 12. Job Aggregator
   `CREATE TABLE IF NOT EXISTS aicp_aggregated_jobs (
     id INT AUTO_INCREMENT PRIMARY KEY,
     external_id VARCHAR(255),
@@ -396,9 +413,24 @@ const tables = [
     completed_at TIMESTAMP
   )`,
 
+  // ALTER TABLE statements (for upgrading existing databases)
   `ALTER TABLE aicp_users
     ADD COLUMN IF NOT EXISTS google_id VARCHAR(255) UNIQUE AFTER password,
     MODIFY COLUMN password VARCHAR(255) NULL`,
+
+  `ALTER TABLE aicp_resumes
+    ADD COLUMN IF NOT EXISTS certifications_data JSON AFTER achievements_data,
+    ADD COLUMN IF NOT EXISTS languages_data JSON AFTER certifications_data,
+    ADD COLUMN IF NOT EXISTS interests_data JSON AFTER languages_data,
+    ADD COLUMN IF NOT EXISTS section_order JSON AFTER interests_data,
+    ADD COLUMN IF NOT EXISTS theme_color VARCHAR(20) DEFAULT '#0a1a4a' AFTER section_order`,
+
+  `ALTER TABLE aicp_cover_letters
+    ADD COLUMN IF NOT EXISTS resume_id INT AFTER user_id,
+    ADD COLUMN IF NOT EXISTS tone VARCHAR(50) DEFAULT 'professional' AFTER content`,
+
+  `ALTER TABLE aicp_documents
+    ADD COLUMN IF NOT EXISTS s3_key VARCHAR(500) AFTER notes`,
 ];
 
 async function runMigrations() {
