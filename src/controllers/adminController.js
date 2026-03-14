@@ -75,7 +75,16 @@ class AdminController {
          FROM aicp_job_applications a
          JOIN aicp_users u ON a.user_id = u.id
          JOIN aicp_aggregated_jobs j ON a.job_id = j.id
-         ORDER BY a.applied_at DESC LIMIT 100`
+
+         UNION ALL
+
+         SELECT aa.id, aa.stage AS status, aa.applied_at, u.name AS student, u.email, u.department,
+                aj.role_title AS job_title, aj.company_name AS company
+         FROM aicp_admin_job_applications aa
+         JOIN aicp_users u ON aa.user_id = u.id
+         JOIN aicp_admin_jobs aj ON aa.job_id = aj.id
+
+         ORDER BY applied_at DESC LIMIT 100`
       );
       res.render('pages/admin/applications', { title: 'Applications', layout: 'layouts/admin', applications });
     } catch (err) {
