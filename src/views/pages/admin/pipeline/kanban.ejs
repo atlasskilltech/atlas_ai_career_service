@@ -1,0 +1,512 @@
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
+<style>
+  .kanban-board { display:flex; gap:12px; overflow-x:auto; padding-bottom:16px; min-height:calc(100vh - 220px); }
+  .kanban-column { min-width:280px; max-width:300px; flex:1; background:#f8fafc; border-radius:12px; display:flex; flex-direction:column; }
+  .kanban-column-header { padding:14px 16px; border-bottom:1px solid #e5e7eb; display:flex; align-items:center; justify-content:space-between; }
+  .kanban-column-title { font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; }
+  .kanban-column-count { font-size:12px; font-weight:600; padding:2px 8px; border-radius:10px; background:rgba(0,0,0,0.06); }
+  .kanban-cards { flex:1; padding:8px; overflow-y:auto; min-height:100px; }
+  .kanban-card {
+    background:#fff; border:1px solid #e5e7eb; border-radius:10px; padding:12px;
+    margin-bottom:8px; cursor:grab; transition:all 0.15s ease; position:relative;
+  }
+  .kanban-card:hover { box-shadow:0 2px 8px rgba(0,0,0,0.08); border-color:#d1d5db; }
+  .kanban-card.sortable-ghost { opacity:0.4; }
+  .kanban-card.sortable-chosen { box-shadow:0 4px 16px rgba(0,0,0,0.15); }
+  .kanban-card-avatar { width:32px; height:32px; border-radius:50%; object-fit:cover; background:#e5e7eb; }
+  .kanban-card-avatar-placeholder {
+    width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg,#01103d,#1a2b5f);
+    display:flex; align-items:center; justify-content:center; color:#a3e635; font-weight:600; font-size:13px;
+  }
+  .kanban-priority { width:8px; height:8px; border-radius:50%; display:inline-block; }
+  .kanban-score { font-size:11px; font-weight:600; padding:2px 6px; border-radius:4px; }
+  .kanban-filter-bar { background:#fff; border:1px solid #e5e7eb; border-radius:10px; padding:12px 16px; margin-bottom:16px; }
+
+  /* Stage colors */
+  .stage-applied { border-top:3px solid #3b82f6; }
+  .stage-applied .kanban-column-title { color:#3b82f6; }
+  .stage-shortlisted { border-top:3px solid #8b5cf6; }
+  .stage-shortlisted .kanban-column-title { color:#8b5cf6; }
+  .stage-interview { border-top:3px solid #f59e0b; }
+  .stage-interview .kanban-column-title { color:#f59e0b; }
+  .stage-offered { border-top:3px solid #10b981; }
+  .stage-offered .kanban-column-title { color:#10b981; }
+  .stage-rejected { border-top:3px solid #ef4444; }
+  .stage-rejected .kanban-column-title { color:#ef4444; }
+  .stage-withdrawn { border-top:3px solid #6b7280; }
+  .stage-withdrawn .kanban-column-title { color:#6b7280; }
+
+  /* Modal */
+  .pipeline-modal-overlay {
+    position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9999;
+    display:none; align-items:center; justify-content:center; padding:20px;
+  }
+  .pipeline-modal {
+    background:#fff; border-radius:14px; width:100%; max-width:520px;
+    max-height:80vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.2);
+  }
+  .pipeline-modal-header {
+    padding:18px 20px; border-bottom:1px solid #e5e7eb;
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .pipeline-modal-body { padding:20px; }
+
+  /* History timeline */
+  .history-item { display:flex; gap:12px; padding:10px 0; border-bottom:1px solid #f3f4f6; }
+  .history-dot { width:10px; height:10px; border-radius:50%; margin-top:5px; flex-shrink:0; }
+  .history-content { flex:1; }
+</style>
+
+<!-- Header -->
+<div style="margin-bottom:16px;">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+    <a href="/admin/pipeline" style="color:#64748b;text-decoration:none;font-size:13px;"><i class="fas fa-arrow-left"></i> All Jobs</a>
+    <span style="color:#cbd5e1;">|</span>
+    <a href="/admin/jobs/<%= job.id %>" style="color:#64748b;text-decoration:none;font-size:13px;">Job Detail</a>
+  </div>
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+    <div style="display:flex;align-items:center;gap:14px;">
+      <% if (job.company_logo) { %>
+        <img src="<%= job.company_logo %>" style="width:42px;height:42px;border-radius:10px;object-fit:contain;background:#f3f4f6;padding:3px;" onerror="this.style.display='none'">
+      <% } %>
+      <div>
+        <h1 style="font-size:20px;font-weight:700;color:#1e293b;margin:0;"><%= job.role_title %></h1>
+        <p style="color:#64748b;font-size:13px;margin:2px 0 0;"><%= job.company_name %></p>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <a href="/admin/pipeline/<%= job.id %>/kanban" style="background:hsl(var(--primary));color:#fff;padding:7px 16px;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600;">
+        <i class="fas fa-columns"></i> Kanban
+      </a>
+      <a href="/admin/pipeline/<%= job.id %>/timeline" style="background:#f3f4f6;color:#374151;padding:7px 16px;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600;">
+        <i class="fas fa-stream"></i> Timeline
+      </a>
+      <button onclick="showAuditLog()" style="background:#f3f4f6;color:#374151;padding:7px 16px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-weight:600;">
+        <i class="fas fa-history"></i> Activity
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Stats bar -->
+<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:16px;">
+  <% var stageColors = {applied:'#3b82f6',shortlisted:'#8b5cf6',interview:'#f59e0b',offered:'#10b981',rejected:'#ef4444',withdrawn:'#6b7280'}; %>
+  <% var stageLabels = {applied:'Applied',shortlisted:'Shortlisted',interview:'Interview',offered:'Offered',rejected:'Rejected',withdrawn:'Withdrawn'}; %>
+  <% ['applied','shortlisted','interview','offered','rejected','withdrawn'].forEach(function(s) { %>
+    <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:12px;text-align:center;border-top:3px solid <%= stageColors[s] %>;">
+      <div style="font-size:20px;font-weight:700;color:<%= stageColors[s] %>;"><%= stats[s] ? stats[s].count : 0 %></div>
+      <div style="font-size:11px;color:#64748b;font-weight:500;"><%= stageLabels[s] %></div>
+    </div>
+  <% }); %>
+</div>
+
+<!-- Filter bar -->
+<div class="kanban-filter-bar">
+  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+    <div style="position:relative;flex:1;min-width:200px;">
+      <i class="fas fa-search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:13px;"></i>
+      <input type="text" id="kanbanSearch" placeholder="Search applicants..." value="<%= query.search || '' %>"
+        style="width:100%;padding:8px 12px 8px 34px;border:1px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;">
+    </div>
+    <select id="filterProgram" style="padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;">
+      <option value="">All Programs</option>
+      <% if (filterOptions && filterOptions.programs) { filterOptions.programs.forEach(function(p) { %>
+        <option value="<%= p %>" <%= query.program === p ? 'selected' : '' %>><%= p %></option>
+      <% }); } %>
+    </select>
+    <select id="filterBranch" style="padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;">
+      <option value="">All Branches</option>
+      <% if (filterOptions && filterOptions.branches) { filterOptions.branches.forEach(function(b) { %>
+        <option value="<%= b %>" <%= query.branch === b ? 'selected' : '' %>><%= b %></option>
+      <% }); } %>
+    </select>
+    <select id="filterPriority" style="padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;">
+      <option value="">All Priorities</option>
+      <option value="urgent" <%= query.priority === 'urgent' ? 'selected' : '' %>>Urgent</option>
+      <option value="high" <%= query.priority === 'high' ? 'selected' : '' %>>High</option>
+      <option value="medium" <%= query.priority === 'medium' ? 'selected' : '' %>>Medium</option>
+      <option value="low" <%= query.priority === 'low' ? 'selected' : '' %>>Low</option>
+    </select>
+    <button onclick="applyFilters()" style="background:hsl(var(--accent));color:#fff;padding:8px 16px;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;">Filter</button>
+  </div>
+</div>
+
+<!-- Kanban Board -->
+<div class="kanban-board">
+  <% ['applied','shortlisted','interview','offered','rejected','withdrawn'].forEach(function(stage) { %>
+    <div class="kanban-column stage-<%= stage %>">
+      <div class="kanban-column-header">
+        <span class="kanban-column-title"><%= stageLabels[stage] %></span>
+        <span class="kanban-column-count"><%= columns[stage] ? columns[stage].length : 0 %></span>
+      </div>
+      <div class="kanban-cards" id="col-<%= stage %>" data-stage="<%= stage %>">
+        <% if (columns[stage]) { columns[stage].forEach(function(card) { %>
+          <div class="kanban-card" data-app-id="<%= card.application_id %>" data-stage="<%= stage %>">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+              <% if (card.avatar) { %>
+                <img src="<%= card.avatar %>" class="kanban-card-avatar" alt="">
+              <% } else { %>
+                <div class="kanban-card-avatar-placeholder"><%= card.name ? card.name.charAt(0).toUpperCase() : '?' %></div>
+              <% } %>
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:13px;font-weight:600;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><%= card.name %></div>
+                <div style="font-size:11px;color:#94a3b8;"><%= card.student_id || card.email %></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:4px;">
+                <span class="kanban-priority" style="background:<%= card.priority === 'urgent' ? '#ef4444' : card.priority === 'high' ? '#f59e0b' : card.priority === 'medium' ? '#3b82f6' : '#10b981' %>;"></span>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+              <% if (card.program) { %>
+                <span style="font-size:10px;background:#f3f4f6;color:#64748b;padding:2px 6px;border-radius:4px;"><%= card.program %></span>
+              <% } %>
+              <% if (card.branch) { %>
+                <span style="font-size:10px;background:#f3f4f6;color:#64748b;padding:2px 6px;border-radius:4px;"><%= card.branch %></span>
+              <% } %>
+              <% if (card.cgpa) { %>
+                <span style="font-size:10px;background:#dbeafe;color:#1d4ed8;padding:2px 6px;border-radius:4px;">CGPA: <%= card.cgpa %></span>
+              <% } %>
+              <% if (card.ats_match_score) { %>
+                <span class="kanban-score" style="background:<%= card.ats_match_score >= 80 ? '#dcfce7' : card.ats_match_score >= 50 ? '#fef9c3' : '#fee2e2' %>;color:<%= card.ats_match_score >= 80 ? '#166534' : card.ats_match_score >= 50 ? '#854d0e' : '#991b1b' %>;">
+                  ATS: <%= card.ats_match_score %>%
+                </span>
+              <% } %>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:1px solid #f3f4f6;">
+              <span style="font-size:10px;color:#94a3b8;"><%= card.applied_at ? new Date(card.applied_at).toLocaleDateString('en-IN',{day:'2-digit',month:'short'}) : '' %></span>
+              <div style="display:flex;gap:4px;">
+                <button onclick="showCardHistory(<%= card.application_id %>)" title="History"
+                  style="background:none;border:none;cursor:pointer;color:#94a3b8;font-size:12px;padding:2px 4px;">
+                  <i class="fas fa-history"></i>
+                </button>
+                <button onclick="showCardActions(<%= card.application_id %>, '<%= stage %>')" title="Actions"
+                  style="background:none;border:none;cursor:pointer;color:#94a3b8;font-size:12px;padding:2px 4px;">
+                  <i class="fas fa-ellipsis-v"></i>
+                </button>
+                <% if (card.resume_path) { %>
+                  <a href="<%= card.resume_path %>" target="_blank" title="Resume"
+                    style="color:#94a3b8;font-size:12px;padding:2px 4px;text-decoration:none;">
+                    <i class="fas fa-file-alt"></i>
+                  </a>
+                <% } %>
+              </div>
+            </div>
+          </div>
+        <% }); } %>
+      </div>
+    </div>
+  <% }); %>
+</div>
+
+<!-- History Modal -->
+<div class="pipeline-modal-overlay" id="historyModal">
+  <div class="pipeline-modal">
+    <div class="pipeline-modal-header">
+      <h3 style="margin:0;font-size:16px;font-weight:600;color:#1e293b;">Stage History</h3>
+      <button onclick="closeModal('historyModal')" style="background:none;border:none;cursor:pointer;font-size:18px;color:#94a3b8;">&times;</button>
+    </div>
+    <div class="pipeline-modal-body" id="historyModalBody">
+      <div style="text-align:center;padding:20px;color:#94a3b8;">Loading...</div>
+    </div>
+  </div>
+</div>
+
+<!-- Actions Modal -->
+<div class="pipeline-modal-overlay" id="actionsModal">
+  <div class="pipeline-modal">
+    <div class="pipeline-modal-header">
+      <h3 style="margin:0;font-size:16px;font-weight:600;color:#1e293b;">Card Actions</h3>
+      <button onclick="closeModal('actionsModal')" style="background:none;border:none;cursor:pointer;font-size:18px;color:#94a3b8;">&times;</button>
+    </div>
+    <div class="pipeline-modal-body" id="actionsModalBody"></div>
+  </div>
+</div>
+
+<!-- Audit Log Modal -->
+<div class="pipeline-modal-overlay" id="auditModal">
+  <div class="pipeline-modal" style="max-width:600px;">
+    <div class="pipeline-modal-header">
+      <h3 style="margin:0;font-size:16px;font-weight:600;color:#1e293b;">Activity Log</h3>
+      <button onclick="closeModal('auditModal')" style="background:none;border:none;cursor:pointer;font-size:18px;color:#94a3b8;">&times;</button>
+    </div>
+    <div class="pipeline-modal-body" id="auditModalBody">
+      <div style="text-align:center;padding:20px;color:#94a3b8;">Loading...</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const JOB_ID = '<%= job.id %>';
+const STAGES = ['applied','shortlisted','interview','offered','rejected','withdrawn'];
+const STAGE_COLORS = {applied:'#3b82f6',shortlisted:'#8b5cf6',interview:'#f59e0b',offered:'#10b981',rejected:'#ef4444',withdrawn:'#6b7280'};
+const STAGE_LABELS = {applied:'Applied',shortlisted:'Shortlisted',interview:'Interview',offered:'Offered',rejected:'Rejected',withdrawn:'Withdrawn'};
+
+// Initialize SortableJS on each column
+STAGES.forEach(function(stage) {
+  var el = document.getElementById('col-' + stage);
+  if (!el) return;
+  new Sortable(el, {
+    group: 'pipeline',
+    animation: 200,
+    ghostClass: 'sortable-ghost',
+    chosenClass: 'sortable-chosen',
+    dragClass: 'sortable-drag',
+    onEnd: function(evt) {
+      var appId = evt.item.getAttribute('data-app-id');
+      var fromStage = evt.from.getAttribute('data-stage');
+      var toStage = evt.to.getAttribute('data-stage');
+
+      if (fromStage !== toStage) {
+        moveCard(appId, toStage);
+      } else {
+        // Reorder within same column
+        var order = [];
+        evt.to.querySelectorAll('.kanban-card').forEach(function(c) {
+          order.push(parseInt(c.getAttribute('data-app-id')));
+        });
+        reorderCards(toStage, order);
+      }
+    }
+  });
+});
+
+function moveCard(appId, toStage, reason) {
+  fetch('/admin/pipeline/api/' + appId + '/move', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ stage: toStage, reason: reason || '' })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data.success) {
+      // Update card data attribute
+      var card = document.querySelector('[data-app-id="' + appId + '"]');
+      if (card) card.setAttribute('data-stage', toStage);
+      updateColumnCounts();
+      showToast('Card moved to ' + STAGE_LABELS[toStage]);
+    } else {
+      showToast(data.error || 'Failed to move card', true);
+      location.reload();
+    }
+  })
+  .catch(function() {
+    showToast('Network error', true);
+    location.reload();
+  });
+}
+
+function reorderCards(stage, order) {
+  fetch('/admin/pipeline/api/' + JOB_ID + '/reorder', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ stage: stage, order: order })
+  });
+}
+
+function updateColumnCounts() {
+  STAGES.forEach(function(stage) {
+    var col = document.getElementById('col-' + stage);
+    var count = col ? col.querySelectorAll('.kanban-card').length : 0;
+    var header = col.closest('.kanban-column').querySelector('.kanban-column-count');
+    if (header) header.textContent = count;
+  });
+}
+
+function showCardHistory(appId) {
+  var modal = document.getElementById('historyModal');
+  var body = document.getElementById('historyModalBody');
+  modal.style.display = 'flex';
+  body.innerHTML = '<div style="text-align:center;padding:20px;color:#94a3b8;">Loading...</div>';
+
+  fetch('/admin/pipeline/api/' + appId + '/history')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (!data.history || data.history.length === 0) {
+        body.innerHTML = '<div style="text-align:center;padding:20px;color:#94a3b8;">No history yet</div>';
+        return;
+      }
+      var html = '';
+      data.history.forEach(function(h) {
+        var date = new Date(h.created_at);
+        html += '<div class="history-item">' +
+          '<span class="history-dot" style="background:' + (STAGE_COLORS[h.to_stage] || '#6b7280') + ';"></span>' +
+          '<div class="history-content">' +
+            '<div style="font-size:13px;color:#1e293b;">' +
+              (h.from_stage ? '<span style="color:' + (STAGE_COLORS[h.from_stage]||'#6b7280') + ';font-weight:500;">' + (STAGE_LABELS[h.from_stage]||h.from_stage) + '</span> → ' : '') +
+              '<span style="color:' + (STAGE_COLORS[h.to_stage]||'#6b7280') + ';font-weight:600;">' + (STAGE_LABELS[h.to_stage]||h.to_stage) + '</span>' +
+            '</div>' +
+            '<div style="font-size:11px;color:#94a3b8;margin-top:2px;">' +
+              date.toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'}) + ' ' +
+              date.toLocaleTimeString('en-IN', {hour:'2-digit',minute:'2-digit'}) +
+              (h.changed_by_name ? ' by ' + h.changed_by_name : '') +
+            '</div>' +
+            (h.change_reason ? '<div style="font-size:12px;color:#64748b;margin-top:4px;font-style:italic;">' + h.change_reason + '</div>' : '') +
+          '</div></div>';
+      });
+      body.innerHTML = html;
+    });
+}
+
+function showCardActions(appId, currentStage) {
+  var modal = document.getElementById('actionsModal');
+  var body = document.getElementById('actionsModalBody');
+  modal.style.display = 'flex';
+
+  var html = '<div style="margin-bottom:16px;">' +
+    '<label style="display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:6px;">Move to Stage</label>' +
+    '<div style="display:flex;flex-wrap:wrap;gap:6px;">';
+  STAGES.forEach(function(s) {
+    if (s !== currentStage) {
+      html += '<button onclick="moveWithReason(' + appId + ',\'' + s + '\')" ' +
+        'style="background:' + STAGE_COLORS[s] + ';color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:500;">' +
+        STAGE_LABELS[s] + '</button>';
+    }
+  });
+  html += '</div></div>';
+
+  html += '<div style="margin-bottom:16px;">' +
+    '<label style="display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:6px;">Reason (optional)</label>' +
+    '<textarea id="moveReason" rows="2" style="width:100%;padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:13px;resize:vertical;outline:none;" placeholder="Add a reason for this change..."></textarea>' +
+  '</div>';
+
+  html += '<div style="margin-bottom:16px;">' +
+    '<label style="display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:6px;">Priority</label>' +
+    '<div style="display:flex;gap:6px;">';
+  ['low','medium','high','urgent'].forEach(function(p) {
+    var pColors = {low:'#10b981',medium:'#3b82f6',high:'#f59e0b',urgent:'#ef4444'};
+    html += '<button onclick="setPriority(' + appId + ',\'' + p + '\')" ' +
+      'style="background:' + pColors[p] + '20;color:' + pColors[p] + ';border:1px solid ' + pColors[p] + '40;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:500;text-transform:capitalize;">' +
+      p + '</button>';
+  });
+  html += '</div></div>';
+
+  html += '<div>' +
+    '<label style="display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:6px;">Notes</label>' +
+    '<textarea id="cardNotes" rows="3" style="width:100%;padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:13px;resize:vertical;outline:none;" placeholder="Add notes..."></textarea>' +
+    '<button onclick="saveNotes(' + appId + ')" style="margin-top:8px;background:hsl(var(--primary));color:#fff;border:none;padding:7px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;">Save Notes</button>' +
+  '</div>';
+
+  body.innerHTML = html;
+}
+
+function moveWithReason(appId, toStage) {
+  var reason = document.getElementById('moveReason') ? document.getElementById('moveReason').value : '';
+  closeModal('actionsModal');
+  // Remove card from current column and add to new column
+  var card = document.querySelector('[data-app-id="' + appId + '"]');
+  if (card) {
+    var targetCol = document.getElementById('col-' + toStage);
+    targetCol.appendChild(card);
+    card.setAttribute('data-stage', toStage);
+    updateColumnCounts();
+  }
+  moveCard(appId, toStage, reason);
+}
+
+function setPriority(appId, priority) {
+  fetch('/admin/pipeline/api/' + appId + '/priority', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ priority: priority })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data.success) {
+      showToast('Priority updated');
+      var pColors = {low:'#10b981',medium:'#3b82f6',high:'#f59e0b',urgent:'#ef4444'};
+      var card = document.querySelector('[data-app-id="' + appId + '"]');
+      if (card) {
+        var dot = card.querySelector('.kanban-priority');
+        if (dot) dot.style.background = pColors[priority];
+      }
+    }
+  });
+}
+
+function saveNotes(appId) {
+  var notes = document.getElementById('cardNotes').value;
+  fetch('/admin/pipeline/api/' + appId + '/notes', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ notes: notes })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data.success) showToast('Notes saved');
+  });
+}
+
+function showAuditLog() {
+  var modal = document.getElementById('auditModal');
+  var body = document.getElementById('auditModalBody');
+  modal.style.display = 'flex';
+  body.innerHTML = '<div style="text-align:center;padding:20px;color:#94a3b8;">Loading...</div>';
+
+  fetch('/admin/pipeline/api/' + JOB_ID + '/audit')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (!data.log || data.log.length === 0) {
+        body.innerHTML = '<div style="text-align:center;padding:20px;color:#94a3b8;">No activity yet</div>';
+        return;
+      }
+      var html = '';
+      data.log.forEach(function(entry) {
+        var date = new Date(entry.created_at);
+        html += '<div class="history-item">' +
+          '<span class="history-dot" style="background:' + (STAGE_COLORS[entry.to_stage] || '#6b7280') + ';"></span>' +
+          '<div class="history-content">' +
+            '<div style="font-size:13px;color:#1e293b;">' +
+              '<strong>' + (entry.student_name || 'Unknown') + '</strong>: ' +
+              (entry.from_stage ? STAGE_LABELS[entry.from_stage] + ' → ' : '') +
+              '<span style="color:' + (STAGE_COLORS[entry.to_stage]||'#6b7280') + ';font-weight:600;">' + (STAGE_LABELS[entry.to_stage]||entry.to_stage) + '</span>' +
+            '</div>' +
+            '<div style="font-size:11px;color:#94a3b8;margin-top:2px;">' +
+              date.toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'}) + ' ' +
+              date.toLocaleTimeString('en-IN', {hour:'2-digit',minute:'2-digit'}) +
+              (entry.changed_by_name ? ' by ' + entry.changed_by_name : '') +
+            '</div>' +
+            (entry.change_reason ? '<div style="font-size:12px;color:#64748b;margin-top:4px;font-style:italic;">' + entry.change_reason + '</div>' : '') +
+          '</div></div>';
+      });
+      body.innerHTML = html;
+    });
+}
+
+function closeModal(id) {
+  document.getElementById(id).style.display = 'none';
+}
+
+// Close modal on overlay click
+document.querySelectorAll('.pipeline-modal-overlay').forEach(function(overlay) {
+  overlay.addEventListener('click', function(e) {
+    if (e.target === overlay) overlay.style.display = 'none';
+  });
+});
+
+function applyFilters() {
+  var search = document.getElementById('kanbanSearch').value;
+  var program = document.getElementById('filterProgram').value;
+  var branch = document.getElementById('filterBranch').value;
+  var priority = document.getElementById('filterPriority').value;
+  var params = new URLSearchParams();
+  if (search) params.set('search', search);
+  if (program) params.set('program', program);
+  if (branch) params.set('branch', branch);
+  if (priority) params.set('priority', priority);
+  window.location.href = '/admin/pipeline/' + JOB_ID + '/kanban' + (params.toString() ? '?' + params.toString() : '');
+}
+
+// Enter key on search
+document.getElementById('kanbanSearch').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') applyFilters();
+});
+
+function showToast(msg, isError) {
+  var toast = document.createElement('div');
+  toast.textContent = msg;
+  toast.style.cssText = 'position:fixed;bottom:24px;right:24px;padding:12px 20px;border-radius:10px;font-size:14px;font-weight:500;z-index:99999;color:#fff;box-shadow:0 4px 12px rgba(0,0,0,0.15);background:' + (isError ? '#ef4444' : '#10b981') + ';';
+  document.body.appendChild(toast);
+  setTimeout(function() { toast.remove(); }, 3000);
+}
+</script>

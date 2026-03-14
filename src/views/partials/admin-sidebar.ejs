@@ -27,6 +27,9 @@
       <a href="/admin/applications" class="admin-nav-link <%= currentPath === '/admin/applications' ? 'active' : '' %>">
         <i class="fas fa-paper-plane" style="width:20px"></i> Applications
       </a>
+      <a href="/admin/pipeline" class="admin-nav-link <%= currentPath.startsWith('/admin/pipeline') ? 'active' : '' %>">
+        <i class="fas fa-columns" style="width:20px"></i> Pipeline
+      </a>
       <a href="/job-board/admin" class="admin-nav-link <%= currentPath === '/job-board/admin' ? 'active' : '' %>">
         <i class="fas fa-search-dollar" style="width:20px"></i> Job Board
       </a>
