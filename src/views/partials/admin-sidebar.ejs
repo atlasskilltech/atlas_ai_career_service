@@ -1,109 +1,150 @@
 <!-- Admin Sidebar — starts closed, toggle with hamburger -->
-<aside id="app-sidebar" style="position:fixed;left:0;top:0;bottom:0;width:256px;z-index:50;display:flex;flex-direction:column;transform:translateX(-100%);transition:transform 0.3s ease;background:hsl(228,100%,11%)">
-  <!-- Close button -->
-  <button onclick="toggleSidebar()" style="position:absolute;top:16px;right:16px;color:#93c5fd;font-size:18px;background:none;border:none;cursor:pointer">
-    <i class="fas fa-times"></i>
-  </button>
+<aside id="app-sidebar" class="admin-sidebar fixed left-0 top-0 bottom-0 z-50 flex flex-col overflow-hidden"
+  style="width:var(--sidebar-w);transform:translateX(-100%);transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);background:hsl(228,100%,11%)">
 
-  <div style="padding:24px;border-bottom:1px solid #1e3a5f">
-    <h1 style="font-size:20px;font-weight:700;color:#fff;margin:0">Atlas Admin</h1>
-    <p style="font-size:12px;color:#93c5fd;margin-top:4px">Placement Cell Dashboard</p>
+  <!-- Brand Header -->
+  <div class="flex items-center justify-between px-5 py-5" style="border-bottom:1px solid rgba(255,255,255,0.08)">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-xl flex items-center justify-center font-black text-sm" style="background:hsl(var(--accent));color:hsl(var(--primary))">A</div>
+      <div>
+        <h1 class="text-base font-bold text-white leading-tight">Atlas Admin</h1>
+        <p class="text-[10px] font-medium tracking-wider uppercase" style="color:hsl(var(--accent))">Career Services</p>
+      </div>
+    </div>
+    <button onclick="toggleSidebar()" class="lg:hidden p-1.5 rounded-lg hover:bg-white/10 transition" style="color:rgba(255,255,255,0.5)">
+      <i class="fas fa-times text-sm"></i>
+    </button>
   </div>
 
-  <nav style="flex:1;padding:16px;overflow-y:auto">
-    <div style="display:flex;flex-direction:column;gap:4px">
-      <a href="/admin" class="admin-nav-link <%= currentPath === '/admin' ? 'active' : '' %>">
-        <i class="fas fa-tachometer-alt" style="width:20px"></i> Dashboard
+  <!-- Navigation -->
+  <nav class="flex-1 px-3 py-4 overflow-y-auto" style="scrollbar-width:thin">
+    <!-- Main Section -->
+    <div class="space-y-0.5">
+      <a href="/admin" class="sidebar-link <%= currentPath === '/admin' ? 'active' : '' %>">
+        <div class="sidebar-icon"><i class="fas fa-tachometer-alt"></i></div>
+        <span>Dashboard</span>
       </a>
-      <a href="/admin/students" class="admin-nav-link <%= currentPath.startsWith('/admin/students') ? 'active' : '' %>">
-        <i class="fas fa-user-graduate" style="width:20px"></i> Students
+      <a href="/admin/students" class="sidebar-link <%= currentPath.startsWith('/admin/students') ? 'active' : '' %>">
+        <div class="sidebar-icon"><i class="fas fa-user-graduate"></i></div>
+        <span>Students</span>
       </a>
-      <a href="/admin/jobs" class="admin-nav-link <%= currentPath.startsWith('/admin/jobs') ? 'active' : '' %>">
-        <i class="fas fa-briefcase" style="width:20px"></i> Jobs
+      <a href="/admin/jobs" class="sidebar-link <%= currentPath.startsWith('/admin/jobs') ? 'active' : '' %>">
+        <div class="sidebar-icon"><i class="fas fa-briefcase"></i></div>
+        <span>Jobs</span>
       </a>
-      <a href="/admin/recruiters" class="admin-nav-link <%= currentPath.startsWith('/admin/recruiters') ? 'active' : '' %>">
-        <i class="fas fa-building" style="width:20px"></i> Recruiters
+      <a href="/admin/recruiters" class="sidebar-link <%= currentPath.startsWith('/admin/recruiters') ? 'active' : '' %>">
+        <div class="sidebar-icon"><i class="fas fa-building"></i></div>
+        <span>Recruiters</span>
       </a>
-      <a href="/admin/applications" class="admin-nav-link <%= currentPath === '/admin/applications' ? 'active' : '' %>">
-        <i class="fas fa-paper-plane" style="width:20px"></i> Applications
+      <a href="/admin/applications" class="sidebar-link <%= currentPath === '/admin/applications' ? 'active' : '' %>">
+        <div class="sidebar-icon"><i class="fas fa-paper-plane"></i></div>
+        <span>Applications</span>
       </a>
-      <a href="/admin/pipeline" class="admin-nav-link <%= currentPath.startsWith('/admin/pipeline') ? 'active' : '' %>">
-        <i class="fas fa-columns" style="width:20px"></i> Pipeline
+      <a href="/admin/pipeline" class="sidebar-link <%= currentPath.startsWith('/admin/pipeline') ? 'active' : '' %>">
+        <div class="sidebar-icon"><i class="fas fa-columns"></i></div>
+        <span>Pipeline</span>
       </a>
-      <a href="/job-board/admin" class="admin-nav-link <%= currentPath === '/job-board/admin' ? 'active' : '' %>">
-        <i class="fas fa-search-dollar" style="width:20px"></i> Job Board
+      <a href="/job-board/admin" class="sidebar-link <%= currentPath === '/job-board/admin' ? 'active' : '' %>">
+        <div class="sidebar-icon"><i class="fas fa-search-dollar"></i></div>
+        <span>Job Board</span>
       </a>
     </div>
 
-    <div style="padding-top:16px;margin-top:16px;border-top:1px solid #1e3a5f">
-      <p style="font-size:10px;color:#60a5fa;text-transform:uppercase;letter-spacing:0.05em;padding:0 16px;margin-bottom:8px">Analytics</p>
-      <div style="display:flex;flex-direction:column;gap:4px">
-        <a href="/admin/skill-gap" class="admin-nav-link <%= currentPath.startsWith('/admin/skill-gap') ? 'active' : '' %>">
-          <i class="fas fa-chart-bar" style="width:20px"></i> Skill Gap
-        </a>
-        <a href="/admin/placement" class="admin-nav-link <%= currentPath.startsWith('/admin/placement') ? 'active' : '' %>">
-          <i class="fas fa-chart-pie" style="width:20px"></i> Placement
-        </a>
-        <a href="/admin/interviews" class="admin-nav-link <%= currentPath === '/admin/interviews' ? 'active' : '' %>">
-          <i class="fas fa-video" style="width:20px"></i> Interviews
-        </a>
-      </div>
+    <!-- Analytics Section -->
+    <div class="mt-6 mb-2">
+      <p class="px-3 mb-2 text-[10px] font-semibold tracking-widest uppercase" style="color:hsl(var(--accent))">Analytics</p>
     </div>
-
-    <div style="padding-top:16px;margin-top:16px;border-top:1px solid #1e3a5f">
-      <p style="font-size:10px;color:#60a5fa;text-transform:uppercase;letter-spacing:0.05em;padding:0 16px;margin-bottom:8px">System</p>
-      <div style="display:flex;flex-direction:column;gap:4px">
-        <a href="/admin/communication" class="admin-nav-link <%= currentPath === '/admin/communication' ? 'active' : '' %>">
-          <i class="fas fa-envelope" style="width:20px"></i> Communication
-        </a>
-        <a href="/admin/settings" class="admin-nav-link <%= currentPath === '/admin/settings' ? 'active' : '' %>">
-          <i class="fas fa-cog" style="width:20px"></i> Settings
-        </a>
-      </div>
-    </div>
-
-    <div style="padding-top:16px;margin-top:16px;border-top:1px solid #1e3a5f">
-      <p style="font-size:10px;color:#60a5fa;text-transform:uppercase;letter-spacing:0.05em;padding:0 16px;margin-bottom:8px">Quick Links</p>
-      <a href="/dashboard" class="admin-nav-link">
-        <i class="fas fa-exchange-alt" style="width:20px"></i> Student View
+    <div class="space-y-0.5">
+      <a href="/admin/skill-gap" class="sidebar-link <%= currentPath.startsWith('/admin/skill-gap') ? 'active' : '' %>">
+        <div class="sidebar-icon"><i class="fas fa-chart-bar"></i></div>
+        <span>Skill Gap</span>
+      </a>
+      <a href="/admin/placement" class="sidebar-link <%= currentPath.startsWith('/admin/placement') ? 'active' : '' %>">
+        <div class="sidebar-icon"><i class="fas fa-chart-pie"></i></div>
+        <span>Placement</span>
+      </a>
+      <a href="/admin/interviews" class="sidebar-link <%= currentPath === '/admin/interviews' ? 'active' : '' %>">
+        <div class="sidebar-icon"><i class="fas fa-video"></i></div>
+        <span>Interviews</span>
       </a>
     </div>
+
+    <!-- System Section -->
+    <div class="mt-6 mb-2">
+      <p class="px-3 mb-2 text-[10px] font-semibold tracking-widest uppercase" style="color:hsl(var(--accent))">System</p>
+    </div>
+    <div class="space-y-0.5">
+      <a href="/admin/communication" class="sidebar-link <%= currentPath === '/admin/communication' ? 'active' : '' %>">
+        <div class="sidebar-icon"><i class="fas fa-envelope"></i></div>
+        <span>Communication</span>
+      </a>
+      <a href="/admin/settings" class="sidebar-link <%= currentPath === '/admin/settings' ? 'active' : '' %>">
+        <div class="sidebar-icon"><i class="fas fa-cog"></i></div>
+        <span>Settings</span>
+      </a>
+    </div>
+
+    <!-- Quick Links -->
+    <div class="mt-6 mb-2">
+      <p class="px-3 mb-2 text-[10px] font-semibold tracking-widest uppercase" style="color:hsl(var(--accent))">Quick Links</p>
+    </div>
+    <a href="/dashboard" class="sidebar-link">
+      <div class="sidebar-icon"><i class="fas fa-exchange-alt"></i></div>
+      <span>Student View</span>
+    </a>
   </nav>
 
-  <div style="padding:16px;border-top:1px solid #1e3a5f">
-    <a href="/auth/logout" style="display:flex;align-items:center;gap:12px;padding:10px 16px;border-radius:8px;color:#fca5a5;text-decoration:none;font-size:14px;transition:background 0.2s" onmouseover="this.style.background='rgba(127,29,29,0.3)'" onmouseout="this.style.background='transparent'">
-      <i class="fas fa-sign-out-alt" style="width:20px"></i> Logout
+  <!-- Logout -->
+  <div class="px-3 py-3" style="border-top:1px solid rgba(255,255,255,0.08)">
+    <a href="/auth/logout" class="sidebar-link" style="color:#fca5a5">
+      <div class="sidebar-icon" style="background:rgba(239,68,68,0.1)"><i class="fas fa-sign-out-alt"></i></div>
+      <span>Logout</span>
     </a>
   </div>
 </aside>
 
 <style>
-  .admin-nav-link {
+  .sidebar-link {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 10px 16px;
-    border-radius: 8px;
-    color: #bfdbfe;
+    padding: 9px 12px;
+    border-radius: 10px;
+    color: rgba(191,219,254,0.8);
     text-decoration: none;
-    font-size: 14px;
-    transition: background 0.2s, color 0.2s;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.15s ease;
   }
-  .admin-nav-link:hover { background: #1e3a5f; color: #fff; }
-  .admin-nav-link.active { background: #1e3a5f; color: #fff; }
+  .sidebar-link:hover {
+    background: rgba(255,255,255,0.06);
+    color: #fff;
+  }
+  .sidebar-link.active {
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+    box-shadow: inset 3px 0 0 hsl(var(--accent));
+  }
+  .sidebar-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    flex-shrink: 0;
+    background: rgba(255,255,255,0.04);
+    transition: background 0.15s;
+  }
+  .sidebar-link:hover .sidebar-icon,
+  .sidebar-link.active .sidebar-icon {
+    background: rgba(255,255,255,0.1);
+  }
 </style>
 
 <script>
 function toggleSidebar() {
-  var sidebar = document.getElementById('app-sidebar');
-  var content = document.querySelector('.admin-content');
-  var isOpen = sidebar.style.transform === 'translateX(0px)' || sidebar.style.transform === 'translateX(0)';
-  if (isOpen) {
-    sidebar.style.transform = 'translateX(-100%)';
-    if (content) content.style.marginLeft = '0';
-  } else {
-    sidebar.style.transform = 'translateX(0)';
-    if (content) content.style.marginLeft = '256px';
-  }
+  document.body.classList.toggle('sidebar-open');
 }
 </script>

@@ -2,72 +2,110 @@
   <!-- Header -->
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
     <div>
-      <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Jobs Management</h1>
-      <p class="text-sm text-gray-500 mt-1"><%= total %> job<%= total !== 1 ? 's' : '' %> found</p>
+      <h1 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white tracking-tight">Jobs Management</h1>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5"><%= total %> job<%= total !== 1 ? 's' : '' %> found</p>
     </div>
     <div class="flex items-center gap-2">
-      <a href="/admin/jobs/export?<%= Object.entries(query).map(function(e){return e[0]+'='+encodeURIComponent(e[1]);}).join('&') %>" class="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 text-sm transition">
-        <i class="fas fa-download"></i> Export
+      <a href="/admin/jobs/export?<%= Object.entries(query).map(function(e){return e[0]+'='+encodeURIComponent(e[1]);}).join('&') %>"
+         class="inline-flex items-center gap-2 px-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/80 text-sm font-medium text-gray-600 dark:text-gray-300 transition-all active:scale-[0.97]">
+        <i class="fas fa-download text-xs"></i> Export
       </a>
-      <a href="/admin/jobs/create" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white text-sm font-medium transition" style="background:hsl(var(--accent))">
-        <i class="fas fa-plus"></i> Create Job
+      <a href="/admin/jobs/create"
+         class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold transition-all shadow-sm hover:shadow-md active:scale-[0.97]"
+         style="background:hsl(var(--accent))">
+        <i class="fas fa-plus text-xs"></i> Create Job
       </a>
     </div>
   </div>
 
   <!-- Stats Cards -->
-  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
-    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 text-center">
-      <div class="text-2xl font-bold" style="color:hsl(var(--accent))"><%= stats.total_jobs || 0 %></div>
-      <p class="text-xs text-gray-500 mt-1">Total Jobs</p>
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4 hover:shadow-sm transition-shadow">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:hsla(80,89%,40%,0.1)">
+          <i class="fas fa-briefcase text-sm" style="color:hsl(var(--accent))"></i>
+        </div>
+        <div>
+          <div class="text-xl font-bold text-gray-900 dark:text-white"><%= stats.total_jobs || 0 %></div>
+          <p class="text-[11px] text-gray-400 font-medium">Total Jobs</p>
+        </div>
+      </div>
     </div>
-    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 text-center">
-      <div class="text-2xl font-bold text-green-600"><%= stats.active_jobs || 0 %></div>
-      <p class="text-xs text-gray-500 mt-1">Active</p>
+    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4 hover:shadow-sm transition-shadow">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-green-50 dark:bg-green-900/20">
+          <i class="fas fa-check-circle text-sm text-green-600"></i>
+        </div>
+        <div>
+          <div class="text-xl font-bold text-green-600"><%= stats.active_jobs || 0 %></div>
+          <p class="text-[11px] text-gray-400 font-medium">Active</p>
+        </div>
+      </div>
     </div>
-    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 text-center">
-      <div class="text-2xl font-bold text-yellow-600"><%= stats.draft_jobs || 0 %></div>
-      <p class="text-xs text-gray-500 mt-1">Drafts</p>
+    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4 hover:shadow-sm transition-shadow">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-yellow-50 dark:bg-yellow-900/20">
+          <i class="fas fa-pen-to-square text-sm text-yellow-600"></i>
+        </div>
+        <div>
+          <div class="text-xl font-bold text-yellow-600"><%= stats.draft_jobs || 0 %></div>
+          <p class="text-[11px] text-gray-400 font-medium">Drafts</p>
+        </div>
+      </div>
     </div>
-    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 text-center">
-      <div class="text-2xl font-bold text-blue-600"><%= stats.total_applications || 0 %></div>
-      <p class="text-xs text-gray-500 mt-1">Applications</p>
+    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4 hover:shadow-sm transition-shadow">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-blue-50 dark:bg-blue-900/20">
+          <i class="fas fa-users text-sm text-blue-600"></i>
+        </div>
+        <div>
+          <div class="text-xl font-bold text-blue-600"><%= stats.total_applications || 0 %></div>
+          <p class="text-[11px] text-gray-400 font-medium">Applications</p>
+        </div>
+      </div>
     </div>
   </div>
 
   <!-- Search + Filters Row -->
   <div class="flex flex-col sm:flex-row gap-3">
     <div class="relative flex-1">
-      <i class="fas fa-search absolute left-3 top-1/2 text-gray-400 text-sm" style="transform:translateY(-50%)"></i>
+      <i class="fas fa-search absolute left-3.5 top-1/2 text-gray-400 text-xs" style="transform:translateY(-50%)"></i>
       <input type="text" id="search-input" value="<%= query.search || '' %>" placeholder="Search by company or role..."
-        class="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-sm">
+        class="w-full pl-10 pr-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800/80 text-sm placeholder:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600 transition">
     </div>
     <div class="flex items-center gap-2">
-      <button onclick="toggleFilters()" class="inline-flex items-center gap-2 px-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 text-sm transition">
-        <i class="fas fa-filter"></i> Filters
+      <button onclick="toggleFilters()" id="filter-toggle-btn"
+        class="inline-flex items-center gap-2 px-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 text-sm font-medium text-gray-600 dark:text-gray-300 transition-all active:scale-[0.97]">
+        <i class="fas fa-sliders-h text-xs"></i> Filters
+        <% var activeFilters = [query.status,query.job_type,query.work_mode,query.company,query.location,query.ctc_min,query.ctc_max].filter(Boolean).length; %>
+        <% if (activeFilters) { %>
+          <span class="w-5 h-5 rounded-full text-[10px] font-bold text-white flex items-center justify-center" style="background:hsl(var(--accent))"><%= activeFilters %></span>
+        <% } %>
       </button>
       <!-- View Toggle -->
-      <div class="flex border border-gray-300 dark:border-gray-700 rounded-lg overflow-hidden">
-        <button onclick="setView('grid')" id="btn-grid" class="px-3 py-2 text-sm" style="background:hsl(var(--accent));color:white">
-          <i class="fas fa-th"></i>
+      <div class="flex border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
+        <button onclick="setView('grid')" id="btn-grid" class="px-3 py-2.5 text-sm transition-all" style="background:hsl(var(--accent));color:white">
+          <i class="fas fa-th-large text-xs"></i>
         </button>
-        <button onclick="setView('list')" id="btn-list" class="px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-500">
-          <i class="fas fa-list"></i>
+        <button onclick="setView('list')" id="btn-list" class="px-3 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-400 transition-all">
+          <i class="fas fa-list text-xs"></i>
         </button>
       </div>
     </div>
   </div>
 
   <!-- Filters Panel (collapsible) -->
-  <div id="filters-panel" style="display:none" class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+  <div id="filters-panel" style="display:none" class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm">
     <div class="flex items-center justify-between mb-4">
-      <h3 class="font-semibold text-gray-900 dark:text-white">Filters</h3>
-      <button onclick="clearFilters()" class="text-xs text-red-500 hover:text-red-600 font-medium">Clear All</button>
+      <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Filters</h3>
+      <button onclick="clearFilters()" class="text-xs font-medium text-red-500 hover:text-red-600 transition px-2 py-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20">
+        <i class="fas fa-times mr-1"></i>Clear All
+      </button>
     </div>
-    <form id="filter-form" style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px">
+    <form id="filter-form" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <div>
-        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Status</label>
-        <select name="status" class="w-full text-sm border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800">
+        <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Status</label>
+        <select name="status" class="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 transition">
           <option value="">All</option>
           <% ['draft','active','closed','on_hold'].forEach(function(s){ %>
             <option value="<%= s %>" <%= query.status === s ? 'selected' : '' %>><%= s.replace(/_/g,' ') %></option>
@@ -75,8 +113,8 @@
         </select>
       </div>
       <div>
-        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Job Type</label>
-        <select name="job_type" class="w-full text-sm border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800">
+        <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Job Type</label>
+        <select name="job_type" class="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 transition">
           <option value="">All</option>
           <% ['full_time','part_time','internship','contract','freelance'].forEach(function(t){ %>
             <option value="<%= t %>" <%= query.job_type === t ? 'selected' : '' %>><%= t.replace(/_/g,' ') %></option>
@@ -84,8 +122,8 @@
         </select>
       </div>
       <div>
-        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Work Mode</label>
-        <select name="work_mode" class="w-full text-sm border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800">
+        <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Work Mode</label>
+        <select name="work_mode" class="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 transition">
           <option value="">All</option>
           <% ['onsite','remote','hybrid'].forEach(function(w){ %>
             <option value="<%= w %>" <%= query.work_mode === w ? 'selected' : '' %>><%= w %></option>
@@ -93,8 +131,8 @@
         </select>
       </div>
       <div>
-        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Company</label>
-        <select name="company" class="w-full text-sm border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800">
+        <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Company</label>
+        <select name="company" class="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 transition">
           <option value="">All</option>
           <% filterOptions.companies.forEach(function(c){ %>
             <option value="<%= c %>" <%= query.company === c ? 'selected' : '' %>><%= c %></option>
@@ -102,8 +140,8 @@
         </select>
       </div>
       <div>
-        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Location</label>
-        <select name="location" class="w-full text-sm border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800">
+        <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Location</label>
+        <select name="location" class="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 transition">
           <option value="">All</option>
           <% filterOptions.locations.forEach(function(l){ %>
             <option value="<%= l %>" <%= query.location === l ? 'selected' : '' %>><%= l %></option>
@@ -111,36 +149,38 @@
         </select>
       </div>
       <div>
-        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">CTC Range (LPA)</label>
+        <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">CTC Range (LPA)</label>
         <div class="flex gap-2">
-          <input type="number" name="ctc_min" placeholder="Min" step="0.5" value="<%= query.ctc_min || '' %>" class="w-1/2 text-sm border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800">
-          <input type="number" name="ctc_max" placeholder="Max" step="0.5" value="<%= query.ctc_max || '' %>" class="w-1/2 text-sm border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800">
+          <input type="number" name="ctc_min" placeholder="Min" step="0.5" value="<%= query.ctc_min || '' %>" class="w-1/2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 transition">
+          <input type="number" name="ctc_max" placeholder="Max" step="0.5" value="<%= query.ctc_max || '' %>" class="w-1/2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 transition">
         </div>
       </div>
       <div>
-        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Deadline Range</label>
+        <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Deadline Range</label>
         <div class="flex gap-2">
-          <input type="date" name="deadline_from" value="<%= query.deadline_from || '' %>" class="w-1/2 text-sm border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800">
-          <input type="date" name="deadline_to" value="<%= query.deadline_to || '' %>" class="w-1/2 text-sm border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800">
+          <input type="date" name="deadline_from" value="<%= query.deadline_from || '' %>" class="w-1/2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 transition">
+          <input type="date" name="deadline_to" value="<%= query.deadline_to || '' %>" class="w-1/2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 transition">
         </div>
       </div>
       <div>
-        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Sort By</label>
-        <select name="sort" class="w-full text-sm border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800">
+        <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Sort By</label>
+        <select name="sort" class="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 transition">
           <% ['newest','oldest','deadline','company','ctc'].forEach(function(s){ %>
             <option value="<%= s %>" <%= query.sort === s ? 'selected' : '' %>><%= s.charAt(0).toUpperCase() + s.slice(1) %></option>
           <% }); %>
         </select>
       </div>
-      <div style="grid-column:1/-1;display:flex;justify-content:flex-end;gap:12px;padding-top:8px">
-        <button type="button" onclick="clearFilters()" class="px-4 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition">Reset</button>
-        <button type="submit" class="px-6 py-2 text-sm text-white rounded-lg font-medium transition" style="background:hsl(var(--accent))">Apply</button>
+      <div class="sm:col-span-2 lg:col-span-4 flex justify-end gap-3 pt-2">
+        <button type="button" onclick="clearFilters()" class="px-5 py-2.5 text-sm font-medium border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-all active:scale-[0.97]">Reset</button>
+        <button type="submit" class="px-6 py-2.5 text-sm text-white rounded-xl font-semibold transition-all shadow-sm hover:shadow active:scale-[0.97]" style="background:hsl(var(--accent))">
+          <i class="fas fa-check mr-1 text-xs"></i> Apply Filters
+        </button>
       </div>
     </form>
   </div>
 
   <!-- Card Grid View -->
-  <div id="view-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
+  <div id="view-grid" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
     <% if (jobs.length) { %>
       <% jobs.forEach(function(j) { %>
         <%
@@ -148,81 +188,94 @@
           var typeLabels = { full_time:'Full Time', part_time:'Part Time', internship:'Internship', contract:'Contract', freelance:'Freelance' };
           var daysLeft = j.application_deadline ? Math.ceil((new Date(j.application_deadline) - new Date()) / 86400000) : null;
         %>
-        <a href="/admin/jobs/<%= j.id %>" class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 hover:shadow-lg transition block">
-          <div class="flex items-start gap-3 mb-3">
+        <a href="/admin/jobs/<%= j.id %>" class="group bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-5 hover:shadow-lg hover:border-gray-200 dark:hover:border-gray-700 transition-all block">
+          <!-- Top: Logo + Title + Status -->
+          <div class="flex items-start gap-3 mb-4">
             <% if (j.company_logo) { %>
-              <img src="<%= j.company_logo %>" alt="" class="w-10 h-10 rounded-lg object-contain border border-gray-200 dark:border-gray-700" style="flex-shrink:0" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="w-10 h-10 rounded-lg items-center justify-center text-white text-sm font-bold" style="flex-shrink:0;background:hsl(var(--primary));display:none"><%= j.company_name ? j.company_name.charAt(0) : '?' %></div>
+              <img src="<%= j.company_logo %>" alt="" class="w-11 h-11 rounded-xl object-contain border border-gray-100 dark:border-gray-700 flex-shrink-0 bg-white dark:bg-gray-800 p-0.5" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+              <div class="w-11 h-11 rounded-xl items-center justify-center text-white text-sm font-bold flex-shrink-0 hidden" style="background:hsl(var(--primary))"><%= j.company_name ? j.company_name.charAt(0) : '?' %></div>
             <% } else { %>
-              <div class="w-10 h-10 rounded-lg flex items-center justify-center text-white text-sm font-bold" style="flex-shrink:0;background:hsl(var(--primary))"><%= j.company_name ? j.company_name.charAt(0) : '?' %></div>
+              <div class="w-11 h-11 rounded-xl flex items-center justify-center text-white text-sm font-bold flex-shrink-0" style="background:hsl(var(--primary))"><%= j.company_name ? j.company_name.charAt(0) : '?' %></div>
             <% } %>
             <div class="flex-1 min-w-0">
-              <h3 class="font-semibold text-gray-900 dark:text-white text-sm" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><%= j.role_title %></h3>
-              <p class="text-xs text-gray-500"><%= j.company_name %></p>
+              <h3 class="font-semibold text-gray-900 dark:text-white text-sm truncate group-hover:text-gray-700 dark:group-hover:text-gray-100 transition"><%= j.role_title %></h3>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5"><%= j.company_name %></p>
             </div>
-            <span class="text-[10px] font-medium px-2 py-0.5 rounded-full" style="<%= statusColors[j.status] || statusColors.draft %>; flex-shrink:0"><%= j.status %></span>
+            <span class="text-[10px] font-semibold px-2.5 py-1 rounded-lg flex-shrink-0 uppercase tracking-wider" style="<%= statusColors[j.status] || statusColors.draft %>"><%= j.status.replace(/_/g,' ') %></span>
           </div>
 
-          <div class="flex flex-wrap gap-2 text-xs text-gray-500 mb-3">
+          <!-- Meta Tags -->
+          <div class="flex flex-wrap gap-1.5 mb-4">
             <% if (j.ctc_min || j.ctc_max) { %>
-              <span><i class="fas fa-rupee-sign w-3"></i> <%= j.ctc_min || 0 %>–<%= j.ctc_max || '?' %> LPA</span>
+              <span class="inline-flex items-center gap-1 text-[11px] text-gray-500 dark:text-gray-400 px-2 py-1 rounded-lg bg-gray-50 dark:bg-gray-800">
+                <i class="fas fa-rupee-sign text-[9px]"></i> <%= j.ctc_min || 0 %>-<%= j.ctc_max || '?' %> LPA
+              </span>
             <% } %>
             <% if (j.location) { %>
-              <span><i class="fas fa-map-marker-alt w-3"></i> <%= j.location %></span>
+              <span class="inline-flex items-center gap-1 text-[11px] text-gray-500 dark:text-gray-400 px-2 py-1 rounded-lg bg-gray-50 dark:bg-gray-800">
+                <i class="fas fa-map-marker-alt text-[9px]"></i> <%= j.location %>
+              </span>
             <% } %>
-            <span class="px-1.5 py-0.5 rounded text-[10px] font-medium" style="background:#eff6ff;color:#2563eb"><%= typeLabels[j.job_type] || j.job_type %></span>
+            <span class="text-[10px] font-semibold px-2 py-1 rounded-lg" style="background:hsla(228,100%,11%,0.06);color:hsl(228,100%,30%)"><%= typeLabels[j.job_type] || j.job_type %></span>
           </div>
 
+          <!-- Deadline -->
           <% if (daysLeft !== null) { %>
-            <div class="text-[10px] mb-3 <%= daysLeft <= 3 ? 'text-red-500 font-medium' : 'text-gray-400' %>">
-              <i class="fas fa-clock w-3"></i>
+            <div class="text-[11px] mb-4 flex items-center gap-1.5 <%= daysLeft <= 3 ? 'text-red-500 font-semibold' : daysLeft <= 7 ? 'text-yellow-600 font-medium' : 'text-gray-400' %>">
+              <i class="fas fa-clock text-[9px]"></i>
               <% if (daysLeft < 0) { %>Expired<% } else if (daysLeft === 0) { %>Closes today<% } else { %><%= daysLeft %> day<%= daysLeft > 1 ? 's' : '' %> left<% } %>
             </div>
           <% } %>
 
           <!-- Pipeline Mini Stats -->
-          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding-top:12px;border-top:1px solid #f3f4f6">
-            <div class="text-center">
-              <div class="text-sm font-bold text-gray-700 dark:text-gray-300"><%= j.applied_count || 0 %></div>
-              <div class="text-[9px] text-gray-400">Applied</div>
+          <div class="grid grid-cols-4 gap-1 pt-3 border-t border-gray-100 dark:border-gray-800">
+            <div class="text-center py-1.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition">
+              <div class="text-sm font-bold text-gray-600 dark:text-gray-300"><%= j.applied_count || 0 %></div>
+              <div class="text-[9px] text-gray-400 font-medium">Applied</div>
             </div>
-            <div class="text-center">
+            <div class="text-center py-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/10 transition">
               <div class="text-sm font-bold text-blue-600"><%= j.shortlisted_count || 0 %></div>
-              <div class="text-[9px] text-gray-400">Shortlisted</div>
+              <div class="text-[9px] text-blue-400 font-medium">Short</div>
             </div>
-            <div class="text-center">
+            <div class="text-center py-1.5 rounded-lg hover:bg-yellow-50 dark:hover:bg-yellow-900/10 transition">
               <div class="text-sm font-bold text-yellow-600"><%= j.interview_count || 0 %></div>
-              <div class="text-[9px] text-gray-400">Interview</div>
+              <div class="text-[9px] text-yellow-500 font-medium">Interview</div>
             </div>
-            <div class="text-center">
+            <div class="text-center py-1.5 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/10 transition">
               <div class="text-sm font-bold text-green-600"><%= j.offer_count || 0 %></div>
-              <div class="text-[9px] text-gray-400">Offers</div>
+              <div class="text-[9px] text-green-500 font-medium">Offers</div>
             </div>
           </div>
         </a>
       <% }); %>
     <% } else { %>
-      <div style="grid-column:1/-1" class="py-12 text-center text-gray-400">
-        <i class="fas fa-briefcase text-4xl mb-3 block"></i>
-        <p>No jobs found</p>
-        <a href="/admin/jobs/create" class="text-sm mt-2 inline-block" style="color:hsl(var(--accent))">Create your first job</a>
+      <div class="sm:col-span-2 xl:col-span-3 py-16 text-center">
+        <div class="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center" style="background:hsl(var(--primary))">
+          <i class="fas fa-briefcase text-lg" style="color:hsl(var(--accent))"></i>
+        </div>
+        <p class="text-gray-500 dark:text-gray-400 font-medium mb-1">No jobs found</p>
+        <p class="text-sm text-gray-400 dark:text-gray-500 mb-4">Try adjusting your filters or create a new job</p>
+        <a href="/admin/jobs/create" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold transition-all" style="background:hsl(var(--accent))">
+          <i class="fas fa-plus text-xs"></i> Create Job
+        </a>
       </div>
     <% } %>
   </div>
 
   <!-- List View (hidden by default) -->
-  <div id="view-list" style="display:none" class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+  <div id="view-list" style="display:none" class="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden shadow-sm">
     <div class="overflow-x-auto">
       <table class="w-full text-sm">
         <thead>
-          <tr class="bg-gray-50 dark:bg-gray-800 text-left">
-            <th class="py-3 px-4 font-medium">Company / Role</th>
-            <th class="py-3 px-4 font-medium">Type</th>
-            <th class="py-3 px-4 font-medium">CTC</th>
-            <th class="py-3 px-4 font-medium">Location</th>
-            <th class="py-3 px-4 font-medium">Deadline</th>
-            <th class="py-3 px-4 font-medium">Pipeline</th>
-            <th class="py-3 px-4 font-medium">Status</th>
-            <th class="py-3 px-4 font-medium w-20">Actions</th>
+          <tr class="bg-gray-50 dark:bg-gray-800/80 text-left">
+            <th class="py-3 px-4 font-semibold text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Company / Role</th>
+            <th class="py-3 px-4 font-semibold text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Type</th>
+            <th class="py-3 px-4 font-semibold text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">CTC</th>
+            <th class="py-3 px-4 font-semibold text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Location</th>
+            <th class="py-3 px-4 font-semibold text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Deadline</th>
+            <th class="py-3 px-4 font-semibold text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Pipeline</th>
+            <th class="py-3 px-4 font-semibold text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+            <th class="py-3 px-4 font-semibold text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider w-24">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -232,47 +285,53 @@
                 var statusStyles = { draft:'background:#f3f4f6;color:#6b7280', active:'background:#dcfce7;color:#16a34a', closed:'background:#fee2e2;color:#dc2626', on_hold:'background:#fef9c3;color:#ca8a04' };
                 var typeLabels2 = { full_time:'Full Time', part_time:'Part Time', internship:'Internship', contract:'Contract', freelance:'Freelance' };
               %>
-              <tr class="border-t border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                <td class="py-3 px-4">
+              <tr class="border-t border-gray-100 dark:border-gray-800 hover:bg-gray-50/80 dark:hover:bg-gray-800/30 transition">
+                <td class="py-3.5 px-4">
                   <div class="flex items-center gap-3">
                     <% if (j.company_logo) { %>
-                      <img src="<%= j.company_logo %>" alt="" class="w-8 h-8 rounded object-contain border border-gray-200 dark:border-gray-700">
+                      <img src="<%= j.company_logo %>" alt="" class="w-9 h-9 rounded-lg object-contain border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 p-0.5">
                     <% } else { %>
-                      <div class="w-8 h-8 rounded flex items-center justify-center text-white text-xs font-bold" style="background:hsl(var(--primary))"><%= j.company_name ? j.company_name.charAt(0) : '?' %></div>
+                      <div class="w-9 h-9 rounded-lg flex items-center justify-center text-white text-xs font-bold" style="background:hsl(var(--primary))"><%= j.company_name ? j.company_name.charAt(0) : '?' %></div>
                     <% } %>
-                    <div>
-                      <a href="/admin/jobs/<%= j.id %>" class="font-medium text-gray-900 dark:text-white hover:underline"><%= j.role_title %></a>
-                      <p class="text-xs text-gray-500"><%= j.company_name %></p>
+                    <div class="min-w-0">
+                      <a href="/admin/jobs/<%= j.id %>" class="font-semibold text-gray-900 dark:text-white hover:text-gray-600 dark:hover:text-gray-300 transition truncate block text-[13px]"><%= j.role_title %></a>
+                      <p class="text-[11px] text-gray-400"><%= j.company_name %></p>
                     </div>
                   </div>
                 </td>
-                <td class="py-3 px-4"><span class="text-xs px-2 py-0.5 rounded font-medium" style="background:#eff6ff;color:#2563eb"><%= typeLabels2[j.job_type] || j.job_type %></span></td>
-                <td class="py-3 px-4 text-gray-600 dark:text-gray-400"><%= j.ctc_min || j.ctc_max ? (j.ctc_min || 0) + '–' + (j.ctc_max || '?') + ' LPA' : '-' %></td>
-                <td class="py-3 px-4 text-gray-600 dark:text-gray-400"><%= j.location || '-' %></td>
-                <td class="py-3 px-4 text-gray-600 dark:text-gray-400"><%= j.application_deadline ? new Date(j.application_deadline).toLocaleDateString('en-IN',{day:'numeric',month:'short'}) : '-' %></td>
-                <td class="py-3 px-4">
-                  <div class="flex items-center gap-2 text-xs">
-                    <span title="Applied"><%= j.applied_count || 0 %></span>
-                    <i class="fas fa-chevron-right text-[8px] text-gray-300"></i>
+                <td class="py-3.5 px-4"><span class="text-[10px] font-semibold px-2 py-1 rounded-lg uppercase tracking-wider" style="background:hsla(228,100%,11%,0.06);color:hsl(228,100%,30%)"><%= typeLabels2[j.job_type] || j.job_type %></span></td>
+                <td class="py-3.5 px-4 text-gray-600 dark:text-gray-400 font-medium text-[13px]"><%= j.ctc_min || j.ctc_max ? (j.ctc_min || 0) + '-' + (j.ctc_max || '?') + ' LPA' : '-' %></td>
+                <td class="py-3.5 px-4 text-gray-500 dark:text-gray-400 text-[13px]"><%= j.location || '-' %></td>
+                <td class="py-3.5 px-4 text-gray-500 dark:text-gray-400 text-[13px]"><%= j.application_deadline ? new Date(j.application_deadline).toLocaleDateString('en-IN',{day:'numeric',month:'short'}) : '-' %></td>
+                <td class="py-3.5 px-4">
+                  <div class="flex items-center gap-1.5 text-xs font-medium">
+                    <span class="text-gray-500" title="Applied"><%= j.applied_count || 0 %></span>
+                    <i class="fas fa-chevron-right text-[7px] text-gray-300"></i>
                     <span class="text-blue-600" title="Shortlisted"><%= j.shortlisted_count || 0 %></span>
-                    <i class="fas fa-chevron-right text-[8px] text-gray-300"></i>
+                    <i class="fas fa-chevron-right text-[7px] text-gray-300"></i>
                     <span class="text-yellow-600" title="Interview"><%= j.interview_count || 0 %></span>
-                    <i class="fas fa-chevron-right text-[8px] text-gray-300"></i>
+                    <i class="fas fa-chevron-right text-[7px] text-gray-300"></i>
                     <span class="text-green-600 font-bold" title="Offers"><%= j.offer_count || 0 %></span>
                   </div>
                 </td>
-                <td class="py-3 px-4"><span class="text-[10px] font-medium px-2 py-0.5 rounded-full" style="<%= statusStyles[j.status] || statusStyles.draft %>"><%= j.status %></span></td>
-                <td class="py-3 px-4">
-                  <div class="flex items-center gap-1">
-                    <a href="/admin/jobs/<%= j.id %>" class="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500" title="View"><i class="fas fa-eye text-xs"></i></a>
-                    <a href="/admin/jobs/<%= j.id %>/edit" class="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500" title="Edit"><i class="fas fa-pen text-xs"></i></a>
-                    <button onclick="deleteJob(<%= j.id %>)" class="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-500 hover:text-red-500" title="Delete"><i class="fas fa-trash text-xs"></i></button>
+                <td class="py-3.5 px-4"><span class="text-[10px] font-semibold px-2.5 py-1 rounded-lg uppercase tracking-wider" style="<%= statusStyles[j.status] || statusStyles.draft %>"><%= j.status.replace(/_/g,' ') %></span></td>
+                <td class="py-3.5 px-4">
+                  <div class="flex items-center gap-0.5">
+                    <a href="/admin/jobs/<%= j.id %>" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-600 transition" title="View"><i class="fas fa-eye text-xs"></i></a>
+                    <a href="/admin/jobs/<%= j.id %>/edit" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-blue-600 transition" title="Edit"><i class="fas fa-pen text-xs"></i></a>
+                    <button onclick="deleteJob(<%= j.id %>)" class="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-400 hover:text-red-500 transition" title="Delete"><i class="fas fa-trash text-xs"></i></button>
                   </div>
                 </td>
               </tr>
             <% }); %>
           <% } else { %>
-            <tr><td colspan="8" class="py-12 text-center text-gray-400"><i class="fas fa-briefcase text-3xl mb-3 block"></i>No jobs found</td></tr>
+            <tr><td colspan="8" class="py-16 text-center text-gray-400">
+              <div class="w-14 h-14 rounded-2xl mx-auto mb-3 flex items-center justify-center" style="background:hsl(var(--primary))">
+                <i class="fas fa-briefcase text-base" style="color:hsl(var(--accent))"></i>
+              </div>
+              <p class="font-medium mb-1">No jobs found</p>
+              <p class="text-xs text-gray-400">Try adjusting your filters</p>
+            </td></tr>
           <% } %>
         </tbody>
       </table>
@@ -281,21 +340,25 @@
 
   <!-- Pagination -->
   <% if (totalPages > 1) { %>
-    <div class="flex items-center justify-between">
-      <span class="text-xs text-gray-500">Page <%= page %> of <%= totalPages %> (<%= total %> total)</span>
-      <div class="flex items-center gap-1">
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
+      <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">Page <strong><%= page %></strong> of <strong><%= totalPages %></strong> &middot; <%= total %> total</span>
+      <div class="flex items-center gap-1.5">
         <% if (page > 1) { %>
           <a href="?<%= Object.entries(query).filter(function(e){return e[0]!=='page';}).map(function(e){return e[0]+'='+encodeURIComponent(e[1]);}).join('&') %>&page=<%= page-1 %>"
-             class="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">Prev</a>
+             class="px-3.5 py-2 text-sm font-medium border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-all active:scale-[0.97]">
+            <i class="fas fa-chevron-left text-xs mr-1"></i> Prev
+          </a>
         <% } %>
         <% for (var p = Math.max(1, page-2); p <= Math.min(totalPages, page+2); p++) { %>
           <a href="?<%= Object.entries(query).filter(function(e){return e[0]!=='page';}).map(function(e){return e[0]+'='+encodeURIComponent(e[1]);}).join('&') %>&page=<%= p %>"
-             class="px-3 py-1.5 text-sm border rounded-lg <%= p === page ? 'text-white border-transparent' : 'border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800' %>"
+             class="w-9 h-9 flex items-center justify-center text-sm font-medium border rounded-xl transition-all <%= p === page ? 'text-white border-transparent shadow-sm' : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400' %>"
              <% if (p === page) { %>style="background:hsl(var(--accent))"<% } %>><%= p %></a>
         <% } %>
         <% if (page < totalPages) { %>
           <a href="?<%= Object.entries(query).filter(function(e){return e[0]!=='page';}).map(function(e){return e[0]+'='+encodeURIComponent(e[1]);}).join('&') %>&page=<%= page+1 %>"
-             class="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">Next</a>
+             class="px-3.5 py-2 text-sm font-medium border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-all active:scale-[0.97]">
+            Next <i class="fas fa-chevron-right text-xs ml-1"></i>
+          </a>
         <% } %>
       </div>
     </div>
@@ -346,14 +409,12 @@ var currentView = localStorage.getItem('admin-jobs-view') || 'grid';
 function setView(v){
   currentView = v;
   localStorage.setItem('admin-jobs-view', v);
-  var gridEl = document.getElementById('view-grid');
-  gridEl.style.display = v === 'grid' ? 'grid' : 'none';
-  gridEl.style.gridTemplateColumns = 'repeat(3, 1fr)';
+  document.getElementById('view-grid').style.display = v === 'grid' ? 'grid' : 'none';
   document.getElementById('view-list').style.display = v === 'list' ? 'block' : 'none';
   document.getElementById('btn-grid').style.background = v === 'grid' ? 'hsl(var(--accent))' : '';
-  document.getElementById('btn-grid').style.color = v === 'grid' ? 'white' : '#6b7280';
+  document.getElementById('btn-grid').style.color = v === 'grid' ? 'white' : '#9ca3af';
   document.getElementById('btn-list').style.background = v === 'list' ? 'hsl(var(--accent))' : '';
-  document.getElementById('btn-list').style.color = v === 'list' ? 'white' : '#6b7280';
+  document.getElementById('btn-list').style.color = v === 'list' ? 'white' : '#9ca3af';
 }
 setView(currentView);
 
@@ -363,9 +424,9 @@ function deleteJob(id){
   fetch('/admin/jobs/api/' + id, { method: 'DELETE' })
     .then(function(r){ return r.json(); })
     .then(function(res){
-      if (res.success) window.location.reload();
-      else alert(res.error || 'Delete failed');
+      if (res.success) { showToast('Job deleted', 'success'); setTimeout(function(){ window.location.reload(); }, 800); }
+      else showToast(res.error || 'Delete failed', 'error');
     })
-    .catch(function(err){ alert('Error: ' + err.message); });
+    .catch(function(err){ showToast('Error: ' + err.message, 'error'); });
 }
 </script>
