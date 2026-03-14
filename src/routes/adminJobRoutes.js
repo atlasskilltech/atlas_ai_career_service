@@ -42,5 +42,7 @@ router.get('/api/:id/applicants', ctrl.apiGetApplicants.bind(ctrl));
 router.patch('/api/applicants/:appId/stage', ctrl.apiMoveApplicant.bind(ctrl));
 router.patch('/api/applicants/:appId/note', ctrl.apiAddNote.bind(ctrl));
 router.post('/api/:id/shortlist', ctrl.apiBulkShortlist.bind(ctrl));
+router.post('/api/:id/publish', ctrl.apiPublish.bind(ctrl));
+router.post('/api/:id/unpublish', ctrl.apiUnpublish.bind(ctrl));
 
 module.exports = router;

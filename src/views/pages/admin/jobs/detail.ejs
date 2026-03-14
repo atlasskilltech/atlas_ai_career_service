@@ -25,12 +25,21 @@
         </div>
       </div>
     </div>
-    <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+    <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap">
       <select id="status-select" onchange="changeStatus(this.value)" class="text-sm border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800" style="padding:8px 12px">
         <% ['draft','active','closed','on_hold'].forEach(function(s){ %>
           <option value="<%= s %>" <%= job.status === s ? 'selected' : '' %>><%= s.replace(/_/g,' ') %></option>
         <% }); %>
       </select>
+      <% if (typeof isPublished !== 'undefined' && isPublished) { %>
+        <button onclick="unpublishJob()" id="publish-btn" style="display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:500;background:#fee2e2;color:#dc2626;border:none;cursor:pointer">
+          <i class="fas fa-globe-americas"></i> Unpublish from Job Board
+        </button>
+      <% } else { %>
+        <button onclick="publishJob()" id="publish-btn" style="display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:500;background:#dcfce7;color:#16a34a;border:none;cursor:pointer">
+          <i class="fas fa-globe-americas"></i> Publish to Job Board
+        </button>
+      <% } %>
       <a href="/admin/jobs/<%= job.id %>/edit" class="border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800" style="display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:8px;font-size:14px;text-decoration:none;transition:background 0.2s">
         <i class="fas fa-pen"></i> Edit
       </a>
@@ -273,6 +282,29 @@ function showTab(tab) {
       btn.style.color = '#6b7280';
     }
   });
+}
+
+// ─── Publish / Unpublish ─────────────────────────────────
+function publishJob() {
+  var btn = document.getElementById('publish-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Publishing...';
+  fetch('/admin/jobs/api/' + jobId + '/publish', { method: 'POST' })
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      if (res.success) window.location.reload();
+      else { alert(res.error || 'Failed'); btn.disabled = false; }
+    })
+    .catch(function(err){ alert('Error: ' + err.message); btn.disabled = false; });
+}
+function unpublishJob() {
+  if (!confirm('Remove this job from the public Job Board?')) return;
+  fetch('/admin/jobs/api/' + jobId + '/unpublish', { method: 'POST' })
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      if (res.success) window.location.reload();
+      else alert(res.error || 'Failed');
+    });
 }
 
 // ─── Status Change ───────────────────────────────────────
