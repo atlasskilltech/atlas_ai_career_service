@@ -17,8 +17,10 @@ router.get('/trend', adminDashboardController.apiTrend.bind(adminDashboardContro
 router.get('/funnel', adminDashboardController.apiFunnel.bind(adminDashboardController));
 router.post('/refresh', adminDashboardController.postRefresh.bind(adminDashboardController));
 
+// Student Management (full sub-router)
+router.use('/students', require('./adminStudentRoutes'));
+
 // Admin section pages
-router.get('/students', adminController.students);
 router.get('/jobs', adminController.jobs);
 router.get('/recruiters', adminController.recruiters);
 router.get('/applications', adminController.applications);

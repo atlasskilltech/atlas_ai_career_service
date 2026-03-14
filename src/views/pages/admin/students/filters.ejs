@@ -1,0 +1,115 @@
+<!-- Collapsible Advanced Filters Panel -->
+<div id="filters-panel" class="hidden bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 mb-6 transition-all">
+  <div class="flex items-center justify-between mb-4">
+    <h3 class="font-semibold text-gray-900 dark:text-white">Advanced Filters</h3>
+    <button onclick="clearFilters()" class="text-xs text-red-500 hover:text-red-600 font-medium">Clear All</button>
+  </div>
+
+  <form id="filter-form" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <!-- Program -->
+    <div>
+      <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Program</label>
+      <select name="program" class="filter-select w-full text-sm border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800">
+        <option value="">All Programs</option>
+        <% filterOptions.programs.forEach(function(p) { %>
+          <option value="<%= p %>" <%= query.program === p ? 'selected' : '' %>><%= p %></option>
+        <% }); %>
+      </select>
+    </div>
+
+    <!-- Branch -->
+    <div>
+      <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Branch</label>
+      <select name="branch" class="filter-select w-full text-sm border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800">
+        <option value="">All Branches</option>
+        <% filterOptions.branches.forEach(function(b) { %>
+          <option value="<%= b %>" <%= query.branch === b ? 'selected' : '' %>><%= b %></option>
+        <% }); %>
+      </select>
+    </div>
+
+    <!-- Graduation Year -->
+    <div>
+      <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Graduation Year</label>
+      <select name="graduation_year" class="filter-select w-full text-sm border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800">
+        <option value="">All Years</option>
+        <% filterOptions.gradYears.forEach(function(y) { %>
+          <option value="<%= y %>" <%= query.graduation_year == y ? 'selected' : '' %>><%= y %></option>
+        <% }); %>
+      </select>
+    </div>
+
+    <!-- Placement Status -->
+    <div>
+      <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Placement Status</label>
+      <select name="placement_status" class="filter-select w-full text-sm border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800">
+        <option value="">All Statuses</option>
+        <% ['not_placed','in_process','placed','opted_out','higher_studies'].forEach(function(s) { %>
+          <option value="<%= s %>" <%= query.placement_status === s ? 'selected' : '' %>><%= s.replace(/_/g, ' ') %></option>
+        <% }); %>
+      </select>
+    </div>
+
+    <!-- ATS Score Range -->
+    <div>
+      <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">ATS Score Range</label>
+      <div class="flex gap-2">
+        <input type="number" name="ats_min" placeholder="Min" min="0" max="100" value="<%= query.ats_min || '' %>" class="w-1/2 text-sm border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800">
+        <input type="number" name="ats_max" placeholder="Max" min="0" max="100" value="<%= query.ats_max || '' %>" class="w-1/2 text-sm border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800">
+      </div>
+    </div>
+
+    <!-- CGPA Range -->
+    <div>
+      <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">CGPA Range</label>
+      <div class="flex gap-2">
+        <input type="number" name="cgpa_min" placeholder="Min" min="0" max="10" step="0.1" value="<%= query.cgpa_min || '' %>" class="w-1/2 text-sm border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800">
+        <input type="number" name="cgpa_max" placeholder="Max" min="0" max="10" step="0.1" value="<%= query.cgpa_max || '' %>" class="w-1/2 text-sm border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800">
+      </div>
+    </div>
+
+    <!-- Resume Uploaded -->
+    <div>
+      <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Resume Uploaded</label>
+      <select name="resume_uploaded" class="filter-select w-full text-sm border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800">
+        <option value="">Any</option>
+        <option value="yes" <%= query.resume_uploaded === 'yes' ? 'selected' : '' %>>Yes</option>
+        <option value="no" <%= query.resume_uploaded === 'no' ? 'selected' : '' %>>No</option>
+      </select>
+    </div>
+
+    <!-- Last Active -->
+    <div>
+      <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Last Active (days)</label>
+      <select name="last_active" class="filter-select w-full text-sm border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800">
+        <option value="">Any time</option>
+        <option value="7" <%= query.last_active === '7' ? 'selected' : '' %>>Last 7 days</option>
+        <option value="30" <%= query.last_active === '30' ? 'selected' : '' %>>Last 30 days</option>
+        <option value="90" <%= query.last_active === '90' ? 'selected' : '' %>>Last 90 days</option>
+      </select>
+    </div>
+
+    <!-- Skills Multi-select -->
+    <div class="sm:col-span-2 lg:col-span-4">
+      <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Skills</label>
+      <div class="flex flex-wrap gap-2 max-h-24 overflow-y-auto p-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
+        <% var selectedSkills = query.skills ? (Array.isArray(query.skills) ? query.skills : query.skills.split(',')) : []; %>
+        <% filterOptions.skills.slice(0, 50).forEach(function(sk) { %>
+          <label class="inline-flex items-center gap-1 text-xs cursor-pointer">
+            <input type="checkbox" name="skills" value="<%= sk %>" <%= selectedSkills.includes(sk) ? 'checked' : '' %> class="rounded text-accent border-gray-300 dark:border-gray-600">
+            <span><%= sk %></span>
+          </label>
+        <% }); %>
+        <% if (!filterOptions.skills.length) { %>
+          <span class="text-xs text-gray-400">No skills found</span>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- Apply Button -->
+    <div class="sm:col-span-2 lg:col-span-4 flex justify-end gap-3 pt-2">
+      <button type="button" onclick="clearFilters()" class="px-4 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition">Reset</button>
+      <button type="submit" class="px-6 py-2 text-sm bg-accent text-white rounded-lg hover:opacity-90 transition font-medium">Apply Filters</button>
+    </div>
+  </form>
+</div>

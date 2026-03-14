@@ -1,0 +1,475 @@
+<div class="space-y-4">
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <div>
+      <h1 class="text-2xl font-bold">Student Management</h1>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mt-1"><%= total %> student<%= total !== 1 ? 's' : '' %> found</p>
+    </div>
+    <div class="flex items-center gap-2">
+      <a href="/admin/students/export?<%= Object.entries(query).map(function(e) { return e[0] + '=' + encodeURIComponent(e[1]); }).join('&') %>" class="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition text-sm">
+        <i class="fas fa-download"></i> Export
+      </a>
+      <button onclick="toggleFilters()" class="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition text-sm" id="filter-toggle-btn">
+        <i class="fas fa-filter"></i> Filters
+      </button>
+    </div>
+  </div>
+
+  <!-- Search bar -->
+  <div class="flex gap-3">
+    <div class="relative flex-1">
+      <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+      <input type="text" id="search-input" value="<%= query.search || '' %>" placeholder="Search by name, email, or student ID..."
+        class="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-sm focus:ring-2 focus:ring-accent focus:border-transparent">
+    </div>
+    <select id="per-page" class="text-sm border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800" onchange="changePerPage(this.value)">
+      <option value="25" <%= limit === 25 ? 'selected' : '' %>>25</option>
+      <option value="50" <%= limit === 50 ? 'selected' : '' %>>50</option>
+      <option value="100" <%= limit === 100 ? 'selected' : '' %>>100</option>
+    </select>
+  </div>
+
+  <!-- Filters Panel -->
+  <%- include('filters') %>
+
+  <!-- Bulk actions bar (shown when checkboxes selected) -->
+  <div id="bulk-bar" class="hidden bg-accent/10 border border-accent/30 rounded-xl px-4 py-3 flex items-center justify-between">
+    <span class="text-sm font-medium"><span id="selected-count">0</span> student(s) selected</span>
+    <div class="flex items-center gap-2">
+      <select id="bulk-action-select" class="text-sm border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800">
+        <option value="">Choose action...</option>
+        <option value="change_status">Change Status</option>
+        <option value="send_job_alert">Send Job Alert</option>
+        <option value="invite_interview">Invite to Interview</option>
+        <option value="send_resume_tips">Send Resume Tips</option>
+        <option value="export_csv">Export Selected</option>
+      </select>
+      <!-- Extra input for status change -->
+      <select id="bulk-status-select" class="hidden text-sm border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800">
+        <option value="not_placed">Not Placed</option>
+        <option value="in_process">In Process</option>
+        <option value="placed">Placed</option>
+        <option value="opted_out">Opted Out</option>
+        <option value="higher_studies">Higher Studies</option>
+      </select>
+      <button onclick="executeBulkAction()" class="px-4 py-1.5 bg-accent text-white rounded-lg text-sm font-medium hover:opacity-90 transition">Apply</button>
+    </div>
+  </div>
+
+  <!-- Students Table -->
+  <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="bg-gray-50 dark:bg-gray-800 text-left">
+            <th class="py-3 px-3 w-10"><input type="checkbox" id="select-all" class="rounded border-gray-300 dark:border-gray-600 text-accent" onchange="toggleSelectAll(this)"></th>
+            <th class="py-3 px-3 w-10"></th>
+            <th class="py-3 px-3 font-medium cursor-pointer hover:text-accent" onclick="sortBy('name')">Name <i class="fas fa-sort text-gray-400 text-xs"></i></th>
+            <th class="py-3 px-3 font-medium cursor-pointer hover:text-accent" onclick="sortBy('program')">Program <i class="fas fa-sort text-gray-400 text-xs"></i></th>
+            <th class="py-3 px-3 font-medium hidden lg:table-cell">Branch</th>
+            <th class="py-3 px-3 font-medium cursor-pointer hover:text-accent hidden md:table-cell" onclick="sortBy('year')">Year <i class="fas fa-sort text-gray-400 text-xs"></i></th>
+            <th class="py-3 px-3 font-medium cursor-pointer hover:text-accent" onclick="sortBy('ats_score')">ATS <i class="fas fa-sort text-gray-400 text-xs"></i></th>
+            <th class="py-3 px-3 font-medium hidden xl:table-cell">Skills</th>
+            <th class="py-3 px-3 font-medium">Status</th>
+            <th class="py-3 px-3 font-medium w-16">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="students-tbody">
+          <% if (students.length) { %>
+            <% students.forEach(function(s) { %>
+              <tr class="border-t border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer student-row" data-id="<%= s.id %>" onclick="openProfile(<%= s.id %>, event)">
+                <td class="py-3 px-3" onclick="event.stopPropagation()">
+                  <input type="checkbox" class="student-checkbox rounded border-gray-300 dark:border-gray-600 text-accent" value="<%= s.id %>" onchange="updateBulkBar()">
+                </td>
+                <td class="py-3 px-3">
+                  <% if (s.avatar) { %>
+                    <img src="<%= s.avatar %>" class="w-8 h-8 rounded-full object-cover" alt="">
+                  <% } else { %>
+                    <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold"><%= s.name ? s.name.charAt(0).toUpperCase() : '?' %></div>
+                  <% } %>
+                </td>
+                <td class="py-3 px-3">
+                  <p class="font-medium text-gray-900 dark:text-white"><%= s.name %></p>
+                  <p class="text-xs text-gray-500"><%= s.email %></p>
+                </td>
+                <td class="py-3 px-3 text-gray-600 dark:text-gray-400"><%= s.program || s.department || '-' %></td>
+                <td class="py-3 px-3 text-gray-500 hidden lg:table-cell"><%= s.branch || '-' %></td>
+                <td class="py-3 px-3 hidden md:table-cell"><%= s.graduation_year || s.year_of_study || '-' %></td>
+                <td class="py-3 px-3">
+                  <%
+                    var atsVal = s.ats_score || 0;
+                    var atsColor = atsVal >= 80 ? 'text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400'
+                      : atsVal >= 60 ? 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/30 dark:text-yellow-400'
+                      : atsVal > 0 ? 'text-red-600 bg-red-100 dark:bg-red-900/30 dark:text-red-400'
+                      : 'text-gray-400 bg-gray-100 dark:bg-gray-800';
+                  %>
+                  <span class="inline-flex items-center justify-center w-10 h-10 rounded-full text-xs font-bold <%= atsColor %>"><%= atsVal %></span>
+                </td>
+                <td class="py-3 px-3 hidden xl:table-cell">
+                  <div class="flex flex-wrap gap-1 max-w-[200px]">
+                    <% var skillsList = s.skills || []; %>
+                    <% skillsList.slice(0, 3).forEach(function(sk) { %>
+                      <%
+                        var chipColor = sk.type === 'technical' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                          : sk.type === 'soft' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
+                          : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400';
+                      %>
+                      <span class="text-[10px] px-1.5 py-0.5 rounded-full <%= chipColor %>"><%= sk.name %></span>
+                    <% }); %>
+                    <% if (skillsList.length > 3) { %>
+                      <span class="text-[10px] text-gray-400">+<%= skillsList.length - 3 %></span>
+                    <% } %>
+                    <% if (!skillsList.length) { %><span class="text-xs text-gray-400">-</span><% } %>
+                  </div>
+                </td>
+                <td class="py-3 px-3">
+                  <%
+                    var ps = s.placement_status || 'not_placed';
+                    var psColors = {
+                      placed: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+                      in_process: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
+                      not_placed: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
+                      opted_out: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+                      higher_studies: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+                    };
+                  %>
+                  <span class="text-[10px] font-medium px-2 py-0.5 rounded-full whitespace-nowrap <%= psColors[ps] || psColors.not_placed %>"><%= ps.replace(/_/g, ' ') %></span>
+                </td>
+                <td class="py-3 px-3" onclick="event.stopPropagation()">
+                  <button onclick="openProfile(<%= s.id %>)" class="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 hover:text-accent transition" title="View profile">
+                    <i class="fas fa-eye text-xs"></i>
+                  </button>
+                </td>
+              </tr>
+            <% }); %>
+          <% } else { %>
+            <tr><td colspan="10" class="py-12 text-center text-gray-400">
+              <i class="fas fa-users text-3xl mb-3 block"></i>
+              No students found matching your criteria
+            </td></tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <% if (totalPages > 1) { %>
+      <div class="border-t border-gray-100 dark:border-gray-800 px-4 py-3 flex items-center justify-between">
+        <span class="text-xs text-gray-500">Page <%= page %> of <%= totalPages %> (<%= total %> total)</span>
+        <div class="flex items-center gap-1">
+          <% if (page > 1) { %>
+            <a href="?<%= Object.entries(query).filter(function(e){return e[0]!=='page';}).map(function(e){return e[0]+'='+encodeURIComponent(e[1]);}).join('&') %>&page=<%= page - 1 %>"
+               class="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">Prev</a>
+          <% } %>
+          <% for (var p = Math.max(1, page - 2); p <= Math.min(totalPages, page + 2); p++) { %>
+            <a href="?<%= Object.entries(query).filter(function(e){return e[0]!=='page';}).map(function(e){return e[0]+'='+encodeURIComponent(e[1]);}).join('&') %>&page=<%= p %>"
+               class="px-3 py-1.5 text-sm border rounded-lg <%= p === page ? 'bg-accent text-white border-accent' : 'border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800' %>"><%= p %></a>
+          <% } %>
+          <% if (page < totalPages) { %>
+            <a href="?<%= Object.entries(query).filter(function(e){return e[0]!=='page';}).map(function(e){return e[0]+'='+encodeURIComponent(e[1]);}).join('&') %>&page=<%= page + 1 %>"
+               class="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">Next</a>
+          <% } %>
+        </div>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<!-- Profile Panel -->
+<%- include('profile-panel') %>
+
+<script>
+var currentStudentId = null;
+
+// ─── Search ──────────────────────────────────────────────
+(function() {
+  var searchInput = document.getElementById('search-input');
+  var timer;
+  searchInput.addEventListener('input', function() {
+    clearTimeout(timer);
+    timer = setTimeout(function() {
+      var url = new URL(window.location.href);
+      if (searchInput.value) url.searchParams.set('search', searchInput.value);
+      else url.searchParams.delete('search');
+      url.searchParams.set('page', '1');
+      window.location.href = url.toString();
+    }, 500);
+  });
+})();
+
+// ─── Filters toggle ──────────────────────────────────────
+function toggleFilters() {
+  var panel = document.getElementById('filters-panel');
+  panel.classList.toggle('hidden');
+}
+
+function clearFilters() {
+  window.location.href = '/admin/students';
+}
+
+// Filter form submit
+(function() {
+  var form = document.getElementById('filter-form');
+  if (!form) return;
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    var url = new URL(window.location.origin + '/admin/students');
+    var fd = new FormData(form);
+    var skills = [];
+    fd.forEach(function(val, key) {
+      if (!val) return;
+      if (key === 'skills') { skills.push(val); return; }
+      url.searchParams.set(key, val);
+    });
+    if (skills.length) url.searchParams.set('skills', skills.join(','));
+    var search = document.getElementById('search-input').value;
+    if (search) url.searchParams.set('search', search);
+    url.searchParams.set('page', '1');
+    window.location.href = url.toString();
+  });
+})();
+
+// ─── Sorting ─────────────────────────────────────────────
+function sortBy(col) {
+  var url = new URL(window.location.href);
+  var current = url.searchParams.get('sort_by');
+  var dir = url.searchParams.get('sort_dir') || 'DESC';
+  url.searchParams.set('sort_by', col);
+  url.searchParams.set('sort_dir', (current === col && dir === 'ASC') ? 'DESC' : 'ASC');
+  url.searchParams.set('page', '1');
+  window.location.href = url.toString();
+}
+
+function changePerPage(val) {
+  var url = new URL(window.location.href);
+  url.searchParams.set('limit', val);
+  url.searchParams.set('page', '1');
+  window.location.href = url.toString();
+}
+
+// ─── Select All / Bulk Bar ───────────────────────────────
+function toggleSelectAll(el) {
+  document.querySelectorAll('.student-checkbox').forEach(function(cb) { cb.checked = el.checked; });
+  updateBulkBar();
+}
+
+function updateBulkBar() {
+  var checked = document.querySelectorAll('.student-checkbox:checked');
+  var bar = document.getElementById('bulk-bar');
+  document.getElementById('selected-count').textContent = checked.length;
+  bar.classList.toggle('hidden', checked.length === 0);
+}
+
+// Show/hide status dropdown based on action
+(function() {
+  var sel = document.getElementById('bulk-action-select');
+  if (!sel) return;
+  sel.addEventListener('change', function() {
+    var statusSel = document.getElementById('bulk-status-select');
+    statusSel.classList.toggle('hidden', this.value !== 'change_status');
+  });
+})();
+
+function executeBulkAction() {
+  var action = document.getElementById('bulk-action-select').value;
+  if (!action) return alert('Please choose an action');
+  var ids = Array.from(document.querySelectorAll('.student-checkbox:checked')).map(function(c) { return parseInt(c.value); });
+  if (!ids.length) return;
+
+  var body = { action: action, user_ids: ids };
+  if (action === 'change_status') {
+    body.status = document.getElementById('bulk-status-select').value;
+  }
+  if (action === 'export_csv') {
+    window.location.href = '/admin/students/export?ids=' + ids.join(',');
+    return;
+  }
+
+  fetch('/admin/students/api/bulk-action', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(res) {
+    if (res.success) {
+      alert(res.message || 'Action completed');
+      window.location.reload();
+    } else {
+      alert(res.error || 'Action failed');
+    }
+  })
+  .catch(function(err) { alert('Error: ' + err.message); });
+}
+
+// ─── Profile Panel ───────────────────────────────────────
+function openProfile(id, event) {
+  if (event && (event.target.tagName === 'INPUT' || event.target.tagName === 'BUTTON' || event.target.closest('button'))) return;
+  currentStudentId = id;
+  var panel = document.getElementById('profile-panel');
+  var backdrop = document.getElementById('panel-backdrop');
+  var loading = document.getElementById('panel-loading');
+  var content = document.getElementById('panel-content');
+
+  panel.classList.remove('translate-x-full');
+  backdrop.classList.remove('hidden');
+  loading.classList.remove('hidden');
+  content.classList.add('hidden');
+
+  fetch('/admin/students/api/' + id)
+    .then(function(r) { return r.json(); })
+    .then(function(res) {
+      if (!res.success) throw new Error(res.error);
+      renderProfile(res.student);
+      loading.classList.add('hidden');
+      content.classList.remove('hidden');
+    })
+    .catch(function(err) {
+      loading.innerHTML = '<p class="text-red-500 text-sm">Failed to load profile</p>';
+    });
+}
+
+function closeProfilePanel() {
+  document.getElementById('profile-panel').classList.add('translate-x-full');
+  document.getElementById('panel-backdrop').classList.add('hidden');
+  currentStudentId = null;
+}
+
+function renderProfile(s) {
+  // Avatar
+  var av = document.getElementById('panel-avatar');
+  av.textContent = s.name ? s.name.charAt(0).toUpperCase() : '?';
+  if (s.avatar) {
+    av.innerHTML = '<img src="' + s.avatar + '" class="w-16 h-16 rounded-full object-cover">';
+  }
+
+  document.getElementById('panel-name').textContent = s.name || '';
+  document.getElementById('panel-email').textContent = s.email || '';
+  document.getElementById('panel-phone').textContent = s.phone || '';
+  document.getElementById('panel-student-id').textContent = s.student_id || 'No ID';
+
+  // Status badge
+  var sb = document.getElementById('panel-status-badge');
+  var ps = s.placement_status || 'not_placed';
+  var psMap = { placed: 'bg-green-100 text-green-700', in_process: 'bg-yellow-100 text-yellow-700', not_placed: 'bg-gray-100 text-gray-600', opted_out: 'bg-red-100 text-red-700', higher_studies: 'bg-blue-100 text-blue-700' };
+  sb.className = 'text-xs px-2 py-0.5 rounded-full font-medium ' + (psMap[ps] || psMap.not_placed);
+  sb.textContent = ps.replace(/_/g, ' ');
+
+  // Completeness
+  var comp = s.completeness || { score: 0, breakdown: {} };
+  document.getElementById('panel-completeness').textContent = comp.score + '%';
+  var bar = document.getElementById('panel-completeness-bar');
+  bar.style.width = comp.score + '%';
+  bar.className = 'h-2.5 rounded-full transition-all duration-500 ' + (comp.score >= 70 ? 'bg-green-500' : comp.score >= 40 ? 'bg-yellow-500' : 'bg-red-500');
+
+  var bd = comp.breakdown || {};
+  var bdHtml = '';
+  var labels = { resume: 'Resume (25)', skills: 'Skills (15)', linkedin: 'LinkedIn (10)', github: 'GitHub (10)', projects: 'Projects (15)', ats: 'ATS>=60 (15)', mockInterview: 'Interview (10)' };
+  Object.keys(labels).forEach(function(k) {
+    var v = bd[k] || 0;
+    bdHtml += '<div class="flex items-center gap-1"><i class="fas fa-' + (v > 0 ? 'check-circle text-green-500' : 'circle text-gray-300') + ' text-[10px]"></i><span class="text-gray-500">' + labels[k] + '</span></div>';
+  });
+  document.getElementById('panel-completeness-breakdown').innerHTML = bdHtml;
+
+  // Academic
+  document.getElementById('panel-program').textContent = s.program || s.department || '-';
+  document.getElementById('panel-branch').textContent = s.branch || '-';
+  document.getElementById('panel-grad-year').textContent = s.graduation_year || s.year_of_study || '-';
+  document.getElementById('panel-cgpa').textContent = s.cgpa || '-';
+
+  // ATS ring
+  var ats = s.ats_score || 0;
+  document.getElementById('panel-ats-ring').setAttribute('stroke-dasharray', ats + ', 100');
+  document.getElementById('panel-ats-score').textContent = ats;
+
+  // Links
+  document.getElementById('panel-resume-link').innerHTML = s.resume_path
+    ? '<a href="' + s.resume_path + '" target="_blank" class="text-accent hover:underline"><i class="fas fa-file-alt w-4"></i> View Resume</a>'
+    : '<span class="text-gray-400"><i class="fas fa-file-alt w-4"></i> No resume</span>';
+  document.getElementById('panel-linkedin-link').innerHTML = s.linkedin_url
+    ? '<a href="' + s.linkedin_url + '" target="_blank" class="text-blue-500 hover:underline"><i class="fab fa-linkedin w-4"></i> LinkedIn</a>'
+    : '<span class="text-gray-400"><i class="fab fa-linkedin w-4"></i> Not linked</span>';
+  document.getElementById('panel-github-link').innerHTML = s.github_url
+    ? '<a href="' + s.github_url + '" target="_blank" class="text-gray-700 dark:text-gray-300 hover:underline"><i class="fab fa-github w-4"></i> GitHub</a>'
+    : '<span class="text-gray-400"><i class="fab fa-github w-4"></i> Not linked</span>';
+
+  // Skills
+  renderSkills(s.skills || []);
+
+  // Projects
+  var projHtml = '';
+  (s.projects || []).forEach(function(p) {
+    var name = p.name || p.title || 'Untitled';
+    var desc = p.description || '';
+    var tech = p.technologies || p.tech || '';
+    projHtml += '<div class="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3"><p class="font-medium text-sm">' + name + '</p>';
+    if (desc) projHtml += '<p class="text-xs text-gray-500 mt-1 line-clamp-2">' + desc + '</p>';
+    if (tech) projHtml += '<p class="text-xs text-accent mt-1">' + tech + '</p>';
+    if (p.url || p.link) projHtml += '<a href="' + (p.url || p.link) + '" target="_blank" class="text-xs text-blue-500 hover:underline mt-1 block"><i class="fas fa-external-link-alt"></i> View</a>';
+    projHtml += '</div>';
+  });
+  document.getElementById('panel-projects').innerHTML = projHtml || '<p class="text-xs text-gray-400">No projects</p>';
+
+  // Activity
+  document.getElementById('panel-last-active').textContent = s.last_active ? new Date(s.last_active).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Unknown';
+  document.getElementById('panel-joined').textContent = s.created_at ? new Date(s.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '-';
+
+  var appHtml = '';
+  (s.applications || []).forEach(function(a) {
+    var stMap = { offered: 'text-green-600', interview: 'text-blue-600', rejected: 'text-red-600', applied: 'text-gray-500' };
+    appHtml += '<div class="flex items-center justify-between text-xs py-1 border-b border-gray-100 dark:border-gray-800"><span>' + (a.title || '') + ' @ ' + (a.company || '') + '</span><span class="font-medium ' + (stMap[a.status] || 'text-gray-500') + '">' + a.status + '</span></div>';
+  });
+  document.getElementById('panel-applications').innerHTML = appHtml || '<p class="text-xs text-gray-400">No applications</p>';
+}
+
+function renderSkills(skills) {
+  var html = '';
+  var typeColors = { technical: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400', soft: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400', tool: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400' };
+  skills.forEach(function(sk) {
+    var col = typeColors[sk.skill_type] || typeColors.technical;
+    html += '<span class="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full ' + col + '">' + sk.skill_name;
+    if (sk.added_by === 'admin') html += ' <i class="fas fa-shield-alt text-[8px]" title="Added by admin"></i>';
+    html += ' <button onclick="removeSkillFromStudent(' + sk.id + ')" class="hover:text-red-500 ml-0.5" title="Remove"><i class="fas fa-times text-[8px]"></i></button></span>';
+  });
+  document.getElementById('panel-skills').innerHTML = html || '<span class="text-xs text-gray-400">No skills</span>';
+}
+
+// ─── Skill Management ────────────────────────────────────
+function toggleAddSkill() {
+  document.getElementById('add-skill-form').classList.toggle('hidden');
+  document.getElementById('new-skill-name').focus();
+}
+
+function addSkillToStudent() {
+  if (!currentStudentId) return;
+  var name = document.getElementById('new-skill-name').value.trim();
+  var type = document.getElementById('new-skill-type').value;
+  if (!name) return;
+
+  fetch('/admin/students/api/' + currentStudentId + '/skills', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ skill_name: name, skill_type: type }),
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(res) {
+    if (res.success) {
+      renderSkills(res.skills);
+      document.getElementById('new-skill-name').value = '';
+      document.getElementById('add-skill-form').classList.add('hidden');
+    }
+  });
+}
+
+function removeSkillFromStudent(skillId) {
+  if (!currentStudentId) return;
+  fetch('/admin/students/api/' + currentStudentId + '/skills/' + skillId, { method: 'DELETE' })
+    .then(function(r) { return r.json(); })
+    .then(function(res) { if (res.success) renderSkills(res.skills); });
+}
+
+// Close panel on Escape
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeProfilePanel();
+});
+</script>
