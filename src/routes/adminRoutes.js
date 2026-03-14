@@ -32,9 +32,11 @@ router.use('/recruiters', require('./adminRecruiterRoutes'));
 // Skill Gap Analysis (full sub-router)
 router.use('/skill-gap', require('./adminSkillRoutes'));
 
+// Placement Analytics (full sub-router)
+router.use('/placement', require('./adminPlacementRoutes'));
+
 router.get('/applications', adminController.applications);
 router.get('/interviews', adminController.interviews);
-router.get('/placement', adminController.placement);
 router.get('/communication', adminController.communication);
 router.get('/settings', adminController.settings);
 
