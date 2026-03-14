@@ -75,16 +75,24 @@ class JobMgmtController {
 
   // ─── API ────────────────────────────────────────────────
 
+  _parseBody(req) {
+    const body = req.body;
+    // If a file was uploaded, use its path as the logo
+    if (req.file) {
+      body.company_logo = '/uploads/logos/' + req.file.filename;
+    }
+    // Parse arrays from form
+    if (typeof body.eligible_programs === 'string') body.eligible_programs = body.eligible_programs.split(',').map(s => s.trim()).filter(Boolean);
+    if (typeof body.eligible_branches === 'string') body.eligible_branches = body.eligible_branches.split(',').map(s => s.trim()).filter(Boolean);
+    if (typeof body.eligible_years === 'string') body.eligible_years = body.eligible_years.split(',').map(s => s.trim()).filter(Boolean);
+    if (typeof body.skills === 'string') body.skills = body.skills.split(',').map(s => s.trim()).filter(Boolean);
+    if (typeof body.rounds === 'string') body.rounds = JSON.parse(body.rounds);
+    return body;
+  }
+
   async apiCreate(req, res) {
     try {
-      const body = req.body;
-      // Parse arrays from form
-      if (typeof body.eligible_programs === 'string') body.eligible_programs = body.eligible_programs.split(',').map(s => s.trim()).filter(Boolean);
-      if (typeof body.eligible_branches === 'string') body.eligible_branches = body.eligible_branches.split(',').map(s => s.trim()).filter(Boolean);
-      if (typeof body.eligible_years === 'string') body.eligible_years = body.eligible_years.split(',').map(s => s.trim()).filter(Boolean);
-      if (typeof body.skills === 'string') body.skills = body.skills.split(',').map(s => s.trim()).filter(Boolean);
-      if (typeof body.rounds === 'string') body.rounds = JSON.parse(body.rounds);
-
+      const body = this._parseBody(req);
       const jobId = await service.createJob(body, req.session.user.id);
       res.json({ success: true, jobId, message: 'Job created successfully' });
     } catch (err) {
@@ -95,13 +103,7 @@ class JobMgmtController {
 
   async apiUpdate(req, res) {
     try {
-      const body = req.body;
-      if (typeof body.eligible_programs === 'string') body.eligible_programs = body.eligible_programs.split(',').map(s => s.trim()).filter(Boolean);
-      if (typeof body.eligible_branches === 'string') body.eligible_branches = body.eligible_branches.split(',').map(s => s.trim()).filter(Boolean);
-      if (typeof body.eligible_years === 'string') body.eligible_years = body.eligible_years.split(',').map(s => s.trim()).filter(Boolean);
-      if (typeof body.skills === 'string') body.skills = body.skills.split(',').map(s => s.trim()).filter(Boolean);
-      if (typeof body.rounds === 'string') body.rounds = JSON.parse(body.rounds);
-
+      const body = this._parseBody(req);
       await service.updateJob(req.params.id, body);
       res.json({ success: true, message: 'Job updated successfully' });
     } catch (err) {

@@ -151,7 +151,7 @@
         <a href="/admin/jobs/<%= j.id %>" class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 hover:shadow-lg transition block">
           <div class="flex items-start gap-3 mb-3">
             <% if (j.company_logo) { %>
-              <img src="<%= j.company_logo %>" alt="" class="w-10 h-10 rounded-lg object-contain border border-gray-200 dark:border-gray-700" style="flex-shrink:0">
+              <img src="<%= j.company_logo %>" alt="" class="w-10 h-10 rounded-lg object-contain border border-gray-200 dark:border-gray-700" style="flex-shrink:0" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="w-10 h-10 rounded-lg items-center justify-center text-white text-sm font-bold" style="flex-shrink:0;background:hsl(var(--primary));display:none"><%= j.company_name ? j.company_name.charAt(0) : '?' %></div>
             <% } else { %>
               <div class="w-10 h-10 rounded-lg flex items-center justify-center text-white text-sm font-bold" style="flex-shrink:0;background:hsl(var(--primary))"><%= j.company_name ? j.company_name.charAt(0) : '?' %></div>
             <% } %>
