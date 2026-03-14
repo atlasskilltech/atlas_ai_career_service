@@ -314,7 +314,13 @@ function playQuestionAudio(url) {
   if (isRecording) stopRecording(true);
   const audio = document.getElementById('ai-audio');
   audio.src = url;
-  audio.onended = () => { setAvatarState('listening'); socket.emit('speak-done'); };
+  audio.onended = () => {
+    // Play "Start your answer now" prompt before switching to listening mode
+    playAnswerPrompt(() => {
+      setAvatarState('listening');
+      socket.emit('speak-done');
+    });
+  };
   audio.onerror = () => { setAvatarState('idle'); showAutoplayHint(); };
   const playPromise = audio.play();
   if (playPromise !== undefined) {
@@ -324,6 +330,24 @@ function playQuestionAudio(url) {
       showAutoplayHint();
       setAvatarState('idle');
     });
+  }
+}
+
+function playAnswerPrompt(callback) {
+  // Use SpeechSynthesis to say "Start your answer now"
+  if ('speechSynthesis' in window) {
+    const utterance = new SpeechSynthesisUtterance('Start your answer now');
+    utterance.rate = 1.0;
+    utterance.pitch = 1.0;
+    utterance.volume = 1.0;
+    utterance.onend = () => { callback(); };
+    utterance.onerror = () => { callback(); };
+    updateLiveCaption('Start your answer now...');
+    window.speechSynthesis.speak(utterance);
+  } else {
+    // Fallback if speech synthesis is not available
+    updateLiveCaption('Start your answer now...');
+    setTimeout(callback, 1500);
   }
 }
 
@@ -348,7 +372,12 @@ function replayQuestion() {
     // User clicked after autoplay was blocked - play the pending audio
     const audio = document.getElementById('ai-audio');
     audio.src = pendingAudioUrl;
-    audio.onended = () => { setAvatarState('listening'); socket.emit('speak-done'); };
+    audio.onended = () => {
+      playAnswerPrompt(() => {
+        setAvatarState('listening');
+        socket.emit('speak-done');
+      });
+    };
     audio.onerror = () => setAvatarState('idle');
     setAvatarState('speaking');
     audio.play().then(() => { audioUnlocked = true; pendingAudioUrl = null; hideAutoplayHint(); }).catch(() => {});
@@ -381,7 +410,7 @@ function updateMicLevels() {
 
 // ===================== RECORDING =====================
 let autoStopTimer = null;
-const MAX_RECORD_SECONDS = 30; // Auto-stop after 30 seconds to keep chunks manageable
+const MAX_RECORD_SECONDS = 120; // Auto-stop after 120 seconds (2 minutes) to keep chunks manageable
 
 function startRecording() {
   if (!mediaStream) { showToast('No microphone', 'error'); return; }
