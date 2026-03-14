@@ -63,6 +63,10 @@ class RecruiterService {
     return { industries };
   }
 
+  async getListStats() {
+    return repo.getListStats();
+  }
+
   async getPendingFollowUps(limit) {
     return repo.getPendingFollowUps(limit);
   }
