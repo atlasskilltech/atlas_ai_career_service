@@ -45,10 +45,7 @@
   <script>
     if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark');
   </script>
-  <!-- Auto-open sidebar on desktop before paint to prevent flash -->
-  <script>
-    if (window.innerWidth >= 1024) document.documentElement.classList.add('sidebar-open');
-  </script>
+  <!-- Sidebar starts closed; user opens it via hamburger menu -->
 </head>
 <body class="bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 min-h-screen">
   <div class="flex min-h-screen relative">
