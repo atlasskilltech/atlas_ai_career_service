@@ -145,7 +145,7 @@ class JobAggregatorController {
 
       res.render('pages/job-board/admin', {
         title: 'Job Board Admin',
-        layout: 'layouts/app',
+        layout: 'layouts/admin',
         jobs: result.jobs,
         total: result.total,
         page: result.page,
