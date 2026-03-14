@@ -52,50 +52,70 @@ class RecruiterRepo {
   }
 
   async findAll(filters = {}) {
-    let sql = 'SELECT * FROM aicp_recruiters WHERE 1=1';
+    let sql = `SELECT r.*,
+      (SELECT COUNT(*) FROM aicp_admin_jobs aj WHERE aj.company_name = r.company_name) AS job_count,
+      (SELECT COUNT(DISTINCT aa.user_id) FROM aicp_admin_job_applications aa
+       JOIN aicp_admin_jobs aj2 ON aa.job_id = aj2.id
+       WHERE aj2.company_name = r.company_name AND aa.stage = 'offered') AS hired_count,
+      (SELECT AVG(aj3.ctc_max) FROM aicp_admin_jobs aj3
+       WHERE aj3.company_name = r.company_name AND aj3.ctc_max IS NOT NULL AND aj3.ctc_max > 0) AS avg_ctc
+      FROM aicp_recruiters r WHERE 1=1`;
     const params = [];
 
     if (filters.search) {
-      sql += ' AND (company_name LIKE ? OR contact_name LIKE ? OR contact_email LIKE ?)';
+      sql += ' AND (r.company_name LIKE ? OR r.contact_name LIKE ? OR r.contact_email LIKE ?)';
       const s = `%${filters.search}%`;
       params.push(s, s, s);
     }
     if (filters.industry) {
-      sql += ' AND industry = ?';
+      sql += ' AND r.industry = ?';
       params.push(filters.industry);
     }
     if (filters.tier) {
-      sql += ' AND tier = ?';
+      sql += ' AND r.tier = ?';
       params.push(filters.tier);
     }
     if (filters.mou_status) {
-      sql += ' AND mou_status = ?';
+      sql += ' AND r.mou_status = ?';
       params.push(filters.mou_status);
     }
     if (filters.company_size) {
-      sql += ' AND company_size = ?';
+      sql += ' AND r.company_size = ?';
       params.push(filters.company_size);
     }
     if (filters.hire_min) {
-      sql += ` AND id IN (
-        SELECT r.id FROM aicp_recruiters r
-        LEFT JOIN aicp_admin_job_applications aa ON aa.job_id IN (SELECT aj.id FROM aicp_admin_jobs aj WHERE aj.company_name = r.company_name) AND aa.stage = 'offered'
-        GROUP BY r.id HAVING COUNT(aa.id) >= ?
+      sql += ` AND r.id IN (
+        SELECT r2.id FROM aicp_recruiters r2
+        LEFT JOIN aicp_admin_job_applications aa ON aa.job_id IN (SELECT aj.id FROM aicp_admin_jobs aj WHERE aj.company_name = r2.company_name) AND aa.stage = 'offered'
+        GROUP BY r2.id HAVING COUNT(aa.id) >= ?
       )`;
       params.push(Number(filters.hire_min));
     }
     if (filters.hire_max) {
-      sql += ` AND id IN (
-        SELECT r.id FROM aicp_recruiters r
-        LEFT JOIN aicp_admin_job_applications aa ON aa.job_id IN (SELECT aj.id FROM aicp_admin_jobs aj WHERE aj.company_name = r.company_name) AND aa.stage = 'offered'
-        GROUP BY r.id HAVING COUNT(aa.id) <= ?
+      sql += ` AND r.id IN (
+        SELECT r2.id FROM aicp_recruiters r2
+        LEFT JOIN aicp_admin_job_applications aa ON aa.job_id IN (SELECT aj.id FROM aicp_admin_jobs aj WHERE aj.company_name = r2.company_name) AND aa.stage = 'offered'
+        GROUP BY r2.id HAVING COUNT(aa.id) <= ?
       )`;
       params.push(Number(filters.hire_max));
     }
 
-    sql += ' ORDER BY tier_score DESC, company_name ASC LIMIT 200';
+    sql += ' ORDER BY r.tier_score DESC, r.company_name ASC LIMIT 200';
     const [rows] = await pool.execute(sql, params);
     return rows;
+  }
+
+  async getListStats() {
+    const [rows] = await pool.execute(`
+      SELECT
+        COUNT(*) AS total,
+        SUM(CASE WHEN tier = 'platinum' THEN 1 ELSE 0 END) AS platinum,
+        SUM(CASE WHEN tier = 'gold' THEN 1 ELSE 0 END) AS gold,
+        SUM(CASE WHEN tier = 'silver' THEN 1 ELSE 0 END) AS silver,
+        SUM(CASE WHEN mou_status = 'active' THEN 1 ELSE 0 END) AS active_mou
+      FROM aicp_recruiters
+    `);
+    return rows[0];
   }
 
   // ─── Stats for a recruiter ────────────────────────────────

@@ -5,15 +5,17 @@ class RecruiterMgmtController {
 
   async index(req, res) {
     try {
-      const [recruiters, filterOptions] = await Promise.all([
+      const [recruiters, filterOptions, listStats] = await Promise.all([
         service.listRecruiters(req.query),
-        service.getFilterOptions()
+        service.getFilterOptions(),
+        service.getListStats()
       ]);
       res.render('pages/admin/recruiters/index', {
         title: 'Recruiter Management',
         layout: 'layouts/admin',
         recruiters,
         filterOptions,
+        listStats,
         query: req.query
       });
     } catch (err) {
