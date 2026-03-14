@@ -145,6 +145,14 @@
 
 <script>
 function toggleSidebar() {
-  document.body.classList.toggle('sidebar-open');
+  if (window.innerWidth >= 1024) {
+    // Desktop: toggle closed state
+    document.body.classList.toggle('sidebar-closed');
+    document.body.classList.remove('sidebar-open');
+  } else {
+    // Mobile: toggle open state
+    document.body.classList.toggle('sidebar-open');
+    document.body.classList.remove('sidebar-closed');
+  }
 }
 </script>
