@@ -1,0 +1,53 @@
+<div class="space-y-6">
+  <h1 class="text-2xl font-bold">Interviews</h1>
+
+  <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="bg-gray-50 dark:bg-gray-800 text-left">
+            <th class="py-3 px-4 font-medium">Student</th>
+            <th class="py-3 px-4 font-medium">Department</th>
+            <th class="py-3 px-4 font-medium">Role</th>
+            <th class="py-3 px-4 font-medium">Type</th>
+            <th class="py-3 px-4 font-medium">Status</th>
+            <th class="py-3 px-4 font-medium">Score</th>
+            <th class="py-3 px-4 font-medium">Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (interviews.length) { %>
+            <% interviews.forEach(function(iv) { %>
+              <tr class="border-t border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                <td class="py-3 px-4 font-medium"><%= iv.student %></td>
+                <td class="py-3 px-4 text-gray-500"><%= iv.department || '-' %></td>
+                <td class="py-3 px-4"><%= iv.job_role %></td>
+                <td class="py-3 px-4">
+                  <span class="text-xs px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400"><%= iv.interview_type %></span>
+                </td>
+                <td class="py-3 px-4">
+                  <%
+                    var sColor = iv.status === 'completed' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                      : iv.status === 'in_progress' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                      : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400';
+                  %>
+                  <span class="text-xs font-medium px-2 py-0.5 rounded-full <%= sColor %>"><%= iv.status %></span>
+                </td>
+                <td class="py-3 px-4">
+                  <% if (iv.overall_score) { %>
+                    <span class="font-semibold <%= iv.overall_score >= 70 ? 'text-green-600' : iv.overall_score >= 40 ? 'text-yellow-600' : 'text-red-600' %>"><%= iv.overall_score %>%</span>
+                  <% } else { %>
+                    <span class="text-gray-400">-</span>
+                  <% } %>
+                </td>
+                <td class="py-3 px-4 text-gray-500 text-xs"><%= iv.started_at ? new Date(iv.started_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '-' %></td>
+              </tr>
+            <% }); %>
+          <% } else { %>
+            <tr><td colspan="7" class="py-8 text-center text-gray-400">No interviews found</td></tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

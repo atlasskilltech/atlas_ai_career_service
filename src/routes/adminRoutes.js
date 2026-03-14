@@ -6,7 +6,7 @@ const { isAuthenticated, isAdmin } = require('../middleware/auth');
 
 router.use(isAuthenticated, isAdmin);
 
-// Dashboard overview (new)
+// Dashboard overview
 router.get('/', adminDashboardController.index.bind(adminDashboardController));
 
 // JSON APIs for auto-refresh & charts
@@ -17,8 +17,17 @@ router.get('/trend', adminDashboardController.apiTrend.bind(adminDashboardContro
 router.get('/funnel', adminDashboardController.apiFunnel.bind(adminDashboardController));
 router.post('/refresh', adminDashboardController.postRefresh.bind(adminDashboardController));
 
-// Existing admin routes
+// Admin section pages
 router.get('/students', adminController.students);
+router.get('/jobs', adminController.jobs);
+router.get('/recruiters', adminController.recruiters);
+router.get('/applications', adminController.applications);
+router.get('/interviews', adminController.interviews);
+router.get('/skill-gap', adminController.skillGap);
+router.get('/placement', adminController.placement);
+router.get('/communication', adminController.communication);
+router.get('/settings', adminController.settings);
+
 router.get('/api/stats', adminController.apiStats);
 
 module.exports = router;

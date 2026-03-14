@@ -1,0 +1,39 @@
+<div class="space-y-6">
+  <h1 class="text-2xl font-bold">Communication</h1>
+
+  <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="bg-gray-50 dark:bg-gray-800 text-left">
+            <th class="py-3 px-4 font-medium">Contact</th>
+            <th class="py-3 px-4 font-medium">Company</th>
+            <th class="py-3 px-4 font-medium">Type</th>
+            <th class="py-3 px-4 font-medium">Added By</th>
+            <th class="py-3 px-4 font-medium">Last Contacted</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (contacts.length) { %>
+            <% contacts.forEach(function(c) { %>
+              <tr class="border-t border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                <td class="py-3 px-4">
+                  <p class="font-medium"><%= c.name %></p>
+                  <p class="text-xs text-gray-500"><%= c.email || '' %></p>
+                </td>
+                <td class="py-3 px-4 text-gray-600 dark:text-gray-400"><%= c.company || '-' %></td>
+                <td class="py-3 px-4">
+                  <span class="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"><%= (c.contact_type || 'other').replace('_', ' ') %></span>
+                </td>
+                <td class="py-3 px-4 text-gray-500"><%= c.student_name %></td>
+                <td class="py-3 px-4 text-gray-500 text-xs"><%= c.last_contacted ? new Date(c.last_contacted).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : 'Never' %></td>
+              </tr>
+            <% }); %>
+          <% } else { %>
+            <tr><td colspan="5" class="py-8 text-center text-gray-400">No communication records found</td></tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
