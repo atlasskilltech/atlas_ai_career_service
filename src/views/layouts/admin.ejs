@@ -9,21 +9,55 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    :root { --primary: 228 100% 11%; --accent: 80 89% 40%; --background: 0 0% 100%; }
-    .dark { --background: 228 100% 5%; }
+    :root {
+      --primary: 228 100% 11%;
+      --accent: 80 89% 40%;
+      --background: 0 0% 100%;
+      --sidebar-w: 264px;
+      --nav-h: 56px;
+    }
+    .dark {
+      --background: 228 100% 5%;
+    }
     body { font-family: 'Inter', sans-serif; }
+
+    /* Sidebar open/closed */
+    .sidebar-open .admin-sidebar  { transform: translateX(0); }
+    .sidebar-open .admin-content  { margin-left: var(--sidebar-w); }
+    .sidebar-open .admin-overlay  { display: block; }
+
+    @media (max-width: 1023px) {
+      .sidebar-open .admin-content { margin-left: 0; }
+    }
+
+    /* Scrollbar styling */
+    .admin-sidebar::-webkit-scrollbar { width: 4px; }
+    .admin-sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+
+    /* Focus ring */
+    input:focus, select:focus, textarea:focus, button:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 2px hsla(80, 89%, 40%, 0.3);
+    }
+
+    /* Smooth page transitions */
+    .admin-content { transition: margin-left 0.3s cubic-bezier(0.4,0,0.2,1); }
   </style>
   <script>
     if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark');
   </script>
 </head>
 <body class="bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 min-h-screen">
-  <div class="flex min-h-screen">
+  <div class="flex min-h-screen relative">
+    <!-- Overlay for mobile -->
+    <div class="admin-overlay fixed inset-0 bg-black/40 z-40 lg:hidden" style="display:none" onclick="toggleSidebar()"></div>
+
     <%- include('../partials/admin-sidebar') %>
-    <div class="flex-1 w-full min-w-0 admin-content" style="margin-left:0;transition:margin-left 0.3s ease">
+
+    <div class="admin-content flex-1 w-full min-w-0" style="margin-left:0">
       <%- include('../partials/admin-nav') %>
       <%- include('../partials/flash') %>
-      <main class="p-3 sm:p-4 lg:p-6">
+      <main class="p-4 sm:p-5 lg:p-6 max-w-[1600px] mx-auto">
         <%- body %>
       </main>
     </div>

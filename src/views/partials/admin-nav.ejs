@@ -1,15 +1,17 @@
-<header class="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-4 sm:px-6 py-3 flex items-center justify-between sticky top-0 z-30">
+<header class="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-b border-gray-200/60 dark:border-gray-800/60 px-4 sm:px-6 py-3 flex items-center justify-between sticky top-0 z-30">
   <div class="flex items-center gap-3">
-    <button onclick="toggleSidebar()" class="p-2 -ml-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition text-gray-600 dark:text-gray-300">
-      <i class="fas fa-bars text-lg"></i>
+    <button onclick="toggleSidebar()" class="p-2 -ml-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-all text-gray-500 dark:text-gray-400 active:scale-95">
+      <i class="fas fa-bars text-base"></i>
     </button>
-    <h2 class="text-base sm:text-lg font-semibold truncate"><%= title %></h2>
+    <div class="hidden sm:block w-px h-6 bg-gray-200 dark:bg-gray-700"></div>
+    <h2 class="text-sm sm:text-base font-semibold truncate text-gray-800 dark:text-gray-200"><%= title %></h2>
   </div>
-  <div class="flex items-center gap-2 sm:gap-4">
+
+  <div class="flex items-center gap-2 sm:gap-3">
     <!-- Academic Year Filter -->
     <% if (typeof academicYears !== 'undefined' && academicYears.length) { %>
       <select id="academic-year-filter" onchange="filterByYear(this.value)"
-        class="text-sm border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-accent">
+        class="text-xs sm:text-sm border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-accent hover:border-gray-300 dark:hover:border-gray-600 transition">
         <% academicYears.forEach(function(y) { %>
           <option value="<%= y %>" <%= y === selectedYear ? 'selected' : '' %>><%= y %></option>
         <% }); %>
@@ -17,19 +19,20 @@
     <% } %>
 
     <!-- Dark Mode Toggle -->
-    <button id="theme-toggle-admin" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition" title="Toggle dark mode">
-      <i class="fas fa-moon dark:hidden"></i>
-      <i class="fas fa-sun hidden dark:inline"></i>
+    <button id="theme-toggle-admin" class="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-all active:scale-95 text-gray-500 dark:text-gray-400" title="Toggle dark mode">
+      <i class="fas fa-moon text-sm dark:hidden"></i>
+      <i class="fas fa-sun text-sm hidden dark:inline"></i>
     </button>
 
     <% if (user) { %>
-      <div class="flex items-center gap-2 sm:gap-3">
-        <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0">
+      <div class="w-px h-6 bg-gray-200 dark:bg-gray-700 hidden sm:block"></div>
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-xl flex items-center justify-center text-white text-xs font-bold" style="background:hsl(var(--primary))">
           <%= user.name ? user.name.charAt(0).toUpperCase() : 'U' %>
         </div>
-        <div class="text-sm hidden sm:block">
-          <p class="font-medium"><%= user.name %></p>
-          <p class="text-gray-500 text-xs capitalize"><%= user.role ? user.role.replace('_', ' ') : '' %></p>
+        <div class="text-xs hidden sm:block">
+          <p class="font-semibold text-gray-800 dark:text-gray-200"><%= user.name %></p>
+          <p class="text-gray-400 capitalize"><%= user.role ? user.role.replace('_', ' ') : '' %></p>
         </div>
       </div>
     <% } %>
@@ -37,11 +40,9 @@
 </header>
 
 <script>
-// Dark mode toggle
 (function() {
   var toggle = document.getElementById('theme-toggle-admin');
   if (!toggle) return;
-  // Init from localStorage
   if (localStorage.getItem('theme') === 'dark') {
     document.documentElement.classList.add('dark');
   }

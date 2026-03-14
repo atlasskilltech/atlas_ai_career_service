@@ -1,7 +1,7 @@
 // Theme toggle
 document.addEventListener('DOMContentLoaded', function () {
-  const themeToggle = document.getElementById('theme-toggle');
-  const html = document.documentElement;
+  var themeToggle = document.getElementById('theme-toggle');
+  var html = document.documentElement;
 
   if (localStorage.getItem('theme') === 'dark') {
     html.classList.add('dark');
@@ -17,24 +17,41 @@ document.addEventListener('DOMContentLoaded', function () {
   // Auto-dismiss flash messages
   setTimeout(function () {
     document.querySelectorAll('#flash-success, #flash-error').forEach(function (el) {
-      el.style.transition = 'opacity 0.5s';
+      el.style.transition = 'all 0.4s cubic-bezier(0.4,0,0.2,1)';
       el.style.opacity = '0';
-      setTimeout(function () { el.remove(); }, 500);
+      el.style.transform = 'translateX(20px)';
+      setTimeout(function () { el.remove(); }, 400);
     });
   }, 5000);
 });
 
 // Toast notification
 function showToast(message, type) {
+  var existing = document.querySelectorAll('.toast-notification');
+  var offset = 16 + (existing.length * 60);
+
   var toast = document.createElement('div');
-  toast.className = 'fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg text-white flex items-center gap-2 ' +
-    (type === 'success' ? 'bg-green-500' : 'bg-red-500');
-  toast.innerHTML = '<i class="fas ' + (type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle') + '"></i>' +
+  toast.className = 'toast-notification fixed right-4 z-50 flex items-center gap-3 px-5 py-3.5 rounded-xl shadow-xl text-white text-sm font-medium';
+  toast.style.cssText = 'top:' + offset + 'px;backdrop-filter:blur(12px);transform:translateX(120%);transition:all 0.4s cubic-bezier(0.4,0,0.2,1);' +
+    (type === 'success' ? 'background:linear-gradient(135deg,#16a34a,#15803d)' : 'background:linear-gradient(135deg,#dc2626,#b91c1c)');
+
+  var iconClass = type === 'success' ? 'fa-check' : 'fa-exclamation';
+  toast.innerHTML = '<div style="width:28px;height:28px;border-radius:8px;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="fas ' + iconClass + '" style="font-size:11px"></i></div>' +
     '<span>' + message + '</span>';
+
   document.body.appendChild(toast);
+
+  // Slide in
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() {
+      toast.style.transform = 'translateX(0)';
+    });
+  });
+
+  // Auto dismiss
   setTimeout(function () {
-    toast.style.transition = 'opacity 0.5s';
     toast.style.opacity = '0';
-    setTimeout(function () { toast.remove(); }, 500);
-  }, 3000);
+    toast.style.transform = 'translateX(20px)';
+    setTimeout(function () { toast.remove(); }, 400);
+  }, 3500);
 }
