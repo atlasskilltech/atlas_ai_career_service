@@ -1,9 +1,7 @@
-<!-- Mobile overlay backdrop -->
-<div id="sidebar-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:40" onclick="toggleSidebar()"></div>
-
-<aside id="app-sidebar" style="position:fixed;left:0;top:0;bottom:0;width:256px;z-index:50;display:flex;flex-direction:column;transform:translateX(-100%);transition:transform 0.3s ease;background:hsl(228,100%,11%)" class="dark:bg-gray-900">
-  <!-- Close button for mobile -->
-  <button onclick="toggleSidebar()" id="sidebar-close-btn" style="position:absolute;top:16px;right:16px;color:#93c5fd;font-size:18px;background:none;border:none;cursor:pointer;display:none">
+<!-- Admin Sidebar — starts closed, toggle with hamburger -->
+<aside id="app-sidebar" style="position:fixed;left:0;top:0;bottom:0;width:256px;z-index:50;display:flex;flex-direction:column;transform:translateX(-100%);transition:transform 0.3s ease;background:hsl(228,100%,11%)">
+  <!-- Close button -->
+  <button onclick="toggleSidebar()" style="position:absolute;top:16px;right:16px;color:#93c5fd;font-size:18px;background:none;border:none;cursor:pointer">
     <i class="fas fa-times"></i>
   </button>
 
@@ -93,62 +91,16 @@
 </style>
 
 <script>
-var sidebarOpen = false;
-
-function initSidebar() {
-  var sidebar = document.getElementById('app-sidebar');
-  var closeBtn = document.getElementById('sidebar-close-btn');
-  if (window.innerWidth >= 1024) {
-    sidebar.style.transform = 'translateX(0)';
-    closeBtn.style.display = 'none';
-    sidebarOpen = true;
-  } else {
-    sidebar.style.transform = 'translateX(-100%)';
-    closeBtn.style.display = 'block';
-    sidebarOpen = false;
-  }
-}
-
 function toggleSidebar() {
   var sidebar = document.getElementById('app-sidebar');
-  var overlay = document.getElementById('sidebar-overlay');
-  var closeBtn = document.getElementById('sidebar-close-btn');
-
-  if (window.innerWidth >= 1024) {
-    // Desktop: slide sidebar and adjust content margin
-    sidebarOpen = !sidebarOpen;
-    sidebar.style.transform = sidebarOpen ? 'translateX(0)' : 'translateX(-100%)';
-    var content = document.querySelector('.admin-content');
-    if (content) content.style.marginLeft = sidebarOpen ? '256px' : '0';
+  var content = document.querySelector('.admin-content');
+  var isOpen = sidebar.style.transform === 'translateX(0px)' || sidebar.style.transform === 'translateX(0)';
+  if (isOpen) {
+    sidebar.style.transform = 'translateX(-100%)';
+    if (content) content.style.marginLeft = '0';
   } else {
-    // Mobile: overlay mode
-    sidebarOpen = !sidebarOpen;
-    sidebar.style.transform = sidebarOpen ? 'translateX(0)' : 'translateX(-100%)';
-    overlay.style.display = sidebarOpen ? 'block' : 'none';
-    closeBtn.style.display = 'block';
-    document.body.style.overflow = sidebarOpen ? 'hidden' : '';
+    sidebar.style.transform = 'translateX(0)';
+    if (content) content.style.marginLeft = '256px';
   }
 }
-
-window.addEventListener('resize', function() {
-  var sidebar = document.getElementById('app-sidebar');
-  var overlay = document.getElementById('sidebar-overlay');
-  var closeBtn = document.getElementById('sidebar-close-btn');
-  if (window.innerWidth >= 1024) {
-    sidebar.style.transform = 'translateX(0)';
-    overlay.style.display = 'none';
-    closeBtn.style.display = 'none';
-    document.body.style.overflow = '';
-    sidebarOpen = true;
-    var content = document.querySelector('.admin-content');
-    if (content) content.style.marginLeft = '256px';
-  } else {
-    if (!sidebarOpen) {
-      sidebar.style.transform = 'translateX(-100%)';
-    }
-    closeBtn.style.display = 'block';
-  }
-});
-
-initSidebar();
 </script>
