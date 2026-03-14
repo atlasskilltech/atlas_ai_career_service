@@ -155,13 +155,11 @@ function toggleSidebar() {
   }
 }
 
-// Auto-close sidebar on mobile when a link is clicked
+// Auto-close sidebar when a link is clicked
 document.querySelectorAll('#app-sidebar .sidebar-link').forEach(function(link) {
   link.addEventListener('click', function() {
-    if (window.innerWidth < 1024) {
-      document.documentElement.classList.remove('sidebar-open');
-      document.body.classList.remove('sidebar-open');
-    }
+    document.documentElement.classList.remove('sidebar-open');
+    document.body.classList.remove('sidebar-open');
   });
 });
 </script>
