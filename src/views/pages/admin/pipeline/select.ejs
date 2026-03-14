@@ -148,9 +148,14 @@ function searchStudents() {
     return;
   }
   searchTimeout = setTimeout(function() {
+    document.getElementById('studentResults').innerHTML = '<p style="text-align:center;color:#94a3b8;padding:20px;font-size:14px;">Searching...</p>';
     fetch('/admin/pipeline/api/students/search?q=' + encodeURIComponent(q))
       .then(function(r) { return r.json(); })
       .then(function(data) {
+        if (!data.success) {
+          document.getElementById('studentResults').innerHTML = '<p style="text-align:center;color:#ef4444;padding:20px;font-size:14px;">Error: ' + (data.error || 'Unknown error') + '</p>';
+          return;
+        }
         if (!data.students || data.students.length === 0) {
           document.getElementById('studentResults').innerHTML = '<p style="text-align:center;color:#94a3b8;padding:20px;font-size:14px;">No students found</p>';
           return;
@@ -173,6 +178,10 @@ function searchStudents() {
           '</div>';
         });
         document.getElementById('studentResults').innerHTML = html;
+      })
+      .catch(function(err) {
+        console.error('Student search error:', err);
+        document.getElementById('studentResults').innerHTML = '<p style="text-align:center;color:#ef4444;padding:20px;font-size:14px;">Failed to search students</p>';
       });
   }, 300);
 }

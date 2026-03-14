@@ -333,18 +333,33 @@ class PipelineRepo {
   // ─── Manual Add Applicant ─────────────────────────────
 
   async searchStudents(query) {
-    const [rows] = await pool.execute(
-      `SELECT u.id, u.name, u.email, u.avatar,
-        sp.program, sp.branch, sp.cgpa, sp.graduation_year, sp.student_id
-       FROM aicp_users u
-       LEFT JOIN aicp_student_profiles sp ON sp.user_id = u.id
-       WHERE (u.name LIKE ? OR u.email LIKE ? OR sp.student_id LIKE ?)
-       AND u.role = 'student'
-       ORDER BY u.name ASC
-       LIMIT 20`,
-      [`%${query}%`, `%${query}%`, `%${query}%`]
-    );
-    return rows;
+    try {
+      const [rows] = await pool.execute(
+        `SELECT u.id, u.name, u.email, u.avatar,
+          sp.program, sp.branch, sp.cgpa, sp.graduation_year, sp.student_id
+         FROM aicp_users u
+         LEFT JOIN aicp_student_profiles sp ON sp.user_id = u.id
+         WHERE (u.name LIKE ? OR u.email LIKE ? OR sp.student_id LIKE ?)
+         AND u.role = 'student'
+         ORDER BY u.name ASC
+         LIMIT 20`,
+        [`%${query}%`, `%${query}%`, `%${query}%`]
+      );
+      return rows;
+    } catch (err) {
+      // Fallback: search without student_profiles if table doesn't exist
+      console.error('searchStudents error, trying fallback:', err.message);
+      const [rows] = await pool.execute(
+        `SELECT u.id, u.name, u.email, u.avatar
+         FROM aicp_users u
+         WHERE (u.name LIKE ? OR u.email LIKE ?)
+         AND u.role = 'student'
+         ORDER BY u.name ASC
+         LIMIT 20`,
+        [`%${query}%`, `%${query}%`]
+      );
+      return rows;
+    }
   }
 
   async addApplicantManually(jobId, userId, addedBy) {

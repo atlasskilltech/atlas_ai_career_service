@@ -124,9 +124,13 @@ class PipelineController {
   }
   async apiSearchStudents(req, res) {
     try {
-      const students = await service.searchStudents(req.query.q || '');
+      const query = req.query.q || '';
+      console.log('Searching students with query:', query);
+      const students = await service.searchStudents(query);
+      console.log('Found students:', students.length);
       res.json({ success: true, students });
     } catch (err) {
+      console.error('apiSearchStudents error:', err);
       res.status(500).json({ success: false, error: err.message });
     }
   }
