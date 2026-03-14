@@ -1,0 +1,241 @@
+<div class="space-y-6">
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Recruiter Management</h1>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mt-1"><%= recruiters.length %> recruiter<%= recruiters.length !== 1 ? 's' : '' %></p>
+    </div>
+    <div class="flex gap-2">
+      <button onclick="openAddModal()" class="px-4 py-2 text-sm font-medium text-white rounded-lg" style="background:hsl(228,100%,11%)">
+        <i class="fas fa-plus mr-1"></i> Add Recruiter
+      </button>
+      <button onclick="recalcTiers()" class="px-4 py-2 text-sm font-medium border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800">
+        <i class="fas fa-sync-alt mr-1"></i> Recalc Tiers
+      </button>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+    <form id="filterForm" method="GET" action="/admin/recruiters" class="flex flex-wrap gap-3 items-end">
+      <div class="flex-1 min-w-[200px]">
+        <input type="text" name="search" placeholder="Search company or contact..." value="<%= query.search || '' %>"
+          class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+      </div>
+      <select name="industry" class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+        <option value="">All Industries</option>
+        <% filterOptions.industries.forEach(function(ind) { %>
+          <option value="<%= ind %>" <%= query.industry === ind ? 'selected' : '' %>><%= ind %></option>
+        <% }); %>
+      </select>
+      <select name="tier" class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+        <option value="">All Tiers</option>
+        <option value="platinum" <%= query.tier === 'platinum' ? 'selected' : '' %>>Platinum</option>
+        <option value="gold" <%= query.tier === 'gold' ? 'selected' : '' %>>Gold</option>
+        <option value="silver" <%= query.tier === 'silver' ? 'selected' : '' %>>Silver</option>
+        <option value="new" <%= query.tier === 'new' ? 'selected' : '' %>>New</option>
+      </select>
+      <select name="mou_status" class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+        <option value="">MOU Status</option>
+        <option value="active" <%= query.mou_status === 'active' ? 'selected' : '' %>>Active</option>
+        <option value="pending" <%= query.mou_status === 'pending' ? 'selected' : '' %>>Pending</option>
+        <option value="expired" <%= query.mou_status === 'expired' ? 'selected' : '' %>>Expired</option>
+        <option value="none" <%= query.mou_status === 'none' ? 'selected' : '' %>>None</option>
+      </select>
+      <select name="company_size" class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+        <option value="">All Sizes</option>
+        <option value="startup" <%= query.company_size === 'startup' ? 'selected' : '' %>>Startup</option>
+        <option value="small" <%= query.company_size === 'small' ? 'selected' : '' %>>Small</option>
+        <option value="medium" <%= query.company_size === 'medium' ? 'selected' : '' %>>Medium</option>
+        <option value="large" <%= query.company_size === 'large' ? 'selected' : '' %>>Large</option>
+        <option value="enterprise" <%= query.company_size === 'enterprise' ? 'selected' : '' %>>Enterprise</option>
+      </select>
+      <input type="number" name="hire_min" placeholder="Min Hires" value="<%= query.hire_min || '' %>"
+        class="w-24 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+      <input type="number" name="hire_max" placeholder="Max Hires" value="<%= query.hire_max || '' %>"
+        class="w-24 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+      <button type="submit" class="px-4 py-2 text-sm font-medium text-white rounded-lg" style="background:hsl(80,89%,40%)">
+        <i class="fas fa-filter mr-1"></i> Filter
+      </button>
+      <% if (query.search || query.industry || query.tier || query.mou_status || query.company_size || query.hire_min || query.hire_max) { %>
+        <a href="/admin/recruiters" class="px-4 py-2 text-sm text-gray-500 hover:text-gray-700">Clear</a>
+      <% } %>
+    </form>
+  </div>
+
+  <!-- Card Grid -->
+  <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    <% if (recruiters.length) { %>
+      <% recruiters.forEach(function(r) { %>
+        <%
+          var tierColors = {
+            platinum: { bg: 'bg-purple-100 dark:bg-purple-900/30', text: 'text-purple-700 dark:text-purple-300', border: 'border-purple-200 dark:border-purple-800' },
+            gold: { bg: 'bg-yellow-100 dark:bg-yellow-900/30', text: 'text-yellow-700 dark:text-yellow-300', border: 'border-yellow-200 dark:border-yellow-800' },
+            silver: { bg: 'bg-gray-100 dark:bg-gray-700', text: 'text-gray-600 dark:text-gray-300', border: 'border-gray-300 dark:border-gray-600' },
+            new: { bg: 'bg-blue-100 dark:bg-blue-900/30', text: 'text-blue-700 dark:text-blue-300', border: 'border-blue-200 dark:border-blue-800' }
+          };
+          var tc = tierColors[r.tier] || tierColors.new;
+        %>
+        <a href="/admin/recruiters/<%= r.id %>" class="block bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 hover:shadow-md transition group">
+          <div class="flex items-start gap-3 mb-3">
+            <% if (r.logo) { %>
+              <img src="<%= r.logo %>" alt="" class="w-10 h-10 rounded-lg object-contain bg-gray-50 dark:bg-gray-800 flex-shrink-0">
+            <% } else { %>
+              <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style="background:hsl(228,100%,11%)">
+                <span class="text-sm font-bold" style="color:hsl(80,89%,40%)"><%= r.company_name.charAt(0).toUpperCase() %></span>
+              </div>
+            <% } %>
+            <div class="min-w-0 flex-1">
+              <p class="font-semibold truncate group-hover:text-blue-600 dark:group-hover:text-blue-400"><%= r.company_name %></p>
+              <p class="text-xs text-gray-500 dark:text-gray-400"><%= r.industry || 'Industry N/A' %></p>
+            </div>
+            <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full <%= tc.bg %> <%= tc.text %>"><%= r.tier %></span>
+          </div>
+
+          <% if (r.contact_name) { %>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mb-2 truncate">
+              <i class="fas fa-user-tie mr-1"></i> <%= r.contact_name %><%= r.contact_role ? ' · ' + r.contact_role : '' %>
+            </p>
+          <% } %>
+
+          <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 pt-2 border-t border-gray-100 dark:border-gray-800">
+            <span><i class="fas fa-briefcase mr-1"></i> Jobs: —</span>
+            <span><i class="fas fa-user-check mr-1"></i> Hired: —</span>
+            <% if (r.last_interaction_at) { %>
+              <span title="Last interaction"><i class="fas fa-clock mr-1"></i> <%= new Date(r.last_interaction_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) %></span>
+            <% } else { %>
+              <span class="text-gray-300 dark:text-gray-600">No contact</span>
+            <% } %>
+          </div>
+        </a>
+      <% }); %>
+    <% } else { %>
+      <div class="col-span-full text-center py-12 text-gray-400">
+        <i class="fas fa-building text-4xl mb-3 opacity-30"></i>
+        <p>No recruiters found</p>
+        <button onclick="openAddModal()" class="mt-3 text-sm text-blue-600 hover:underline">Add your first recruiter</button>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<!-- Add Recruiter Modal -->
+<div id="addModal" class="fixed inset-0 z-50 hidden">
+  <div class="absolute inset-0 bg-black/50" onclick="closeAddModal()"></div>
+  <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-white dark:bg-gray-900 rounded-xl shadow-xl p-6 max-h-[90vh] overflow-y-auto">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-bold text-gray-900 dark:text-white">Add Recruiter</h2>
+      <button onclick="closeAddModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+    </div>
+    <form id="addForm" class="space-y-3">
+      <div class="grid grid-cols-2 gap-3">
+        <div class="col-span-2">
+          <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Company Name *</label>
+          <input type="text" name="company_name" required class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Industry</label>
+          <input type="text" name="industry" class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Company Size</label>
+          <select name="company_size" class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+            <option value="">Select</option>
+            <option value="startup">Startup</option>
+            <option value="small">Small</option>
+            <option value="medium">Medium</option>
+            <option value="large">Large</option>
+            <option value="enterprise">Enterprise</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Website</label>
+          <input type="url" name="website" placeholder="https://" class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Logo URL</label>
+          <input type="url" name="logo" placeholder="https://" class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">MOU Status</label>
+          <select name="mou_status" class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+            <option value="none">None</option>
+            <option value="pending">Pending</option>
+            <option value="active">Active</option>
+            <option value="expired">Expired</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">MOU Expiry</label>
+          <input type="date" name="mou_expiry" class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+        </div>
+
+        <div class="col-span-2 border-t border-gray-100 dark:border-gray-800 pt-3 mt-1">
+          <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-2">Contact Person</p>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Name</label>
+          <input type="text" name="contact_name" class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Role</label>
+          <input type="text" name="contact_role" class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Email</label>
+          <input type="email" name="contact_email" class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Phone</label>
+          <input type="tel" name="contact_phone" class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+        </div>
+      </div>
+      <div class="pt-3 flex justify-end gap-2">
+        <button type="button" onclick="closeAddModal()" class="px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300">Cancel</button>
+        <button type="submit" class="px-4 py-2 text-sm font-medium text-white rounded-lg" style="background:hsl(228,100%,11%)">Create</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function openAddModal() { document.getElementById('addModal').classList.remove('hidden'); }
+function closeAddModal() { document.getElementById('addModal').classList.add('hidden'); }
+
+document.getElementById('addForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  var fd = new FormData(this);
+  var body = {};
+  fd.forEach(function(v, k) { if (v) body[k] = v; });
+
+  fetch('/admin/recruiters/api/create', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data.success) {
+      showToast('Recruiter created', 'success');
+      setTimeout(function() { location.reload(); }, 800);
+    } else {
+      showToast(data.error || 'Failed to create', 'error');
+    }
+  })
+  .catch(function() { showToast('Network error', 'error'); });
+});
+
+function recalcTiers() {
+  fetch('/admin/recruiters/api/recalc-tiers', { method: 'POST' })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data.success) {
+      showToast('Tiers recalculated', 'success');
+      setTimeout(function() { location.reload(); }, 800);
+    } else {
+      showToast(data.error || 'Failed', 'error');
+    }
+  })
+  .catch(function() { showToast('Network error', 'error'); });
+}
+</script>

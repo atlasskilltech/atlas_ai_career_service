@@ -106,12 +106,14 @@ class AdminDashboardService {
 
   // ─── Activity Feeds ────────────────────────────────────────
   async getActivity(academicYear) {
-    const [recentJobs, latestApps, upcomingInterviews] = await Promise.all([
+    const recruiterRepo = require('../repositories/recruiterRepo');
+    const [recentJobs, latestApps, upcomingInterviews, recruiterFollowUps] = await Promise.all([
       dashboardRepo.getRecentJobs(5),
       dashboardRepo.getLatestApplications(5),
       dashboardRepo.getUpcomingInterviews(5),
+      recruiterRepo.getPendingFollowUps(5).catch(() => []),
     ]);
-    return { recentJobs, latestApps, upcomingInterviews };
+    return { recentJobs, latestApps, upcomingInterviews, recruiterFollowUps };
   }
 
   // ─── Helpers ───────────────────────────────────────────────

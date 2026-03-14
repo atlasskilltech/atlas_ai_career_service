@@ -21,7 +21,7 @@
       <a href="/admin/jobs" class="admin-nav-link <%= currentPath.startsWith('/admin/jobs') ? 'active' : '' %>">
         <i class="fas fa-briefcase" style="width:20px"></i> Jobs
       </a>
-      <a href="/admin/recruiters" class="admin-nav-link <%= currentPath === '/admin/recruiters' ? 'active' : '' %>">
+      <a href="/admin/recruiters" class="admin-nav-link <%= currentPath.startsWith('/admin/recruiters') ? 'active' : '' %>">
         <i class="fas fa-building" style="width:20px"></i> Recruiters
       </a>
       <a href="/admin/applications" class="admin-nav-link <%= currentPath === '/admin/applications' ? 'active' : '' %>">
