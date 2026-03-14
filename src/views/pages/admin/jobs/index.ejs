@@ -16,7 +16,7 @@
   </div>
 
   <!-- Stats Cards -->
-  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
     <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 text-center">
       <div class="text-2xl font-bold" style="color:hsl(var(--accent))"><%= stats.total_jobs || 0 %></div>
       <p class="text-xs text-gray-500 mt-1">Total Jobs</p>
@@ -64,7 +64,7 @@
       <h3 class="font-semibold text-gray-900 dark:text-white">Filters</h3>
       <button onclick="clearFilters()" class="text-xs text-red-500 hover:text-red-600 font-medium">Clear All</button>
     </div>
-    <form id="filter-form" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <form id="filter-form" style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px">
       <div>
         <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Status</label>
         <select name="status" class="w-full text-sm border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800">
@@ -132,7 +132,7 @@
           <% }); %>
         </select>
       </div>
-      <div class="sm:col-span-2 lg:col-span-4 flex justify-end gap-3 pt-2">
+      <div style="grid-column:1/-1;display:flex;justify-content:flex-end;gap:12px;padding-top:8px">
         <button type="button" onclick="clearFilters()" class="px-4 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition">Reset</button>
         <button type="submit" class="px-6 py-2 text-sm text-white rounded-lg font-medium transition" style="background:hsl(var(--accent))">Apply</button>
       </div>
@@ -140,7 +140,7 @@
   </div>
 
   <!-- Card Grid View -->
-  <div id="view-grid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+  <div id="view-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
     <% if (jobs.length) { %>
       <% jobs.forEach(function(j) { %>
         <%
@@ -180,7 +180,7 @@
           <% } %>
 
           <!-- Pipeline Mini Stats -->
-          <div class="grid grid-cols-4 gap-1 pt-3 border-t border-gray-100 dark:border-gray-800">
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding-top:12px;border-top:1px solid #f3f4f6">
             <div class="text-center">
               <div class="text-sm font-bold text-gray-700 dark:text-gray-300"><%= j.applied_count || 0 %></div>
               <div class="text-[9px] text-gray-400">Applied</div>
@@ -201,7 +201,7 @@
         </a>
       <% }); %>
     <% } else { %>
-      <div class="sm:col-span-2 lg:col-span-3 py-12 text-center text-gray-400">
+      <div style="grid-column:1/-1" class="py-12 text-center text-gray-400">
         <i class="fas fa-briefcase text-4xl mb-3 block"></i>
         <p>No jobs found</p>
         <a href="/admin/jobs/create" class="text-sm mt-2 inline-block" style="color:hsl(var(--accent))">Create your first job</a>
@@ -346,7 +346,9 @@ var currentView = localStorage.getItem('admin-jobs-view') || 'grid';
 function setView(v){
   currentView = v;
   localStorage.setItem('admin-jobs-view', v);
-  document.getElementById('view-grid').style.display = v === 'grid' ? 'grid' : 'none';
+  var gridEl = document.getElementById('view-grid');
+  gridEl.style.display = v === 'grid' ? 'grid' : 'none';
+  gridEl.style.gridTemplateColumns = 'repeat(3, 1fr)';
   document.getElementById('view-list').style.display = v === 'list' ? 'block' : 'none';
   document.getElementById('btn-grid').style.background = v === 'grid' ? 'hsl(var(--accent))' : '';
   document.getElementById('btn-grid').style.color = v === 'grid' ? 'white' : '#6b7280';
