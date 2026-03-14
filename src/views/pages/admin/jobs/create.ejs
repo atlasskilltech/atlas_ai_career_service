@@ -37,10 +37,34 @@
           <input type="text" id="f-company-name" value="<%= job ? job.company_name : '' %>" required
             class="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-800 text-sm">
         </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Company Logo URL</label>
-          <input type="text" id="f-company-logo" value="<%= job ? (job.company_logo || '') : '' %>" placeholder="https://..."
-            class="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-800 text-sm">
+        <div class="sm:col-span-2">
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Company Logo</label>
+          <div class="flex items-start gap-4">
+            <!-- Logo Preview -->
+            <div id="logo-preview" class="w-16 h-16 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center overflow-hidden" style="flex-shrink:0">
+              <% if (job && job.company_logo) { %>
+                <img src="<%= job.company_logo %>" alt="" class="w-full h-full object-contain">
+              <% } else { %>
+                <i class="fas fa-image text-gray-300 text-xl"></i>
+              <% } %>
+            </div>
+            <div class="flex-1 space-y-2">
+              <!-- File Upload -->
+              <div>
+                <label class="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer text-sm transition">
+                  <i class="fas fa-upload"></i> Upload Image
+                  <input type="file" id="f-company-logo-file" accept="image/*" style="display:none" onchange="previewLogo(this)">
+                </label>
+                <span id="logo-file-name" class="text-xs text-gray-500 ml-2"></span>
+              </div>
+              <!-- OR URL -->
+              <div class="flex items-center gap-2">
+                <span class="text-xs text-gray-400">or paste URL:</span>
+                <input type="text" id="f-company-logo" value="<%= job ? (job.company_logo || '') : '' %>" placeholder="https://logo.clearbit.com/company.com"
+                  class="flex-1 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 text-sm" oninput="previewLogoUrl(this.value)">
+              </div>
+            </div>
+          </div>
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Role / Title *</label>
@@ -310,42 +334,90 @@ function addRound() {
 function removeRound(idx) { rounds.splice(idx, 1); renderRounds(); }
 renderRounds();
 
+// ─── Logo Preview ────────────────────────────────────────
+function previewLogo(input) {
+  if (input.files && input.files[0]) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      document.getElementById('logo-preview').innerHTML = '<img src="' + e.target.result + '" class="w-full h-full object-contain">';
+      // Clear URL input when file is selected
+      document.getElementById('f-company-logo').value = '';
+    };
+    reader.readAsDataURL(input.files[0]);
+    document.getElementById('logo-file-name').textContent = input.files[0].name;
+  }
+}
+function previewLogoUrl(url) {
+  if (!url) return;
+  var preview = document.getElementById('logo-preview');
+  var img = new Image();
+  img.onload = function() { preview.innerHTML = '<img src="' + url + '" class="w-full h-full object-contain">'; };
+  img.onerror = function() { preview.innerHTML = '<i class="fas fa-image text-gray-300 text-xl"></i>'; };
+  img.src = url;
+  // Clear file input when URL is typed
+  document.getElementById('f-company-logo-file').value = '';
+  document.getElementById('logo-file-name').textContent = '';
+}
+
 // ─── Submit ──────────────────────────────────────────────
 function submitJob() {
   var btn = document.getElementById('submit-btn');
   btn.disabled = true;
   btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Saving...';
 
-  var body = {
-    company_name: document.getElementById('f-company-name').value.trim(),
-    company_logo: document.getElementById('f-company-logo').value.trim() || null,
-    role_title: document.getElementById('f-role-title').value.trim(),
-    job_type: document.getElementById('f-job-type').value,
-    ctc_min: parseFloat(document.getElementById('f-ctc-min').value) || null,
-    ctc_max: parseFloat(document.getElementById('f-ctc-max').value) || null,
-    location: document.getElementById('f-location').value.trim() || null,
-    work_mode: document.getElementById('f-work-mode').value,
-    description: quill.root.innerHTML,
-    cgpa_cutoff: parseFloat(document.getElementById('f-cgpa-cutoff').value) || null,
-    application_deadline: document.getElementById('f-deadline').value || null,
-    joining_date: document.getElementById('f-joining').value || null,
-    eligible_programs: document.getElementById('f-programs').value.split(',').map(function(s){return s.trim()}).filter(Boolean).join(','),
-    eligible_branches: document.getElementById('f-branches').value.split(',').map(function(s){return s.trim()}).filter(Boolean).join(','),
-    eligible_years: document.getElementById('f-years').value.split(',').map(function(s){return s.trim()}).filter(Boolean).join(','),
-    skills: skills.join(','),
-    rounds: JSON.stringify(rounds.filter(function(r){ return r.round_name; })),
-    selection_notes: document.getElementById('f-selection-notes').value.trim() || null,
-    status: document.getElementById('f-status').value,
-  };
+  var fd = new FormData();
+  fd.append('company_name', document.getElementById('f-company-name').value.trim());
+  fd.append('role_title', document.getElementById('f-role-title').value.trim());
+  fd.append('job_type', document.getElementById('f-job-type').value);
+  fd.append('work_mode', document.getElementById('f-work-mode').value);
+  fd.append('status', document.getElementById('f-status').value);
+  fd.append('description', quill.root.innerHTML);
+  fd.append('skills', skills.join(','));
+  fd.append('rounds', JSON.stringify(rounds.filter(function(r){ return r.round_name; })));
+
+  // Logo: file takes priority over URL
+  var logoFile = document.getElementById('f-company-logo-file').files[0];
+  var logoUrl = document.getElementById('f-company-logo').value.trim();
+  if (logoFile) {
+    fd.append('company_logo_file', logoFile);
+  } else if (logoUrl) {
+    fd.append('company_logo', logoUrl);
+  }
+
+  // Optional fields
+  var ctcMin = document.getElementById('f-ctc-min').value;
+  var ctcMax = document.getElementById('f-ctc-max').value;
+  if (ctcMin) fd.append('ctc_min', ctcMin);
+  if (ctcMax) fd.append('ctc_max', ctcMax);
+
+  var loc = document.getElementById('f-location').value.trim();
+  if (loc) fd.append('location', loc);
+
+  var cgpa = document.getElementById('f-cgpa-cutoff').value;
+  if (cgpa) fd.append('cgpa_cutoff', cgpa);
+
+  var deadline = document.getElementById('f-deadline').value;
+  if (deadline) fd.append('application_deadline', deadline);
+
+  var joining = document.getElementById('f-joining').value;
+  if (joining) fd.append('joining_date', joining);
+
+  var programs = document.getElementById('f-programs').value.split(',').map(function(s){return s.trim()}).filter(Boolean).join(',');
+  if (programs) fd.append('eligible_programs', programs);
+
+  var branches = document.getElementById('f-branches').value.split(',').map(function(s){return s.trim()}).filter(Boolean).join(',');
+  if (branches) fd.append('eligible_branches', branches);
+
+  var years = document.getElementById('f-years').value.split(',').map(function(s){return s.trim()}).filter(Boolean).join(',');
+  if (years) fd.append('eligible_years', years);
+
+  var notes = document.getElementById('f-selection-notes').value.trim();
+  if (notes) fd.append('selection_notes', notes);
 
   var url = isEdit ? '/admin/jobs/api/' + editJobId : '/admin/jobs/api/create';
   var method = isEdit ? 'PUT' : 'POST';
 
-  fetch(url, {
-    method: method,
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  })
+  fetch(url, { method: method, body: fd })
   .then(function(r){ return r.json(); })
   .then(function(res){
     if (res.success) {
