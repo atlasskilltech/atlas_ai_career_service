@@ -176,11 +176,22 @@ class JobAggregatorRepository {
 
   async getUserApplications(userId) {
     const [rows] = await pool.execute(
-      `SELECT a.*, j.title, j.company, j.location, j.source, j.apply_url
+      `SELECT a.id, a.status, a.applied_at, a.user_id, a.job_id,
+              j.title, j.company, j.location, j.source, j.apply_url
        FROM aicp_job_applications a
        JOIN aicp_aggregated_jobs j ON a.job_id = j.id
-       WHERE a.user_id = ? ORDER BY a.applied_at DESC`,
-      [userId]
+       WHERE a.user_id = ?
+
+       UNION ALL
+
+       SELECT aa.id, aa.stage AS status, aa.applied_at, aa.user_id, aa.job_id,
+              aj.role_title AS title, aj.company_name AS company, aj.location, 'admin' AS source, NULL AS apply_url
+       FROM aicp_admin_job_applications aa
+       JOIN aicp_admin_jobs aj ON aa.job_id = aj.id
+       WHERE aa.user_id = ?
+
+       ORDER BY applied_at DESC`,
+      [userId, userId]
     );
     return rows;
   }
