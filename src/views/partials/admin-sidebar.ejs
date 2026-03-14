@@ -16,10 +16,10 @@
     <a href="/admin" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-200 hover:bg-blue-900 hover:text-white transition-all <%= currentPath === '/admin' ? 'bg-blue-900 text-white' : '' %>">
       <i class="fas fa-tachometer-alt w-5"></i> Dashboard
     </a>
-    <a href="/admin/students" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-200 hover:bg-blue-900 hover:text-white transition-all <%= currentPath === '/admin/students' ? 'bg-blue-900 text-white' : '' %>">
+    <a href="/admin/students" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-200 hover:bg-blue-900 hover:text-white transition-all <%= currentPath.startsWith('/admin/students') ? 'bg-blue-900 text-white' : '' %>">
       <i class="fas fa-user-graduate w-5"></i> Students
     </a>
-    <a href="/admin/jobs" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-200 hover:bg-blue-900 hover:text-white transition-all <%= currentPath === '/admin/jobs' ? 'bg-blue-900 text-white' : '' %>">
+    <a href="/admin/jobs" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-200 hover:bg-blue-900 hover:text-white transition-all <%= currentPath.startsWith('/admin/jobs') ? 'bg-blue-900 text-white' : '' %>">
       <i class="fas fa-briefcase w-5"></i> Jobs
     </a>
     <a href="/admin/recruiters" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-200 hover:bg-blue-900 hover:text-white transition-all <%= currentPath === '/admin/recruiters' ? 'bg-blue-900 text-white' : '' %>">

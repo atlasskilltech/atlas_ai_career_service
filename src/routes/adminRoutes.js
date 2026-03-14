@@ -20,8 +20,8 @@ router.post('/refresh', adminDashboardController.postRefresh.bind(adminDashboard
 // Student Management (full sub-router)
 router.use('/students', require('./adminStudentRoutes'));
 
-// Admin section pages
-router.get('/jobs', adminController.jobs);
+// Job Management (full sub-router)
+router.use('/jobs', require('./adminJobRoutes'));
 router.get('/recruiters', adminController.recruiters);
 router.get('/applications', adminController.applications);
 router.get('/interviews', adminController.interviews);
