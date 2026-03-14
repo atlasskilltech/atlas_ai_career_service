@@ -145,14 +145,14 @@
 
 <script>
 function toggleSidebar() {
-  if (window.innerWidth >= 1024) {
-    // Desktop: toggle closed state
-    document.body.classList.toggle('sidebar-closed');
+  // Toggle on both html and body to cover the early-load class on <html>
+  var isOpen = document.documentElement.classList.contains('sidebar-open') || document.body.classList.contains('sidebar-open');
+  if (isOpen) {
+    document.documentElement.classList.remove('sidebar-open');
     document.body.classList.remove('sidebar-open');
   } else {
-    // Mobile: toggle open state
-    document.body.classList.toggle('sidebar-open');
-    document.body.classList.remove('sidebar-closed');
+    document.documentElement.classList.add('sidebar-open');
+    document.body.classList.add('sidebar-open');
   }
 }
 </script>

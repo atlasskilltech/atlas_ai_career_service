@@ -21,19 +21,12 @@
     }
     body { font-family: 'Inter', sans-serif; }
 
-    /* Desktop: sidebar visible by default */
+    /* Sidebar visible when sidebar-open is on <html> or <body> */
+    .sidebar-open .admin-sidebar  { transform: translateX(0) !important; }
+    .sidebar-open .admin-overlay  { display: block; }
     @media (min-width: 1024px) {
-      .admin-sidebar  { transform: translateX(0) !important; }
-      .admin-content  { margin-left: var(--sidebar-w) !important; }
-      /* Allow closing on desktop */
-      .sidebar-closed .admin-sidebar  { transform: translateX(-100%) !important; }
-      .sidebar-closed .admin-content  { margin-left: 0 !important; }
-    }
-
-    /* Mobile: sidebar hidden by default, shown with sidebar-open */
-    @media (max-width: 1023px) {
-      .sidebar-open .admin-sidebar  { transform: translateX(0); }
-      .sidebar-open .admin-overlay  { display: block; }
+      .sidebar-open .admin-content  { margin-left: var(--sidebar-w); }
+      .sidebar-open .admin-overlay  { display: none !important; }
     }
 
     /* Scrollbar styling */
@@ -51,6 +44,10 @@
   </style>
   <script>
     if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark');
+  </script>
+  <!-- Auto-open sidebar on desktop before paint to prevent flash -->
+  <script>
+    if (window.innerWidth >= 1024) document.documentElement.classList.add('sidebar-open');
   </script>
 </head>
 <body class="bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 min-h-screen">
