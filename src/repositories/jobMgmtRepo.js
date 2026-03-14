@@ -136,7 +136,9 @@ class JobMgmtRepo {
 
     const [rows] = await pool.execute(
       `SELECT j.*,
-        (SELECT COUNT(*) FROM aicp_admin_job_applications WHERE job_id = j.id) as total_applicants,
+        (SELECT COUNT(*) FROM aicp_admin_job_applications WHERE job_id = j.id)
+        + COALESCE((SELECT COUNT(*) FROM aicp_job_applications ja JOIN aicp_aggregated_jobs ag ON ag.id = ja.job_id WHERE ag.source = 'manual' AND ag.external_id = CONCAT('admin-job-', j.id) AND ja.user_id NOT IN (SELECT user_id FROM aicp_admin_job_applications WHERE job_id = j.id)), 0)
+        as total_applicants,
         (SELECT COUNT(*) FROM aicp_admin_job_applications WHERE job_id = j.id AND stage = 'applied') as applied_count,
         (SELECT COUNT(*) FROM aicp_admin_job_applications WHERE job_id = j.id AND stage = 'shortlisted') as shortlisted_count,
         (SELECT COUNT(*) FROM aicp_admin_job_applications WHERE job_id = j.id AND stage = 'interview') as interview_count,
@@ -363,7 +365,9 @@ class JobMgmtRepo {
         SUM(status = 'active') as active_jobs,
         SUM(status = 'draft') as draft_jobs,
         SUM(status = 'closed') as closed_jobs,
-        (SELECT COUNT(*) FROM aicp_admin_job_applications) as total_applications,
+        (SELECT COUNT(*) FROM aicp_admin_job_applications)
+        + (SELECT COUNT(*) FROM aicp_job_applications ja JOIN aicp_aggregated_jobs ag ON ag.id = ja.job_id WHERE ag.source = 'manual')
+        as total_applications,
         (SELECT COUNT(*) FROM aicp_admin_job_applications WHERE stage = 'offered') as total_offers
       FROM aicp_admin_jobs
     `);
