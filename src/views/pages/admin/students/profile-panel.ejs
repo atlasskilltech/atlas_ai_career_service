@@ -1,0 +1,111 @@
+<!-- Slide-in Profile Panel (right side) -->
+<div id="profile-panel" class="fixed inset-y-0 right-0 w-full sm:w-[480px] bg-white dark:bg-gray-900 shadow-2xl z-50 transform translate-x-full transition-transform duration-300 overflow-y-auto border-l border-gray-200 dark:border-gray-800">
+  <!-- Header -->
+  <div class="sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-5 py-4 flex items-center justify-between z-10">
+    <h3 class="font-semibold text-gray-900 dark:text-white">Student Profile</h3>
+    <button onclick="closeProfilePanel()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
+
+  <!-- Loading -->
+  <div id="panel-loading" class="flex items-center justify-center py-20">
+    <i class="fas fa-spinner fa-spin text-2xl text-gray-400"></i>
+  </div>
+
+  <!-- Content (populated by JS) -->
+  <div id="panel-content" class="hidden p-5 space-y-6">
+    <!-- Personal Info -->
+    <div class="flex items-start gap-4">
+      <div id="panel-avatar" class="w-16 h-16 rounded-full bg-primary flex items-center justify-center text-white text-xl font-bold flex-shrink-0"></div>
+      <div>
+        <h4 id="panel-name" class="text-lg font-bold text-gray-900 dark:text-white"></h4>
+        <p id="panel-email" class="text-sm text-gray-500"></p>
+        <p id="panel-phone" class="text-sm text-gray-500"></p>
+        <div class="flex items-center gap-2 mt-1">
+          <span id="panel-student-id" class="text-xs bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded"></span>
+          <span id="panel-status-badge" class="text-xs px-2 py-0.5 rounded-full font-medium"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Completeness Score -->
+    <div class="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-sm font-medium">Profile Completeness</span>
+        <span id="panel-completeness" class="text-sm font-bold"></span>
+      </div>
+      <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+        <div id="panel-completeness-bar" class="h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+      </div>
+      <div id="panel-completeness-breakdown" class="grid grid-cols-2 gap-2 mt-3 text-xs"></div>
+    </div>
+
+    <!-- Academic Info -->
+    <div>
+      <h5 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-3">Academic</h5>
+      <div class="grid grid-cols-2 gap-3 text-sm">
+        <div><span class="text-gray-500">Program:</span> <span id="panel-program" class="font-medium"></span></div>
+        <div><span class="text-gray-500">Branch:</span> <span id="panel-branch" class="font-medium"></span></div>
+        <div><span class="text-gray-500">Grad Year:</span> <span id="panel-grad-year" class="font-medium"></span></div>
+        <div><span class="text-gray-500">CGPA:</span> <span id="panel-cgpa" class="font-medium"></span></div>
+      </div>
+    </div>
+
+    <!-- Career Section -->
+    <div>
+      <h5 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-3">Career</h5>
+      <div class="flex items-center gap-4 mb-3">
+        <!-- ATS Score Ring -->
+        <div class="relative w-16 h-16 flex-shrink-0">
+          <svg class="w-16 h-16 transform -rotate-90" viewBox="0 0 36 36">
+            <path class="text-gray-200 dark:text-gray-700" stroke="currentColor" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+            <path id="panel-ats-ring" class="text-accent" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+          </svg>
+          <span id="panel-ats-score" class="absolute inset-0 flex items-center justify-center text-xs font-bold"></span>
+        </div>
+        <div class="text-sm space-y-1">
+          <div id="panel-resume-link"></div>
+          <div id="panel-linkedin-link"></div>
+          <div id="panel-github-link"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Skills -->
+    <div>
+      <div class="flex items-center justify-between mb-3">
+        <h5 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Skills</h5>
+        <button onclick="toggleAddSkill()" class="text-xs text-accent hover:underline font-medium"><i class="fas fa-plus"></i> Add</button>
+      </div>
+      <!-- Add skill form (hidden) -->
+      <div id="add-skill-form" class="hidden mb-3 flex gap-2">
+        <input type="text" id="new-skill-name" placeholder="Skill name" class="flex-1 text-sm border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800">
+        <select id="new-skill-type" class="text-sm border border-gray-300 dark:border-gray-700 rounded-lg px-2 py-1.5 bg-white dark:bg-gray-800">
+          <option value="technical">Technical</option>
+          <option value="soft">Soft</option>
+          <option value="tool">Tool</option>
+        </select>
+        <button onclick="addSkillToStudent()" class="px-3 py-1.5 bg-accent text-white rounded-lg text-sm"><i class="fas fa-check"></i></button>
+      </div>
+      <div id="panel-skills" class="flex flex-wrap gap-1.5"></div>
+    </div>
+
+    <!-- Projects -->
+    <div>
+      <h5 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-3">Projects</h5>
+      <div id="panel-projects" class="space-y-2"></div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div>
+      <h5 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-3">Activity</h5>
+      <div class="text-sm space-y-1 mb-3">
+        <div><span class="text-gray-500">Last Login:</span> <span id="panel-last-active" class="font-medium"></span></div>
+        <div><span class="text-gray-500">Member Since:</span> <span id="panel-joined" class="font-medium"></span></div>
+      </div>
+      <div id="panel-applications" class="space-y-2"></div>
+    </div>
+  </div>
+</div>
+<div id="panel-backdrop" class="hidden fixed inset-0 bg-black/30 z-40" onclick="closeProfilePanel()"></div>
