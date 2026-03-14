@@ -1,0 +1,61 @@
+<div class="space-y-6">
+  <h1 class="text-2xl font-bold">Placement Records</h1>
+
+  <% if (placements.length) { %>
+    <div class="grid sm:grid-cols-3 gap-4 mb-2">
+      <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 text-center">
+        <div class="text-2xl font-bold text-green-600"><%= placements.length %></div>
+        <div class="text-xs text-gray-500 mt-1">Total Placements</div>
+      </div>
+      <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 text-center">
+        <% var uniqueCompanies = [...new Set(placements.map(function(p) { return p.company; }))]; %>
+        <div class="text-2xl font-bold text-blue-600"><%= uniqueCompanies.length %></div>
+        <div class="text-xs text-gray-500 mt-1">Companies</div>
+      </div>
+      <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 text-center">
+        <% var avgSal = placements.filter(function(p){return p.salary;}).reduce(function(s,p){return s+p.salary;},0) / (placements.filter(function(p){return p.salary;}).length || 1); %>
+        <div class="text-2xl font-bold text-purple-600"><%= avgSal >= 100000 ? (avgSal/100000).toFixed(1) + 'L' : Math.round(avgSal).toLocaleString() %></div>
+        <div class="text-xs text-gray-500 mt-1">Avg Salary</div>
+      </div>
+    </div>
+  <% } %>
+
+  <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="bg-gray-50 dark:bg-gray-800 text-left">
+            <th class="py-3 px-4 font-medium">Student</th>
+            <th class="py-3 px-4 font-medium">Department</th>
+            <th class="py-3 px-4 font-medium">Company</th>
+            <th class="py-3 px-4 font-medium">Position</th>
+            <th class="py-3 px-4 font-medium">Salary</th>
+            <th class="py-3 px-4 font-medium">Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (placements.length) { %>
+            <% placements.forEach(function(p) { %>
+              <tr class="border-t border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                <td class="py-3 px-4 font-medium"><%= p.student %></td>
+                <td class="py-3 px-4 text-gray-500"><%= p.department || '-' %></td>
+                <td class="py-3 px-4"><%= p.company %></td>
+                <td class="py-3 px-4 text-gray-600 dark:text-gray-400"><%= p.position %></td>
+                <td class="py-3 px-4 font-medium">
+                  <% if (p.salary) { %>
+                    <%= p.salary >= 100000 ? '₹' + (p.salary/100000).toFixed(1) + 'L' : '₹' + p.salary.toLocaleString() %>
+                  <% } else { %>
+                    <span class="text-gray-400">-</span>
+                  <% } %>
+                </td>
+                <td class="py-3 px-4 text-gray-500 text-xs"><%= p.placed_at ? new Date(p.placed_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '-' %></td>
+              </tr>
+            <% }); %>
+          <% } else { %>
+            <tr><td colspan="6" class="py-8 text-center text-gray-400">No placements recorded yet</td></tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

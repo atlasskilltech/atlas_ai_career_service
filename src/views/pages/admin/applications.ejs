@@ -1,0 +1,51 @@
+<div class="space-y-6">
+  <h1 class="text-2xl font-bold">Applications</h1>
+
+  <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="bg-gray-50 dark:bg-gray-800 text-left">
+            <th class="py-3 px-4 font-medium">Student</th>
+            <th class="py-3 px-4 font-medium">Department</th>
+            <th class="py-3 px-4 font-medium">Job Title</th>
+            <th class="py-3 px-4 font-medium">Company</th>
+            <th class="py-3 px-4 font-medium">Status</th>
+            <th class="py-3 px-4 font-medium">Applied</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (applications.length) { %>
+            <% applications.forEach(function(a) { %>
+              <tr class="border-t border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                <td class="py-3 px-4">
+                  <p class="font-medium"><%= a.student %></p>
+                  <p class="text-xs text-gray-500"><%= a.email %></p>
+                </td>
+                <td class="py-3 px-4 text-gray-500"><%= a.department || '-' %></td>
+                <td class="py-3 px-4 max-w-[180px] truncate"><%= a.job_title %></td>
+                <td class="py-3 px-4 text-gray-600 dark:text-gray-400"><%= a.company %></td>
+                <td class="py-3 px-4">
+                  <%
+                    var statusColors = {
+                      applied: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
+                      reviewed: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+                      shortlisted: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400',
+                      interview: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
+                      offered: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+                      rejected: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+                    };
+                  %>
+                  <span class="text-xs font-medium px-2 py-0.5 rounded-full <%= statusColors[a.status] || statusColors.applied %>"><%= a.status %></span>
+                </td>
+                <td class="py-3 px-4 text-gray-500 text-xs"><%= new Date(a.applied_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) %></td>
+              </tr>
+            <% }); %>
+          <% } else { %>
+            <tr><td colspan="6" class="py-8 text-center text-gray-400">No applications found</td></tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

@@ -19,35 +19,35 @@
     <a href="/admin/students" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-200 hover:bg-blue-900 hover:text-white transition-all <%= currentPath === '/admin/students' ? 'bg-blue-900 text-white' : '' %>">
       <i class="fas fa-user-graduate w-5"></i> Students
     </a>
-    <a href="/jobs" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-200 hover:bg-blue-900 hover:text-white transition-all <%= currentPath.startsWith('/jobs') ? 'bg-blue-900 text-white' : '' %>">
+    <a href="/admin/jobs" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-200 hover:bg-blue-900 hover:text-white transition-all <%= currentPath === '/admin/jobs' ? 'bg-blue-900 text-white' : '' %>">
       <i class="fas fa-briefcase w-5"></i> Jobs
     </a>
-    <a href="/job-board" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-200 hover:bg-blue-900 hover:text-white transition-all <%= currentPath.startsWith('/job-board') ? 'bg-blue-900 text-white' : '' %>">
+    <a href="/admin/recruiters" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-200 hover:bg-blue-900 hover:text-white transition-all <%= currentPath === '/admin/recruiters' ? 'bg-blue-900 text-white' : '' %>">
       <i class="fas fa-building w-5"></i> Recruiters
     </a>
-    <a href="/jobs" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-200 hover:bg-blue-900 hover:text-white transition-all">
+    <a href="/admin/applications" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-200 hover:bg-blue-900 hover:text-white transition-all <%= currentPath === '/admin/applications' ? 'bg-blue-900 text-white' : '' %>">
       <i class="fas fa-paper-plane w-5"></i> Applications
     </a>
 
     <div class="pt-4 mt-4 border-t border-blue-900">
       <p class="text-xs text-blue-400 uppercase tracking-wide px-4 mb-2">Analytics</p>
-      <a href="/skills" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-200 hover:bg-blue-900 hover:text-white transition-all <%= currentPath.startsWith('/skills') ? 'bg-blue-900 text-white' : '' %>">
+      <a href="/admin/skill-gap" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-200 hover:bg-blue-900 hover:text-white transition-all <%= currentPath === '/admin/skill-gap' ? 'bg-blue-900 text-white' : '' %>">
         <i class="fas fa-chart-bar w-5"></i> Skill Gap
       </a>
-      <a href="/admin" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-200 hover:bg-blue-900 hover:text-white transition-all">
+      <a href="/admin/placement" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-200 hover:bg-blue-900 hover:text-white transition-all <%= currentPath === '/admin/placement' ? 'bg-blue-900 text-white' : '' %>">
         <i class="fas fa-chart-pie w-5"></i> Placement
       </a>
-      <a href="/interview" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-200 hover:bg-blue-900 hover:text-white transition-all <%= currentPath.startsWith('/interview') ? 'bg-blue-900 text-white' : '' %>">
+      <a href="/admin/interviews" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-200 hover:bg-blue-900 hover:text-white transition-all <%= currentPath === '/admin/interviews' ? 'bg-blue-900 text-white' : '' %>">
         <i class="fas fa-video w-5"></i> Interviews
       </a>
     </div>
 
     <div class="pt-4 mt-4 border-t border-blue-900">
       <p class="text-xs text-blue-400 uppercase tracking-wide px-4 mb-2">System</p>
-      <a href="/networking" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-200 hover:bg-blue-900 hover:text-white transition-all <%= currentPath.startsWith('/networking') ? 'bg-blue-900 text-white' : '' %>">
+      <a href="/admin/communication" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-200 hover:bg-blue-900 hover:text-white transition-all <%= currentPath === '/admin/communication' ? 'bg-blue-900 text-white' : '' %>">
         <i class="fas fa-envelope w-5"></i> Communication
       </a>
-      <a href="#" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-200 hover:bg-blue-900 hover:text-white transition-all">
+      <a href="/admin/settings" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-200 hover:bg-blue-900 hover:text-white transition-all <%= currentPath === '/admin/settings' ? 'bg-blue-900 text-white' : '' %>">
         <i class="fas fa-cog w-5"></i> Settings
       </a>
     </div>
