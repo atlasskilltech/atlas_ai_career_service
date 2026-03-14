@@ -1,97 +1,154 @@
 <!-- Mobile overlay backdrop -->
-<div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 hidden lg:hidden" onclick="toggleSidebar()"></div>
+<div id="sidebar-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:40" onclick="toggleSidebar()"></div>
 
-<aside id="app-sidebar" class="fixed left-0 top-0 h-full w-64 bg-primary dark:bg-gray-900 z-50 flex flex-col transition-transform duration-300 -translate-x-full lg:translate-x-0">
+<aside id="app-sidebar" style="position:fixed;left:0;top:0;bottom:0;width:256px;z-index:50;display:flex;flex-direction:column;transform:translateX(-100%);transition:transform 0.3s ease;background:hsl(228,100%,11%)" class="dark:bg-gray-900">
   <!-- Close button for mobile -->
-  <button onclick="toggleSidebar()" class="absolute top-4 right-4 lg:hidden text-blue-200 hover:text-white text-lg">
+  <button onclick="toggleSidebar()" id="sidebar-close-btn" style="position:absolute;top:16px;right:16px;color:#93c5fd;font-size:18px;background:none;border:none;cursor:pointer;display:none">
     <i class="fas fa-times"></i>
   </button>
 
-  <div class="p-6 border-b border-blue-900">
-    <h1 class="text-xl font-bold text-white">Atlas Admin</h1>
-    <p class="text-xs text-blue-300 mt-1">Placement Cell Dashboard</p>
+  <div style="padding:24px;border-bottom:1px solid #1e3a5f">
+    <h1 style="font-size:20px;font-weight:700;color:#fff;margin:0">Atlas Admin</h1>
+    <p style="font-size:12px;color:#93c5fd;margin-top:4px">Placement Cell Dashboard</p>
   </div>
 
-  <nav class="flex-1 p-4 space-y-1 overflow-y-auto">
-    <a href="/admin" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-200 hover:bg-blue-900 hover:text-white transition-all <%= currentPath === '/admin' ? 'bg-blue-900 text-white' : '' %>">
-      <i class="fas fa-tachometer-alt w-5"></i> Dashboard
-    </a>
-    <a href="/admin/students" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-200 hover:bg-blue-900 hover:text-white transition-all <%= currentPath.startsWith('/admin/students') ? 'bg-blue-900 text-white' : '' %>">
-      <i class="fas fa-user-graduate w-5"></i> Students
-    </a>
-    <a href="/admin/jobs" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-200 hover:bg-blue-900 hover:text-white transition-all <%= currentPath.startsWith('/admin/jobs') ? 'bg-blue-900 text-white' : '' %>">
-      <i class="fas fa-briefcase w-5"></i> Jobs
-    </a>
-    <a href="/admin/recruiters" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-200 hover:bg-blue-900 hover:text-white transition-all <%= currentPath === '/admin/recruiters' ? 'bg-blue-900 text-white' : '' %>">
-      <i class="fas fa-building w-5"></i> Recruiters
-    </a>
-    <a href="/admin/applications" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-200 hover:bg-blue-900 hover:text-white transition-all <%= currentPath === '/admin/applications' ? 'bg-blue-900 text-white' : '' %>">
-      <i class="fas fa-paper-plane w-5"></i> Applications
-    </a>
-    <a href="/job-board/admin" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-200 hover:bg-blue-900 hover:text-white transition-all <%= currentPath === '/job-board/admin' ? 'bg-blue-900 text-white' : '' %>">
-      <i class="fas fa-search-dollar w-5"></i> Job Board
-    </a>
-
-    <div class="pt-4 mt-4 border-t border-blue-900">
-      <p class="text-xs text-blue-400 uppercase tracking-wide px-4 mb-2">Analytics</p>
-      <a href="/admin/skill-gap" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-200 hover:bg-blue-900 hover:text-white transition-all <%= currentPath === '/admin/skill-gap' ? 'bg-blue-900 text-white' : '' %>">
-        <i class="fas fa-chart-bar w-5"></i> Skill Gap
+  <nav style="flex:1;padding:16px;overflow-y:auto">
+    <div style="display:flex;flex-direction:column;gap:4px">
+      <a href="/admin" class="admin-nav-link <%= currentPath === '/admin' ? 'active' : '' %>">
+        <i class="fas fa-tachometer-alt" style="width:20px"></i> Dashboard
       </a>
-      <a href="/admin/placement" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-200 hover:bg-blue-900 hover:text-white transition-all <%= currentPath === '/admin/placement' ? 'bg-blue-900 text-white' : '' %>">
-        <i class="fas fa-chart-pie w-5"></i> Placement
+      <a href="/admin/students" class="admin-nav-link <%= currentPath.startsWith('/admin/students') ? 'active' : '' %>">
+        <i class="fas fa-user-graduate" style="width:20px"></i> Students
       </a>
-      <a href="/admin/interviews" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-200 hover:bg-blue-900 hover:text-white transition-all <%= currentPath === '/admin/interviews' ? 'bg-blue-900 text-white' : '' %>">
-        <i class="fas fa-video w-5"></i> Interviews
+      <a href="/admin/jobs" class="admin-nav-link <%= currentPath.startsWith('/admin/jobs') ? 'active' : '' %>">
+        <i class="fas fa-briefcase" style="width:20px"></i> Jobs
+      </a>
+      <a href="/admin/recruiters" class="admin-nav-link <%= currentPath === '/admin/recruiters' ? 'active' : '' %>">
+        <i class="fas fa-building" style="width:20px"></i> Recruiters
+      </a>
+      <a href="/admin/applications" class="admin-nav-link <%= currentPath === '/admin/applications' ? 'active' : '' %>">
+        <i class="fas fa-paper-plane" style="width:20px"></i> Applications
+      </a>
+      <a href="/job-board/admin" class="admin-nav-link <%= currentPath === '/job-board/admin' ? 'active' : '' %>">
+        <i class="fas fa-search-dollar" style="width:20px"></i> Job Board
       </a>
     </div>
 
-    <div class="pt-4 mt-4 border-t border-blue-900">
-      <p class="text-xs text-blue-400 uppercase tracking-wide px-4 mb-2">System</p>
-      <a href="/admin/communication" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-200 hover:bg-blue-900 hover:text-white transition-all <%= currentPath === '/admin/communication' ? 'bg-blue-900 text-white' : '' %>">
-        <i class="fas fa-envelope w-5"></i> Communication
-      </a>
-      <a href="/admin/settings" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-200 hover:bg-blue-900 hover:text-white transition-all <%= currentPath === '/admin/settings' ? 'bg-blue-900 text-white' : '' %>">
-        <i class="fas fa-cog w-5"></i> Settings
-      </a>
+    <div style="padding-top:16px;margin-top:16px;border-top:1px solid #1e3a5f">
+      <p style="font-size:10px;color:#60a5fa;text-transform:uppercase;letter-spacing:0.05em;padding:0 16px;margin-bottom:8px">Analytics</p>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <a href="/admin/skill-gap" class="admin-nav-link <%= currentPath === '/admin/skill-gap' ? 'active' : '' %>">
+          <i class="fas fa-chart-bar" style="width:20px"></i> Skill Gap
+        </a>
+        <a href="/admin/placement" class="admin-nav-link <%= currentPath === '/admin/placement' ? 'active' : '' %>">
+          <i class="fas fa-chart-pie" style="width:20px"></i> Placement
+        </a>
+        <a href="/admin/interviews" class="admin-nav-link <%= currentPath === '/admin/interviews' ? 'active' : '' %>">
+          <i class="fas fa-video" style="width:20px"></i> Interviews
+        </a>
+      </div>
     </div>
 
-    <div class="pt-4 mt-4 border-t border-blue-900">
-      <p class="text-xs text-blue-400 uppercase tracking-wide px-4 mb-2">Quick Links</p>
-      <a href="/dashboard" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-200 hover:bg-blue-900 hover:text-white transition-all">
-        <i class="fas fa-exchange-alt w-5"></i> Student View
+    <div style="padding-top:16px;margin-top:16px;border-top:1px solid #1e3a5f">
+      <p style="font-size:10px;color:#60a5fa;text-transform:uppercase;letter-spacing:0.05em;padding:0 16px;margin-bottom:8px">System</p>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <a href="/admin/communication" class="admin-nav-link <%= currentPath === '/admin/communication' ? 'active' : '' %>">
+          <i class="fas fa-envelope" style="width:20px"></i> Communication
+        </a>
+        <a href="/admin/settings" class="admin-nav-link <%= currentPath === '/admin/settings' ? 'active' : '' %>">
+          <i class="fas fa-cog" style="width:20px"></i> Settings
+        </a>
+      </div>
+    </div>
+
+    <div style="padding-top:16px;margin-top:16px;border-top:1px solid #1e3a5f">
+      <p style="font-size:10px;color:#60a5fa;text-transform:uppercase;letter-spacing:0.05em;padding:0 16px;margin-bottom:8px">Quick Links</p>
+      <a href="/dashboard" class="admin-nav-link">
+        <i class="fas fa-exchange-alt" style="width:20px"></i> Student View
       </a>
     </div>
   </nav>
 
-  <div class="p-4 border-t border-blue-900">
-    <a href="/auth/logout" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-red-300 hover:bg-red-900/30 hover:text-red-200 transition-all">
-      <i class="fas fa-sign-out-alt w-5"></i> Logout
+  <div style="padding:16px;border-top:1px solid #1e3a5f">
+    <a href="/auth/logout" style="display:flex;align-items:center;gap:12px;padding:10px 16px;border-radius:8px;color:#fca5a5;text-decoration:none;font-size:14px;transition:background 0.2s" onmouseover="this.style.background='rgba(127,29,29,0.3)'" onmouseout="this.style.background='transparent'">
+      <i class="fas fa-sign-out-alt" style="width:20px"></i> Logout
     </a>
   </div>
 </aside>
 
+<style>
+  .admin-nav-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    border-radius: 8px;
+    color: #bfdbfe;
+    text-decoration: none;
+    font-size: 14px;
+    transition: background 0.2s, color 0.2s;
+  }
+  .admin-nav-link:hover { background: #1e3a5f; color: #fff; }
+  .admin-nav-link.active { background: #1e3a5f; color: #fff; }
+</style>
+
 <script>
+var sidebarOpen = false;
+
+function initSidebar() {
+  var sidebar = document.getElementById('app-sidebar');
+  var closeBtn = document.getElementById('sidebar-close-btn');
+  if (window.innerWidth >= 1024) {
+    sidebar.style.transform = 'translateX(0)';
+    closeBtn.style.display = 'none';
+    sidebarOpen = true;
+  } else {
+    sidebar.style.transform = 'translateX(-100%)';
+    closeBtn.style.display = 'block';
+    sidebarOpen = false;
+  }
+}
+
 function toggleSidebar() {
   var sidebar = document.getElementById('app-sidebar');
   var overlay = document.getElementById('sidebar-overlay');
-  var isOpen = !sidebar.classList.contains('-translate-x-full');
-  if (isOpen) {
-    sidebar.classList.add('-translate-x-full');
-    overlay.classList.add('hidden');
-    document.body.classList.remove('overflow-hidden');
+  var closeBtn = document.getElementById('sidebar-close-btn');
+
+  if (window.innerWidth >= 1024) {
+    // Desktop: slide sidebar and adjust content margin
+    sidebarOpen = !sidebarOpen;
+    sidebar.style.transform = sidebarOpen ? 'translateX(0)' : 'translateX(-100%)';
+    var content = document.querySelector('.admin-content');
+    if (content) content.style.marginLeft = sidebarOpen ? '256px' : '0';
   } else {
-    sidebar.classList.remove('-translate-x-full');
-    overlay.classList.remove('hidden');
-    document.body.classList.add('overflow-hidden');
+    // Mobile: overlay mode
+    sidebarOpen = !sidebarOpen;
+    sidebar.style.transform = sidebarOpen ? 'translateX(0)' : 'translateX(-100%)';
+    overlay.style.display = sidebarOpen ? 'block' : 'none';
+    closeBtn.style.display = 'block';
+    document.body.style.overflow = sidebarOpen ? 'hidden' : '';
   }
 }
+
 window.addEventListener('resize', function() {
+  var sidebar = document.getElementById('app-sidebar');
+  var overlay = document.getElementById('sidebar-overlay');
+  var closeBtn = document.getElementById('sidebar-close-btn');
   if (window.innerWidth >= 1024) {
-    var sidebar = document.getElementById('app-sidebar');
-    var overlay = document.getElementById('sidebar-overlay');
-    if (sidebar) sidebar.classList.remove('-translate-x-full');
-    if (overlay) overlay.classList.add('hidden');
-    document.body.classList.remove('overflow-hidden');
+    sidebar.style.transform = 'translateX(0)';
+    overlay.style.display = 'none';
+    closeBtn.style.display = 'none';
+    document.body.style.overflow = '';
+    sidebarOpen = true;
+    var content = document.querySelector('.admin-content');
+    if (content) content.style.marginLeft = '256px';
+  } else {
+    if (!sidebarOpen) {
+      sidebar.style.transform = 'translateX(-100%)';
+    }
+    closeBtn.style.display = 'block';
   }
 });
+
+initSidebar();
 </script>

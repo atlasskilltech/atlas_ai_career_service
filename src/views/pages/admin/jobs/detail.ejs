@@ -1,44 +1,44 @@
 <div class="space-y-5">
   <!-- Header -->
-  <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-    <div class="flex items-start gap-4">
-      <a href="/admin/jobs" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 mt-1"><i class="fas fa-arrow-left"></i></a>
+  <div style="display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:16px">
+    <div style="display:flex;align-items:flex-start;gap:16px">
+      <a href="/admin/jobs" class="text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800" style="padding:8px;border-radius:8px;margin-top:4px"><i class="fas fa-arrow-left"></i></a>
       <% if (job.company_logo) { %>
-        <img src="<%= job.company_logo %>" alt="" class="w-14 h-14 rounded-xl object-contain border border-gray-200 dark:border-gray-700" style="flex-shrink:0">
+        <img src="<%= job.company_logo %>" alt="" style="width:56px;height:56px;border-radius:12px;object-fit:contain;flex-shrink:0;border:1px solid #e5e7eb" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+        <div style="width:56px;height:56px;border-radius:12px;display:none;align-items:center;justify-content:center;color:#fff;font-size:18px;font-weight:700;flex-shrink:0;background:hsl(var(--primary))"><%= job.company_name ? job.company_name.charAt(0) : '?' %></div>
       <% } else { %>
-        <div class="w-14 h-14 rounded-xl flex items-center justify-center text-white text-lg font-bold" style="flex-shrink:0;background:hsl(var(--primary))"><%= job.company_name ? job.company_name.charAt(0) : '?' %></div>
+        <div style="width:56px;height:56px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;font-weight:700;flex-shrink:0;background:hsl(var(--primary))"><%= job.company_name ? job.company_name.charAt(0) : '?' %></div>
       <% } %>
       <div>
-        <h1 class="text-xl font-bold text-gray-900 dark:text-white"><%= job.role_title %></h1>
-        <p class="text-sm text-gray-500"><%= job.company_name %></p>
-        <div class="flex flex-wrap gap-2 mt-2">
+        <h1 style="font-size:20px;font-weight:700" class="text-gray-900 dark:text-white"><%= job.role_title %></h1>
+        <p style="font-size:14px;color:#6b7280;margin-top:2px"><%= job.company_name %></p>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px">
           <%
             var stColors = { draft:'background:#f3f4f6;color:#6b7280', active:'background:#dcfce7;color:#16a34a', closed:'background:#fee2e2;color:#dc2626', on_hold:'background:#fef9c3;color:#ca8a04' };
             var typeLabels = { full_time:'Full Time', part_time:'Part Time', internship:'Internship', contract:'Contract', freelance:'Freelance' };
           %>
-          <span class="text-xs font-medium px-2.5 py-1 rounded-full" style="<%= stColors[job.status] || stColors.draft %>"><%= job.status.replace(/_/g,' ') %></span>
-          <span class="text-xs px-2 py-1 rounded font-medium" style="background:#eff6ff;color:#2563eb"><%= typeLabels[job.job_type] || job.job_type %></span>
+          <span style="font-size:11px;font-weight:500;padding:4px 10px;border-radius:99px;<%= stColors[job.status] || stColors.draft %>"><%= job.status.replace(/_/g,' ') %></span>
+          <span style="font-size:11px;padding:4px 8px;border-radius:4px;font-weight:500;background:#eff6ff;color:#2563eb"><%= typeLabels[job.job_type] || job.job_type %></span>
           <% if (job.work_mode) { %>
-            <span class="text-xs px-2 py-1 rounded font-medium" style="background:#f0fdf4;color:#16a34a"><%= job.work_mode %></span>
+            <span style="font-size:11px;padding:4px 8px;border-radius:4px;font-weight:500;background:#f0fdf4;color:#16a34a"><%= job.work_mode %></span>
           <% } %>
         </div>
       </div>
     </div>
-    <div class="flex items-center gap-2">
-      <!-- Status Quick Actions -->
-      <select id="status-select" onchange="changeStatus(this.value)" class="text-sm border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800">
+    <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+      <select id="status-select" onchange="changeStatus(this.value)" class="text-sm border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800" style="padding:8px 12px">
         <% ['draft','active','closed','on_hold'].forEach(function(s){ %>
           <option value="<%= s %>" <%= job.status === s ? 'selected' : '' %>><%= s.replace(/_/g,' ') %></option>
         <% }); %>
       </select>
-      <a href="/admin/jobs/<%= job.id %>/edit" class="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 text-sm transition">
+      <a href="/admin/jobs/<%= job.id %>/edit" class="border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800" style="display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:8px;font-size:14px;text-decoration:none;transition:background 0.2s">
         <i class="fas fa-pen"></i> Edit
       </a>
     </div>
   </div>
 
   <!-- Info Grid -->
-  <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
     <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
       <p class="text-xs text-gray-500 mb-1"><i class="fas fa-rupee-sign w-4"></i> CTC Range</p>
       <p class="font-semibold text-gray-900 dark:text-white"><%= job.ctc_min || job.ctc_max ? (job.ctc_min || 0) + ' – ' + (job.ctc_max || '?') + ' LPA' : 'Not specified' %></p>
@@ -60,7 +60,7 @@
   <!-- Pipeline Summary -->
   <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
     <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Applicant Pipeline</h3>
-    <div class="grid grid-cols-3 sm:grid-cols-6 gap-3">
+    <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:12px">
       <%
         var stageColors = {
           applied: '#6b7280', shortlisted: '#2563eb', interview: '#ca8a04',
