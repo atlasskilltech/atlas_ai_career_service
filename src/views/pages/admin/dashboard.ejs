@@ -160,6 +160,29 @@
       </div>
     </div>
   </div>
+
+  <!-- Recruiter Follow-ups -->
+  <% if (activity.recruiterFollowUps && activity.recruiterFollowUps.length) { %>
+  <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+    <h3 class="font-semibold mb-4 text-gray-900 dark:text-white flex items-center gap-2">
+      <i class="fas fa-bell text-accent"></i> Recruiter Follow-ups Due
+    </h3>
+    <div class="space-y-3">
+      <% activity.recruiterFollowUps.forEach(function(f) { %>
+        <a href="/admin/recruiters/<%= f.recruiter_id %>" class="flex items-start gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition block">
+          <div class="w-8 h-8 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
+            <i class="fas fa-building text-red-600 dark:text-red-400 text-xs"></i>
+          </div>
+          <div class="min-w-0">
+            <p class="text-sm font-medium truncate"><%= f.company_name %></p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 truncate"><%= f.summary.substring(0, 60) %><%= f.summary.length > 60 ? '...' : '' %></p>
+            <p class="text-xs text-orange-600 mt-0.5"><i class="fas fa-clock mr-1"></i><%= new Date(f.follow_up_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) %></p>
+          </div>
+        </a>
+      <% }); %>
+    </div>
+  </div>
+  <% } %>
 </div>
 
 <%

@@ -28,7 +28,7 @@ class AdminDashboardController {
         layout: 'layouts/admin',
         metrics: [],
         charts: { trend: {}, funnel: [], industries: [], recruiters: [], departments: [], salaryDist: [] },
-        activity: { recentJobs: [], latestApps: [], upcomingInterviews: [] },
+        activity: { recentJobs: [], latestApps: [], upcomingInterviews: [], recruiterFollowUps: [] },
         academicYears: [adminDashboardService.getDefaultAcademicYear()],
         selectedYear: adminDashboardService.getDefaultAcademicYear(),
       });
