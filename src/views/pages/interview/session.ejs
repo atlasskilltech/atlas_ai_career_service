@@ -334,20 +334,37 @@ function playQuestionAudio(url) {
 }
 
 function playAnswerPrompt(callback) {
+  // Mute mic tracks so the prompt voice doesn't get picked up by the microphone
+  if (mediaStream) {
+    mediaStream.getAudioTracks().forEach(t => { t.enabled = false; });
+  }
+
   // Use SpeechSynthesis to say "Start your answer now"
   if ('speechSynthesis' in window) {
     const utterance = new SpeechSynthesisUtterance('Start your answer now');
     utterance.rate = 1.0;
     utterance.pitch = 1.0;
     utterance.volume = 1.0;
-    utterance.onend = () => { callback(); };
-    utterance.onerror = () => { callback(); };
+    utterance.onend = () => {
+      // Re-enable mic after prompt finishes, small delay to avoid capturing tail-end
+      setTimeout(() => {
+        if (mediaStream) mediaStream.getAudioTracks().forEach(t => { t.enabled = true; });
+        callback();
+      }, 300);
+    };
+    utterance.onerror = () => {
+      if (mediaStream) mediaStream.getAudioTracks().forEach(t => { t.enabled = true; });
+      callback();
+    };
     updateLiveCaption('Start your answer now...');
     window.speechSynthesis.speak(utterance);
   } else {
     // Fallback if speech synthesis is not available
     updateLiveCaption('Start your answer now...');
-    setTimeout(callback, 1500);
+    setTimeout(() => {
+      if (mediaStream) mediaStream.getAudioTracks().forEach(t => { t.enabled = true; });
+      callback();
+    }, 1500);
   }
 }
 
@@ -414,6 +431,8 @@ const MAX_RECORD_SECONDS = 120; // Auto-stop after 120 seconds (2 minutes) to ke
 
 function startRecording() {
   if (!mediaStream) { showToast('No microphone', 'error'); return; }
+  // Ensure mic tracks are enabled before recording
+  mediaStream.getAudioTracks().forEach(t => { t.enabled = true; });
   audioChunks = []; recordedBlob = null;
   const as = new MediaStream(mediaStream.getAudioTracks());
   mediaRecorder = new MediaRecorder(as, { mimeType: 'audio/webm;codecs=opus' });
