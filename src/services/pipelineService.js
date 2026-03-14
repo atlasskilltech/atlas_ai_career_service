@@ -40,10 +40,14 @@ class PipelineService {
   async moveCard(applicationId, toStage, changedBy, reason) {
     const result = await repo.moveCard(applicationId, toStage, changedBy, reason);
 
-    // Send email notification
-    const applicantInfo = await repo.getApplicantEmail(applicationId);
-    if (applicantInfo) {
-      await notificationService.notifyStageChange(applicantInfo, toStage, reason);
+    // Send email notification (non-blocking — don't fail the move if notification fails)
+    try {
+      const applicantInfo = await repo.getApplicantEmail(applicationId);
+      if (applicantInfo) {
+        await notificationService.notifyStageChange(applicantInfo, toStage, reason);
+      }
+    } catch (err) {
+      console.error('Failed to send stage change notification:', err.message);
     }
 
     return result;
