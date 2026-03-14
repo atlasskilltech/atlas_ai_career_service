@@ -1,0 +1,259 @@
+<div class="max-w-2xl mx-auto space-y-6">
+  <% if (error || !interview) { %>
+    <!-- Error State -->
+    <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-10 text-center shadow-sm">
+      <div class="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center bg-red-50 dark:bg-red-900/20">
+        <i class="fas fa-exclamation-triangle text-xl text-red-500"></i>
+      </div>
+      <h2 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Feedback Unavailable</h2>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mb-6"><%= error || 'This feedback link is invalid or has expired.' %></p>
+      <a href="/admin/interviews" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold transition-all" style="background:hsl(var(--accent))">
+        <i class="fas fa-arrow-left text-xs"></i> Back to Interviews
+      </a>
+    </div>
+  <% } else if (interview.feedback_submitted) { %>
+    <!-- Already Submitted -->
+    <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden">
+      <div class="px-6 py-5 border-b border-gray-100 dark:border-gray-800">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-green-50 dark:bg-green-900/20">
+            <i class="fas fa-check-circle text-sm text-green-600"></i>
+          </div>
+          <div>
+            <h2 class="font-bold text-gray-900 dark:text-white">Feedback Submitted</h2>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5"><%= interview.student_name %> &middot; <%= interview.role_title %> at <%= interview.company_name %></p>
+          </div>
+        </div>
+      </div>
+      <div class="p-6 space-y-5">
+        <!-- Scores -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <% var scoreFields = [
+            { label: 'Technical', score: interview.technical_score, color: '#3b82f6' },
+            { label: 'Communication', score: interview.communication_score, color: '#8b5cf6' },
+            { label: 'Problem Solving', score: interview.problem_solving_score, color: '#f59e0b' },
+            { label: 'Culture Fit', score: interview.culture_fit_score, color: '#10b981' },
+          ]; %>
+          <% scoreFields.forEach(function(sf){ %>
+            <div class="text-center p-3 rounded-xl" style="background:<%= sf.color %>10">
+              <div class="text-2xl font-bold" style="color:<%= sf.color %>"><%= sf.score || 0 %><span class="text-sm font-normal text-gray-400">/5</span></div>
+              <p class="text-[10px] font-semibold uppercase tracking-wider mt-0.5" style="color:<%= sf.color %>"><%= sf.label %></p>
+            </div>
+          <% }); %>
+        </div>
+
+        <!-- Overall + Recommendation -->
+        <div class="grid grid-cols-2 gap-3">
+          <div class="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4 text-center">
+            <div class="text-3xl font-bold" style="color:hsl(var(--accent))"><%= interview.overall_score || 0 %><span class="text-base font-normal text-gray-400">/5</span></div>
+            <p class="text-xs text-gray-400 font-medium mt-1">Overall Score</p>
+          </div>
+          <div class="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4 text-center flex flex-col justify-center">
+            <%
+              var recColors = { strongly_recommend:'#16a34a', recommend:'#10b981', on_hold:'#f59e0b', reject:'#ef4444' };
+              var recLabels = { strongly_recommend:'Strongly Recommend', recommend:'Recommend', on_hold:'On Hold', reject:'Reject' };
+            %>
+            <span class="text-sm font-bold" style="color:<%= recColors[interview.recommendation] || '#6b7280' %>"><%= recLabels[interview.recommendation] || interview.recommendation || '-' %></span>
+            <p class="text-xs text-gray-400 font-medium mt-1">Recommendation</p>
+          </div>
+        </div>
+
+        <% if (interview.feedback_comments) { %>
+          <div class="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4">
+            <p class="text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-2">Comments</p>
+            <p class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed"><%= interview.feedback_comments %></p>
+          </div>
+        <% } %>
+
+        <% if (interview.ai_feedback_summary) { %>
+          <div class="bg-purple-50 dark:bg-purple-900/10 border border-purple-100 dark:border-purple-800 rounded-xl p-4">
+            <p class="text-[10px] text-purple-500 font-semibold uppercase tracking-wider mb-1.5"><i class="fas fa-robot mr-1"></i> AI Summary</p>
+            <p class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed"><%= interview.ai_feedback_summary %></p>
+          </div>
+        <% } %>
+
+        <a href="/admin/interviews" class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-all">
+          <i class="fas fa-arrow-left text-xs"></i> Back to Interviews
+        </a>
+      </div>
+    </div>
+  <% } else { %>
+    <!-- Feedback Form -->
+    <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden">
+      <!-- Header -->
+      <div class="px-6 py-5 border-b border-gray-100 dark:border-gray-800" style="background:linear-gradient(135deg,hsl(228 100% 11% / 0.03),hsl(80 89% 40% / 0.03))">
+        <div class="flex items-start gap-4">
+          <div class="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0" style="background:hsl(var(--primary))"><%= interview.student_name ? interview.student_name.charAt(0).toUpperCase() : '?' %></div>
+          <div>
+            <h2 class="font-bold text-gray-900 dark:text-white text-lg">Interview Feedback</h2>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5"><%= interview.student_name %></p>
+            <div class="flex flex-wrap gap-2 mt-2">
+              <span class="text-[10px] font-semibold px-2 py-1 rounded-lg" style="background:hsla(228,100%,11%,0.06);color:hsl(228,100%,30%)"><%= interview.role_title %></span>
+              <span class="text-[10px] font-semibold px-2 py-1 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"><%= interview.company_name %></span>
+              <span class="text-[10px] font-semibold px-2 py-1 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600"><%= (interview.interview_type || '').replace(/_/g, ' ') %> &middot; Round <%= interview.round_number %></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Form -->
+      <form id="feedback-form" class="p-6 space-y-6">
+        <!-- Rating Criteria -->
+        <div>
+          <h3 class="text-sm font-bold text-gray-900 dark:text-white mb-4">Rate the Candidate</h3>
+          <div class="space-y-5">
+            <% var ratingCriteria = [
+              { key: 'technical', label: 'Technical Knowledge', icon: 'fa-laptop-code', color: '#3b82f6', desc: 'Domain expertise, technical depth, problem approach' },
+              { key: 'communication', label: 'Communication', icon: 'fa-comments', color: '#8b5cf6', desc: 'Clarity, articulation, listening skills' },
+              { key: 'problem_solving', label: 'Problem Solving', icon: 'fa-lightbulb', color: '#f59e0b', desc: 'Analytical thinking, creativity, structured approach' },
+              { key: 'culture_fit', label: 'Culture Fit', icon: 'fa-users', color: '#10b981', desc: 'Team alignment, values, motivation' },
+            ]; %>
+            <% ratingCriteria.forEach(function(rc){ %>
+              <div class="bg-gray-50 dark:bg-gray-800/30 rounded-xl p-4">
+                <div class="flex items-center gap-2.5 mb-3">
+                  <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:<%= rc.color %>15">
+                    <i class="fas <%= rc.icon %> text-xs" style="color:<%= rc.color %>"></i>
+                  </div>
+                  <div>
+                    <p class="text-sm font-semibold text-gray-900 dark:text-white"><%= rc.label %></p>
+                    <p class="text-[10px] text-gray-400"><%= rc.desc %></p>
+                  </div>
+                </div>
+                <div class="flex items-center gap-1.5 mb-3" id="stars-<%= rc.key %>">
+                  <% for (var s = 1; s <= 5; s++) { %>
+                    <button type="button" onclick="setRating('<%= rc.key %>', <%= s %>)"
+                      class="w-10 h-10 rounded-xl border-2 border-gray-200 dark:border-gray-700 flex items-center justify-center text-sm font-bold text-gray-300 hover:border-yellow-400 hover:text-yellow-500 transition-all star-btn"
+                      data-key="<%= rc.key %>" data-val="<%= s %>"><%= s %></button>
+                  <% } %>
+                  <input type="hidden" name="<%= rc.key %>_score" id="rating-<%= rc.key %>" value="0">
+                </div>
+                <textarea name="<%= rc.key %>_comments" rows="2" placeholder="Comments for <%= rc.label.toLowerCase() %>..."
+                  class="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 bg-white dark:bg-gray-800 placeholder:text-gray-400 transition resize-none"></textarea>
+              </div>
+            <% }); %>
+          </div>
+        </div>
+
+        <!-- Written Comments -->
+        <div>
+          <label class="block text-sm font-bold text-gray-900 dark:text-white mb-2">Overall Comments</label>
+          <textarea name="comments" rows="4" placeholder="Share your overall assessment of the candidate..."
+            class="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 bg-white dark:bg-gray-800 placeholder:text-gray-400 transition resize-none"></textarea>
+        </div>
+
+        <!-- Recommendation -->
+        <div>
+          <label class="block text-sm font-bold text-gray-900 dark:text-white mb-3">Recommendation</label>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <label class="rec-option cursor-pointer">
+              <input type="radio" name="recommendation" value="strongly_recommend" class="hidden peer">
+              <div class="peer-checked:border-green-500 peer-checked:bg-green-50 dark:peer-checked:bg-green-900/20 border-2 border-gray-200 dark:border-gray-700 rounded-xl p-3 text-center transition-all hover:border-green-300">
+                <i class="fas fa-star text-green-600 text-lg mb-1"></i>
+                <p class="text-xs font-semibold text-gray-700 dark:text-gray-300">Strongly Recommend</p>
+              </div>
+            </label>
+            <label class="rec-option cursor-pointer">
+              <input type="radio" name="recommendation" value="recommend" class="hidden peer">
+              <div class="peer-checked:border-blue-500 peer-checked:bg-blue-50 dark:peer-checked:bg-blue-900/20 border-2 border-gray-200 dark:border-gray-700 rounded-xl p-3 text-center transition-all hover:border-blue-300">
+                <i class="fas fa-thumbs-up text-blue-600 text-lg mb-1"></i>
+                <p class="text-xs font-semibold text-gray-700 dark:text-gray-300">Recommend</p>
+              </div>
+            </label>
+            <label class="rec-option cursor-pointer">
+              <input type="radio" name="recommendation" value="on_hold" class="hidden peer">
+              <div class="peer-checked:border-yellow-500 peer-checked:bg-yellow-50 dark:peer-checked:bg-yellow-900/20 border-2 border-gray-200 dark:border-gray-700 rounded-xl p-3 text-center transition-all hover:border-yellow-300">
+                <i class="fas fa-pause-circle text-yellow-600 text-lg mb-1"></i>
+                <p class="text-xs font-semibold text-gray-700 dark:text-gray-300">On Hold</p>
+              </div>
+            </label>
+            <label class="rec-option cursor-pointer">
+              <input type="radio" name="recommendation" value="reject" class="hidden peer">
+              <div class="peer-checked:border-red-500 peer-checked:bg-red-50 dark:peer-checked:bg-red-900/20 border-2 border-gray-200 dark:border-gray-700 rounded-xl p-3 text-center transition-all hover:border-red-300">
+                <i class="fas fa-times-circle text-red-600 text-lg mb-1"></i>
+                <p class="text-xs font-semibold text-gray-700 dark:text-gray-300">Reject</p>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Submit -->
+        <div class="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-800">
+          <a href="/admin/interviews" class="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition">
+            <i class="fas fa-arrow-left text-xs mr-1"></i> Back
+          </a>
+          <button type="submit" id="feedback-submit-btn"
+            class="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-white text-sm font-semibold transition-all shadow-sm hover:shadow-md active:scale-[0.97]"
+            style="background:hsl(var(--accent))">
+            <i class="fas fa-paper-plane text-xs"></i> Submit Feedback
+          </button>
+        </div>
+      </form>
+    </div>
+  <% } %>
+</div>
+
+<% if (interview && !interview.feedback_submitted && !error) { %>
+<script>
+function setRating(key, val) {
+  document.getElementById('rating-' + key).value = val;
+  var btns = document.querySelectorAll('#stars-' + key + ' .star-btn');
+  btns.forEach(function(btn) {
+    var bv = parseInt(btn.dataset.val);
+    if (bv <= val) {
+      btn.style.borderColor = '#facc15';
+      btn.style.background = '#fefce8';
+      btn.style.color = '#ca8a04';
+    } else {
+      btn.style.borderColor = '';
+      btn.style.background = '';
+      btn.style.color = '';
+    }
+  });
+}
+
+document.getElementById('feedback-form').addEventListener('submit', function(e) {
+  e.preventDefault();
+  var btn = document.getElementById('feedback-submit-btn');
+
+  // Validate
+  var scores = ['technical','communication','problem_solving','culture_fit'];
+  for (var idx = 0; idx < scores.length; idx++) {
+    if (document.getElementById('rating-' + scores[idx]).value === '0') {
+      showToast('Please rate all criteria', 'error');
+      return;
+    }
+  }
+  var rec = document.querySelector('input[name="recommendation"]:checked');
+  if (!rec) { showToast('Please select a recommendation', 'error'); return; }
+
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Submitting...';
+
+  var fd = new FormData(this);
+  var data = {};
+  fd.forEach(function(val, key) { data[key] = val; });
+
+  fetch('/admin/interviews/api/<%= interview.id %>/feedback', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(res) {
+    if (res.success) {
+      showToast('Feedback submitted successfully!', 'success');
+      setTimeout(function() { window.location.reload(); }, 1500);
+    } else {
+      showToast(res.error || 'Failed to submit', 'error');
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-paper-plane text-xs"></i> Submit Feedback';
+    }
+  })
+  .catch(function(err) {
+    showToast('Error: ' + err.message, 'error');
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-paper-plane text-xs"></i> Submit Feedback';
+  });
+});
+</script>
+<% } %>

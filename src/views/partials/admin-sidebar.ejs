@@ -44,6 +44,10 @@
         <div class="sidebar-icon"><i class="fas fa-columns"></i></div>
         <span>Pipeline</span>
       </a>
+      <a href="/admin/interviews" class="sidebar-link <%= currentPath.startsWith('/admin/interviews') ? 'active' : '' %>">
+        <div class="sidebar-icon"><i class="fas fa-calendar-check"></i></div>
+        <span>Interviews</span>
+      </a>
       <a href="/job-board/admin" class="sidebar-link <%= currentPath === '/job-board/admin' ? 'active' : '' %>">
         <div class="sidebar-icon"><i class="fas fa-search-dollar"></i></div>
         <span>Job Board</span>
@@ -62,10 +66,6 @@
       <a href="/admin/placement" class="sidebar-link <%= currentPath.startsWith('/admin/placement') ? 'active' : '' %>">
         <div class="sidebar-icon"><i class="fas fa-chart-pie"></i></div>
         <span>Placement</span>
-      </a>
-      <a href="/admin/interviews" class="sidebar-link <%= currentPath === '/admin/interviews' ? 'active' : '' %>">
-        <div class="sidebar-icon"><i class="fas fa-video"></i></div>
-        <span>Interviews</span>
       </a>
     </div>
 

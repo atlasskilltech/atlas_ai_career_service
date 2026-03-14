@@ -11,12 +11,13 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-async function sendMail({ to, subject, html }) {
+async function sendMail({ to, subject, html, attachments }) {
   return transporter.sendMail({
     from: `"ATLAS Career Platform" <${process.env.SMTP_USER}>`,
     to,
     subject,
     html,
+    attachments,
   });
 }
 

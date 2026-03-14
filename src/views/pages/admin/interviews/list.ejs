@@ -1,0 +1,723 @@
+<div class="space-y-5">
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <div>
+      <h1 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white tracking-tight">Interview Management</h1>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5"><%= total %> interview<%= total !== 1 ? 's' : '' %> found</p>
+    </div>
+    <div class="flex items-center gap-2 flex-wrap">
+      <a href="/admin/interviews/calendar"
+         class="inline-flex items-center gap-2 px-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/80 text-sm font-medium text-gray-600 dark:text-gray-300 transition-all active:scale-[0.97]">
+        <i class="fas fa-calendar-alt text-xs"></i> Calendar View
+      </a>
+      <button onclick="openScheduleModal()"
+         class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold transition-all shadow-sm hover:shadow-md active:scale-[0.97]"
+         style="background:hsl(var(--accent))">
+        <i class="fas fa-plus text-xs"></i> Schedule Interview
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4 hover:shadow-sm transition-shadow">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-blue-50 dark:bg-blue-900/20">
+          <i class="fas fa-calendar-check text-sm text-blue-600"></i>
+        </div>
+        <div>
+          <div class="text-xl font-bold text-blue-600"><%= stats.scheduled || 0 %></div>
+          <p class="text-[11px] text-gray-400 font-medium">Scheduled</p>
+        </div>
+      </div>
+    </div>
+    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4 hover:shadow-sm transition-shadow">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-green-50 dark:bg-green-900/20">
+          <i class="fas fa-check-circle text-sm text-green-600"></i>
+        </div>
+        <div>
+          <div class="text-xl font-bold text-green-600"><%= stats.completed || 0 %></div>
+          <p class="text-[11px] text-gray-400 font-medium">Completed</p>
+        </div>
+      </div>
+    </div>
+    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4 hover:shadow-sm transition-shadow">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-red-50 dark:bg-red-900/20">
+          <i class="fas fa-times-circle text-sm text-red-600"></i>
+        </div>
+        <div>
+          <div class="text-xl font-bold text-red-600"><%= stats.cancelled || 0 %></div>
+          <p class="text-[11px] text-gray-400 font-medium">Cancelled</p>
+        </div>
+      </div>
+    </div>
+    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4 hover:shadow-sm transition-shadow">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-purple-50 dark:bg-purple-900/20">
+          <i class="fas fa-clock text-sm text-purple-600"></i>
+        </div>
+        <div>
+          <div class="text-xl font-bold text-purple-600"><%= stats.today || 0 %></div>
+          <p class="text-[11px] text-gray-400 font-medium">Today</p>
+        </div>
+      </div>
+    </div>
+    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4 hover:shadow-sm transition-shadow">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-yellow-50 dark:bg-yellow-900/20">
+          <i class="fas fa-calendar-week text-sm text-yellow-600"></i>
+        </div>
+        <div>
+          <div class="text-xl font-bold text-yellow-600"><%= stats.this_week || 0 %></div>
+          <p class="text-[11px] text-gray-400 font-medium">This Week</p>
+        </div>
+      </div>
+    </div>
+    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4 hover:shadow-sm transition-shadow">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:hsla(80,89%,40%,0.1)">
+          <i class="fas fa-star text-sm" style="color:hsl(var(--accent))"></i>
+        </div>
+        <div>
+          <div class="text-xl font-bold" style="color:hsl(var(--accent))"><%= stats.avg_score ? Number(stats.avg_score).toFixed(1) : '-' %></div>
+          <p class="text-[11px] text-gray-400 font-medium">Avg Score</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search + Filters Row -->
+  <div class="flex flex-col sm:flex-row gap-3">
+    <div class="relative flex-1">
+      <i class="fas fa-search absolute left-3.5 top-1/2 text-gray-400 text-xs" style="transform:translateY(-50%)"></i>
+      <input type="text" id="search-input" value="<%= query.search || '' %>" placeholder="Search by student, company, or role..."
+        class="w-full pl-10 pr-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800/80 text-sm placeholder:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600 transition">
+    </div>
+    <button onclick="toggleFilters()" id="filter-toggle-btn"
+      class="inline-flex items-center gap-2 px-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 text-sm font-medium text-gray-600 dark:text-gray-300 transition-all active:scale-[0.97]">
+      <i class="fas fa-sliders-h text-xs"></i> Filters
+      <% var activeFilters = [query.status, query.interview_type, query.mode, query.company, query.date_from, query.date_to].filter(Boolean).length; %>
+      <% if (activeFilters) { %>
+        <span class="w-5 h-5 rounded-full text-[10px] font-bold text-white flex items-center justify-center" style="background:hsl(var(--accent))"><%= activeFilters %></span>
+      <% } %>
+    </button>
+  </div>
+
+  <!-- Filters Panel -->
+  <div id="filters-panel" style="display:<%= activeFilters ? 'block' : 'none' %>" class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Filters</h3>
+      <button onclick="clearFilters()" class="text-xs font-medium text-red-500 hover:text-red-600 transition px-2 py-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20">
+        <i class="fas fa-times mr-1"></i>Clear All
+      </button>
+    </div>
+    <form id="filter-form" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Status</label>
+        <select name="status" class="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 transition">
+          <option value="">All</option>
+          <% ['scheduled','confirmed','in_progress','completed','cancelled','rescheduled','no_show'].forEach(function(s){ %>
+            <option value="<%= s %>" <%= query.status === s ? 'selected' : '' %>><%= s.replace(/_/g, ' ') %></option>
+          <% }); %>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Type</label>
+        <select name="interview_type" class="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 transition">
+          <option value="">All</option>
+          <% ['technical','hr','behavioral','case_study','group_discussion','aptitude','coding','panel','other'].forEach(function(t){ %>
+            <option value="<%= t %>" <%= query.interview_type === t ? 'selected' : '' %>><%= t.replace(/_/g, ' ') %></option>
+          <% }); %>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Mode</label>
+        <select name="mode" class="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 transition">
+          <option value="">All</option>
+          <% ['online','onsite','phone'].forEach(function(m){ %>
+            <option value="<%= m %>" <%= query.mode === m ? 'selected' : '' %>><%= m %></option>
+          <% }); %>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Company</label>
+        <select name="company" class="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 transition">
+          <option value="">All</option>
+          <% filterOptions.companies.forEach(function(c){ %>
+            <option value="<%= c %>" <%= query.company === c ? 'selected' : '' %>><%= c %></option>
+          <% }); %>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Date From</label>
+        <input type="date" name="date_from" value="<%= query.date_from || '' %>" class="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 transition">
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Date To</label>
+        <input type="date" name="date_to" value="<%= query.date_to || '' %>" class="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 transition">
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Sort By</label>
+        <select name="sort" class="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 transition">
+          <% ['newest','oldest','company','student','status'].forEach(function(s){ %>
+            <option value="<%= s %>" <%= query.sort === s ? 'selected' : '' %>><%= s.charAt(0).toUpperCase() + s.slice(1) %></option>
+          <% }); %>
+        </select>
+      </div>
+      <div class="flex items-end">
+        <button type="submit" class="w-full px-5 py-2.5 text-sm text-white rounded-xl font-semibold transition-all shadow-sm hover:shadow active:scale-[0.97]" style="background:hsl(var(--accent))">
+          <i class="fas fa-check mr-1 text-xs"></i> Apply
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Interview Table -->
+  <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden shadow-sm">
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="bg-gray-50 dark:bg-gray-800/80 text-left">
+            <th class="py-3 px-4 font-semibold text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Student</th>
+            <th class="py-3 px-4 font-semibold text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Company / Role</th>
+            <th class="py-3 px-4 font-semibold text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Type</th>
+            <th class="py-3 px-4 font-semibold text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date & Time</th>
+            <th class="py-3 px-4 font-semibold text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Mode</th>
+            <th class="py-3 px-4 font-semibold text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+            <th class="py-3 px-4 font-semibold text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Score</th>
+            <th class="py-3 px-4 font-semibold text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider w-40">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (interviews.length) { %>
+            <% interviews.forEach(function(i) { %>
+              <%
+                var statusStyles = {
+                  scheduled: 'background:#dbeafe;color:#2563eb',
+                  confirmed: 'background:#e0e7ff;color:#4f46e5',
+                  in_progress: 'background:#fef9c3;color:#ca8a04',
+                  completed: 'background:#dcfce7;color:#16a34a',
+                  cancelled: 'background:#fee2e2;color:#dc2626',
+                  rescheduled: 'background:#ffedd5;color:#ea580c',
+                  no_show: 'background:#f3f4f6;color:#6b7280',
+                };
+                var modeIcons = { online: 'fa-video', onsite: 'fa-building', phone: 'fa-phone' };
+                var dateObj = new Date(i.scheduled_date);
+                var dateStr = dateObj.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: '2-digit' });
+                var timeStr = i.scheduled_time ? i.scheduled_time.substring(0, 5) : '';
+              %>
+              <tr class="border-t border-gray-100 dark:border-gray-800 hover:bg-gray-50/80 dark:hover:bg-gray-800/30 transition interview-row" data-id="<%= i.id %>">
+                <td class="py-3.5 px-4">
+                  <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0" style="background:hsl(var(--primary))"><%= i.student_name ? i.student_name.charAt(0).toUpperCase() : '?' %></div>
+                    <div class="min-w-0">
+                      <p class="font-semibold text-gray-900 dark:text-white text-[13px] truncate"><%= i.student_name %></p>
+                      <p class="text-[10px] text-gray-400 truncate"><%= i.student_program || '' %></p>
+                    </div>
+                  </div>
+                </td>
+                <td class="py-3.5 px-4">
+                  <p class="font-medium text-gray-900 dark:text-white text-[13px] truncate"><%= i.company_name %></p>
+                  <p class="text-[10px] text-gray-400 truncate"><%= i.role_title %></p>
+                </td>
+                <td class="py-3.5 px-4">
+                  <span class="text-[10px] font-semibold px-2 py-1 rounded-lg uppercase tracking-wider" style="background:hsla(228,100%,11%,0.06);color:hsl(228,100%,30%)"><%= (i.interview_type || '').replace(/_/g, ' ') %></span>
+                  <p class="text-[10px] text-gray-400 mt-1">Round <%= i.round_number %></p>
+                </td>
+                <td class="py-3.5 px-4 text-[13px]">
+                  <p class="font-medium text-gray-700 dark:text-gray-300"><%= dateStr %></p>
+                  <p class="text-[11px] text-gray-400"><%= timeStr %> &middot; <%= i.duration_minutes %>min</p>
+                </td>
+                <td class="py-3.5 px-4">
+                  <span class="inline-flex items-center gap-1 text-[11px] text-gray-600 dark:text-gray-400">
+                    <i class="fas <%= modeIcons[i.mode] || 'fa-circle' %> text-[9px]"></i> <%= i.mode %>
+                  </span>
+                </td>
+                <td class="py-3.5 px-4">
+                  <span class="text-[10px] font-semibold px-2.5 py-1 rounded-lg uppercase tracking-wider" style="<%= statusStyles[i.status] || 'background:#f3f4f6;color:#6b7280' %>"><%= (i.status || '').replace(/_/g, ' ') %></span>
+                </td>
+                <td class="py-3.5 px-4">
+                  <% if (i.overall_score) { %>
+                    <span class="font-bold text-[13px]" style="color:<%= i.overall_score >= 4 ? '#16a34a' : i.overall_score >= 3 ? '#ca8a04' : '#dc2626' %>"><%= i.overall_score %>/5</span>
+                  <% } else { %>
+                    <span class="text-gray-400 text-xs">-</span>
+                  <% } %>
+                </td>
+                <td class="py-3.5 px-4">
+                  <div class="flex items-center gap-0.5">
+                    <button onclick="viewInterview(<%= i.id %>)" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-600 transition" title="View Details"><i class="fas fa-eye text-xs"></i></button>
+                    <% if (i.status === 'scheduled' || i.status === 'confirmed') { %>
+                      <button onclick="openRescheduleModal(<%= i.id %>)" class="p-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 text-gray-400 hover:text-blue-600 transition" title="Reschedule"><i class="fas fa-calendar-alt text-xs"></i></button>
+                      <button onclick="cancelInterview(<%= i.id %>)" class="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-400 hover:text-red-500 transition" title="Cancel"><i class="fas fa-ban text-xs"></i></button>
+                    <% } %>
+                    <% if (i.status === 'scheduled' || i.status === 'confirmed') { %>
+                      <button onclick="markComplete(<%= i.id %>)" class="p-2 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 text-gray-400 hover:text-green-600 transition" title="Mark Complete"><i class="fas fa-check text-xs"></i></button>
+                    <% } %>
+                    <% if (i.feedback_submitted) { %>
+                      <button onclick="viewFeedback(<%= i.id %>)" class="p-2 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/20 text-gray-400 hover:text-purple-600 transition" title="View Feedback"><i class="fas fa-comment-dots text-xs"></i></button>
+                    <% } else if (i.status === 'completed') { %>
+                      <button onclick="openFeedbackModal(<%= i.id %>, '<%= i.feedback_token %>')" class="p-2 rounded-lg hover:bg-yellow-50 dark:hover:bg-yellow-900/20 text-gray-400 hover:text-yellow-600 transition" title="Add Feedback"><i class="fas fa-pen-fancy text-xs"></i></button>
+                    <% } %>
+                  </div>
+                </td>
+              </tr>
+            <% }); %>
+          <% } else { %>
+            <tr><td colspan="8" class="py-16 text-center text-gray-400">
+              <div class="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center" style="background:hsl(var(--primary))">
+                <i class="fas fa-calendar-check text-lg" style="color:hsl(var(--accent))"></i>
+              </div>
+              <p class="font-medium mb-1">No interviews found</p>
+              <p class="text-sm text-gray-400 dark:text-gray-500 mb-4">Schedule your first interview to get started</p>
+              <button onclick="openScheduleModal()" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold transition-all" style="background:hsl(var(--accent))">
+                <i class="fas fa-plus text-xs"></i> Schedule Interview
+              </button>
+            </td></tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <% if (totalPages > 1) { %>
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
+      <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">Page <strong><%= page %></strong> of <strong><%= totalPages %></strong> &middot; <%= total %> total</span>
+      <div class="flex items-center gap-1.5">
+        <% if (page > 1) { %>
+          <a href="?<%= Object.entries(query).filter(function(e){return e[0]!=='page';}).map(function(e){return e[0]+'='+encodeURIComponent(e[1]);}).join('&') %>&page=<%= page-1 %>"
+             class="px-3.5 py-2 text-sm font-medium border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-all active:scale-[0.97]">
+            <i class="fas fa-chevron-left text-xs mr-1"></i> Prev
+          </a>
+        <% } %>
+        <% for (var p = Math.max(1, page-2); p <= Math.min(totalPages, page+2); p++) { %>
+          <a href="?<%= Object.entries(query).filter(function(e){return e[0]!=='page';}).map(function(e){return e[0]+'='+encodeURIComponent(e[1]);}).join('&') %>&page=<%= p %>"
+             class="w-9 h-9 flex items-center justify-center text-sm font-medium border rounded-xl transition-all <%= p == page ? 'text-white border-transparent shadow-sm' : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400' %>"
+             <% if (p == page) { %>style="background:hsl(var(--accent))"<% } %>><%= p %></a>
+        <% } %>
+        <% if (page < totalPages) { %>
+          <a href="?<%= Object.entries(query).filter(function(e){return e[0]!=='page';}).map(function(e){return e[0]+'='+encodeURIComponent(e[1]);}).join('&') %>&page=<%= page+1 %>"
+             class="px-3.5 py-2 text-sm font-medium border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-all active:scale-[0.97]">
+            Next <i class="fas fa-chevron-right text-xs ml-1"></i>
+          </a>
+        <% } %>
+      </div>
+    </div>
+  <% } %>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCHEDULE INTERVIEW MODAL
+     ═══════════════════════════════════════════════════════════ -->
+<div id="schedule-modal" class="fixed inset-0 z-[100]" style="display:none" onclick="if(event.target===this)closeScheduleModal()">
+  <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+  <div class="absolute top-1/2 left-1/2 w-[95%] max-w-2xl bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 max-h-[90vh] overflow-y-auto" style="transform:translate(-50%,-50%)">
+    <div class="sticky top-0 bg-white dark:bg-gray-900 px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between z-10">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:hsla(80,89%,40%,0.1)">
+          <i class="fas fa-calendar-plus text-sm" style="color:hsl(var(--accent))"></i>
+        </div>
+        <h3 class="font-bold text-gray-900 dark:text-white">Schedule Interview</h3>
+      </div>
+      <button onclick="closeScheduleModal()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 transition"><i class="fas fa-times"></i></button>
+    </div>
+    <form id="schedule-form" class="p-6 space-y-5">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <!-- Job Selection -->
+        <div class="sm:col-span-2">
+          <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Select Job <span class="text-red-400">*</span></label>
+          <select name="job_id" id="sched-job" required onchange="loadStudentsForJob(this.value)"
+            class="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 transition">
+            <option value="">Choose a job...</option>
+            <% jobs.forEach(function(j){ %>
+              <option value="<%= j.id %>"><%= j.role_title %> - <%= j.company_name %></option>
+            <% }); %>
+          </select>
+        </div>
+
+        <!-- Student Selection (multi) -->
+        <div class="sm:col-span-2">
+          <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Select Students <span class="text-red-400">*</span></label>
+          <div id="student-select-area" class="border border-gray-200 dark:border-gray-700 rounded-xl p-3 min-h-[80px] bg-gray-50 dark:bg-gray-800/50">
+            <p class="text-xs text-gray-400" id="student-placeholder">Select a job first to see shortlisted students</p>
+            <div id="student-checkboxes" class="space-y-2 hidden"></div>
+          </div>
+        </div>
+
+        <!-- Interview Type -->
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Interview Type <span class="text-red-400">*</span></label>
+          <select name="interview_type" required class="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 transition">
+            <% ['technical','hr','behavioral','case_study','group_discussion','aptitude','coding','panel','other'].forEach(function(t){ %>
+              <option value="<%= t %>"><%= t.replace(/_/g, ' ').replace(/\b\w/g, function(l){ return l.toUpperCase(); }) %></option>
+            <% }); %>
+          </select>
+        </div>
+
+        <!-- Round Number -->
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Round Number</label>
+          <input type="number" name="round_number" value="1" min="1" max="10" class="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 transition">
+        </div>
+
+        <!-- Round Name -->
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Round Name</label>
+          <input type="text" name="round_name" placeholder="e.g. Technical Round 1" class="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 transition">
+        </div>
+
+        <!-- Recruiter -->
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Recruiter</label>
+          <select name="recruiter_id" class="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 transition">
+            <option value="">None</option>
+            <% recruiters.forEach(function(r){ %>
+              <option value="<%= r.id %>"><%= r.company_name %> - <%= r.contact_name || 'N/A' %></option>
+            <% }); %>
+          </select>
+        </div>
+
+        <!-- Date -->
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Date <span class="text-red-400">*</span></label>
+          <input type="date" name="scheduled_date" required class="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 transition">
+        </div>
+
+        <!-- Time -->
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Time <span class="text-red-400">*</span></label>
+          <input type="time" name="scheduled_time" required class="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 transition">
+        </div>
+
+        <!-- Duration -->
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Duration (min)</label>
+          <select name="duration_minutes" class="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 transition">
+            <% [15,30,45,60,90,120].forEach(function(d){ %>
+              <option value="<%= d %>" <%= d === 60 ? 'selected' : '' %>><%= d %> min</option>
+            <% }); %>
+          </select>
+        </div>
+
+        <!-- Mode -->
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Mode <span class="text-red-400">*</span></label>
+          <select name="mode" required id="sched-mode" onchange="toggleModeFields()"
+            class="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 transition">
+            <option value="online">Online</option>
+            <option value="onsite">Onsite</option>
+            <option value="phone">Phone</option>
+          </select>
+        </div>
+
+        <!-- Meet Link (shown for online) -->
+        <div id="meet-link-field" class="sm:col-span-2">
+          <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Meeting Link</label>
+          <input type="url" name="meet_link" placeholder="https://meet.google.com/..." class="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 transition">
+        </div>
+
+        <!-- Venue (shown for onsite) -->
+        <div id="venue-field" class="sm:col-span-2" style="display:none">
+          <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Venue</label>
+          <input type="text" name="venue" placeholder="Building, Room number..." class="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 transition">
+        </div>
+
+        <!-- Notes -->
+        <div class="sm:col-span-2">
+          <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Notes</label>
+          <textarea name="notes" rows="2" placeholder="Any special instructions..." class="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 transition resize-none"></textarea>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-3 pt-2 border-t border-gray-100 dark:border-gray-800">
+        <button type="button" onclick="closeScheduleModal()" class="px-5 py-2.5 text-sm font-medium border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-all active:scale-[0.97]">Cancel</button>
+        <button type="submit" id="schedule-btn" class="px-6 py-2.5 text-sm text-white rounded-xl font-semibold transition-all shadow-sm hover:shadow active:scale-[0.97]" style="background:hsl(var(--accent))">
+          <i class="fas fa-calendar-check mr-1.5 text-xs"></i> Schedule Interview
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     INTERVIEW DETAIL MODAL
+     ═══════════════════════════════════════════════════════════ -->
+<div id="detail-modal" class="fixed inset-0 z-[100]" style="display:none" onclick="if(event.target===this)closeDetailModal()">
+  <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+  <div class="absolute top-1/2 left-1/2 w-[95%] max-w-lg bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 max-h-[90vh] overflow-y-auto" style="transform:translate(-50%,-50%)">
+    <div class="sticky top-0 bg-white dark:bg-gray-900 px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between z-10">
+      <h3 class="font-bold text-gray-900 dark:text-white">Interview Details</h3>
+      <button onclick="closeDetailModal()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 transition"><i class="fas fa-times"></i></button>
+    </div>
+    <div id="detail-content" class="p-6">
+      <div class="flex items-center justify-center py-8"><i class="fas fa-spinner fa-spin text-gray-400 text-xl"></i></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     RESCHEDULE MODAL
+     ═══════════════════════════════════════════════════════════ -->
+<div id="reschedule-modal" class="fixed inset-0 z-[100]" style="display:none" onclick="if(event.target===this)closeRescheduleModal()">
+  <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+  <div class="absolute top-1/2 left-1/2 w-[95%] max-w-md bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-2xl border border-gray-200 dark:border-gray-700" style="transform:translate(-50%,-50%)">
+    <div class="flex items-center gap-2 mb-5">
+      <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-blue-50 dark:bg-blue-900/20"><i class="fas fa-calendar-alt text-sm text-blue-600"></i></div>
+      <h3 class="font-bold text-gray-900 dark:text-white">Reschedule Interview</h3>
+    </div>
+    <input type="hidden" id="reschedule-id">
+    <div class="space-y-4">
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">New Date <span class="text-red-400">*</span></label>
+        <input type="date" id="reschedule-date" required class="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 bg-white dark:bg-gray-800 transition">
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">New Time <span class="text-red-400">*</span></label>
+        <input type="time" id="reschedule-time" required class="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 bg-white dark:bg-gray-800 transition">
+      </div>
+    </div>
+    <div class="flex justify-end gap-2 mt-5">
+      <button onclick="closeRescheduleModal()" class="px-4 py-2.5 text-sm font-medium border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-all active:scale-[0.97]">Cancel</button>
+      <button onclick="submitReschedule()" class="px-5 py-2.5 text-sm text-white rounded-xl font-semibold transition-all active:scale-[0.97]" style="background:hsl(var(--accent))">Reschedule</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── Search ──────────────────────────────────────────────
+(function(){
+  var input = document.getElementById('search-input');
+  var timer;
+  input.addEventListener('input', function(){
+    clearTimeout(timer);
+    timer = setTimeout(function(){
+      var url = new URL(window.location.href);
+      if (input.value) url.searchParams.set('search', input.value);
+      else url.searchParams.delete('search');
+      url.searchParams.set('page','1');
+      window.location.href = url.toString();
+    }, 500);
+  });
+})();
+
+// ─── Filters ─────────────────────────────────────────────
+function toggleFilters(){ var p = document.getElementById('filters-panel'); p.style.display = p.style.display === 'none' ? 'block' : 'none'; }
+function clearFilters(){ window.location.href = '/admin/interviews'; }
+
+(function(){
+  var form = document.getElementById('filter-form');
+  if (!form) return;
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    var url = new URL(window.location.origin + '/admin/interviews');
+    var fd = new FormData(form);
+    fd.forEach(function(val, key){ if (val) url.searchParams.set(key, val); });
+    var search = document.getElementById('search-input').value;
+    if (search) url.searchParams.set('search', search);
+    url.searchParams.set('page','1');
+    window.location.href = url.toString();
+  });
+})();
+
+// ─── Schedule Modal ──────────────────────────────────────
+function openScheduleModal(){ document.getElementById('schedule-modal').style.display = 'block'; }
+function closeScheduleModal(){ document.getElementById('schedule-modal').style.display = 'none'; }
+
+function toggleModeFields(){
+  var mode = document.getElementById('sched-mode').value;
+  document.getElementById('meet-link-field').style.display = mode === 'online' ? 'block' : 'none';
+  document.getElementById('venue-field').style.display = mode === 'onsite' ? 'block' : 'none';
+}
+
+function loadStudentsForJob(jobId){
+  var area = document.getElementById('student-checkboxes');
+  var placeholder = document.getElementById('student-placeholder');
+  if (!jobId){ area.classList.add('hidden'); placeholder.classList.remove('hidden'); return; }
+
+  placeholder.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Loading students...';
+  fetch('/admin/interviews/api/students/' + jobId)
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      if (!res.students || !res.students.length){
+        placeholder.innerHTML = 'No shortlisted students for this job';
+        area.classList.add('hidden');
+        placeholder.classList.remove('hidden');
+        return;
+      }
+      var html = '';
+      res.students.forEach(function(s){
+        html += '<label class="flex items-center gap-2.5 p-2 rounded-lg hover:bg-white dark:hover:bg-gray-800 cursor-pointer transition">'
+          + '<input type="checkbox" name="student_ids" value="' + s.user_id + '" class="rounded border-gray-300 dark:border-gray-600">'
+          + '<div class="min-w-0"><p class="text-sm font-medium text-gray-900 dark:text-white truncate">' + s.name + '</p>'
+          + '<p class="text-[10px] text-gray-400">' + (s.program || '') + (s.branch ? ' - ' + s.branch : '') + (s.cgpa ? ' | CGPA: ' + s.cgpa : '') + '</p></div>'
+          + '</label>';
+      });
+      area.innerHTML = html;
+      area.classList.remove('hidden');
+      placeholder.classList.add('hidden');
+    })
+    .catch(function(){ placeholder.innerHTML = 'Failed to load students'; });
+}
+
+document.getElementById('schedule-form').addEventListener('submit', function(e){
+  e.preventDefault();
+  var btn = document.getElementById('schedule-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Scheduling...';
+
+  var fd = new FormData(this);
+  var data = {};
+  fd.forEach(function(val, key){
+    if (key === 'student_ids') {
+      if (!data.student_ids) data.student_ids = [];
+      data.student_ids.push(val);
+    } else {
+      data[key] = val;
+    }
+  });
+
+  if (!data.student_ids || !data.student_ids.length){
+    showToast('Please select at least one student', 'error');
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-calendar-check mr-1.5 text-xs"></i> Schedule Interview';
+    return;
+  }
+
+  fetch('/admin/interviews/api/schedule', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(res){
+    if (res.success){
+      showToast('Interview(s) scheduled successfully!', 'success');
+      setTimeout(function(){ window.location.reload(); }, 1000);
+    } else {
+      showToast(res.error || 'Failed to schedule', 'error');
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-calendar-check mr-1.5 text-xs"></i> Schedule Interview';
+    }
+  })
+  .catch(function(err){
+    showToast('Error: ' + err.message, 'error');
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-calendar-check mr-1.5 text-xs"></i> Schedule Interview';
+  });
+});
+
+// ─── Detail Modal ────────────────────────────────────────
+function closeDetailModal(){ document.getElementById('detail-modal').style.display = 'none'; }
+
+function viewInterview(id){
+  document.getElementById('detail-modal').style.display = 'block';
+  document.getElementById('detail-content').innerHTML = '<div class="flex items-center justify-center py-8"><i class="fas fa-spinner fa-spin text-gray-400 text-xl"></i></div>';
+
+  fetch('/admin/interviews/api/' + id)
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      if (!res.success) { document.getElementById('detail-content').innerHTML = '<p class="text-red-500">Failed to load</p>'; return; }
+      var i = res.interview;
+      var date = new Date(i.scheduled_date).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+      var time = i.scheduled_time ? i.scheduled_time.substring(0, 5) : '';
+      var statusColors = { scheduled:'#3b82f6', confirmed:'#4f46e5', completed:'#16a34a', cancelled:'#dc2626', rescheduled:'#ea580c', no_show:'#6b7280', in_progress:'#ca8a04' };
+
+      var html = '<div class="space-y-5">'
+        + '<div class="flex items-center gap-3">'
+        + '<div class="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold" style="background:hsl(var(--primary))">' + (i.student_name ? i.student_name.charAt(0) : '?') + '</div>'
+        + '<div><h4 class="font-bold text-gray-900 dark:text-white">' + i.student_name + '</h4>'
+        + '<p class="text-xs text-gray-400">' + i.student_email + '</p></div></div>';
+
+      html += '<div class="grid grid-cols-2 gap-3">';
+      var fields = [
+        ['Company', i.company_name], ['Role', i.role_title],
+        ['Date', date], ['Time', time + ' IST'],
+        ['Duration', i.duration_minutes + ' min'], ['Mode', i.mode],
+        ['Type', (i.interview_type || '').replace(/_/g, ' ')], ['Round', i.round_number + (i.round_name ? ' - ' + i.round_name : '')],
+        ['Status', '<span style="color:' + (statusColors[i.status] || '#6b7280') + ';font-weight:600">' + (i.status || '').replace(/_/g, ' ') + '</span>'],
+      ];
+      if (i.mode === 'online' && i.meet_link) fields.push(['Link', '<a href="' + i.meet_link + '" target="_blank" class="text-blue-600 underline text-xs">Join Meeting</a>']);
+      if (i.mode === 'onsite' && i.venue) fields.push(['Venue', i.venue]);
+      if (i.overall_score) fields.push(['Score', '<span style="color:#16a34a;font-weight:700">' + i.overall_score + '/5</span>']);
+      if (i.recommendation) fields.push(['Recommendation', (i.recommendation || '').replace(/_/g, ' ')]);
+
+      fields.forEach(function(f){
+        html += '<div class="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-3"><p class="text-[10px] text-gray-400 font-medium uppercase tracking-wider mb-0.5">' + f[0] + '</p><p class="text-sm text-gray-900 dark:text-white">' + f[1] + '</p></div>';
+      });
+      html += '</div>';
+
+      if (i.ai_feedback_summary) {
+        html += '<div class="bg-purple-50 dark:bg-purple-900/10 border border-purple-100 dark:border-purple-800 rounded-xl p-4"><p class="text-[10px] text-purple-500 font-semibold uppercase tracking-wider mb-1.5"><i class="fas fa-robot mr-1"></i> AI Summary</p><p class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">' + i.ai_feedback_summary + '</p></div>';
+      }
+      if (i.notes) {
+        html += '<div class="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4"><p class="text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-1">Notes</p><p class="text-sm text-gray-600 dark:text-gray-400">' + i.notes + '</p></div>';
+      }
+
+      html += '</div>';
+      document.getElementById('detail-content').innerHTML = html;
+    });
+}
+
+function viewFeedback(id){ viewInterview(id); }
+
+// ─── Reschedule ──────────────────────────────────────────
+function openRescheduleModal(id){
+  document.getElementById('reschedule-id').value = id;
+  document.getElementById('reschedule-modal').style.display = 'block';
+}
+function closeRescheduleModal(){ document.getElementById('reschedule-modal').style.display = 'none'; }
+
+function submitReschedule(){
+  var id = document.getElementById('reschedule-id').value;
+  var date = document.getElementById('reschedule-date').value;
+  var time = document.getElementById('reschedule-time').value;
+  if (!date || !time){ showToast('Please fill date and time', 'error'); return; }
+
+  fetch('/admin/interviews/api/' + id + '/reschedule', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ scheduled_date: date, scheduled_time: time })
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(res){
+    if (res.success){ showToast('Interview rescheduled', 'success'); setTimeout(function(){ window.location.reload(); }, 1000); }
+    else showToast(res.error || 'Failed', 'error');
+  });
+}
+
+// ─── Cancel ──────────────────────────────────────────────
+function cancelInterview(id){
+  if (!confirm('Cancel this interview? The student will be notified.')) return;
+  fetch('/admin/interviews/api/' + id + '/status', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status: 'cancelled', reason: 'Cancelled by admin' })
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(res){
+    if (res.success){ showToast('Interview cancelled', 'success'); setTimeout(function(){ window.location.reload(); }, 1000); }
+    else showToast(res.error || 'Failed', 'error');
+  });
+}
+
+// ─── Mark Complete ───────────────────────────────────────
+function markComplete(id){
+  fetch('/admin/interviews/api/' + id + '/status', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status: 'completed' })
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(res){
+    if (res.success){ showToast('Marked as completed', 'success'); setTimeout(function(){ window.location.reload(); }, 1000); }
+    else showToast(res.error || 'Failed', 'error');
+  });
+}
+
+// ─── Feedback Modal (inline) ─────────────────────────────
+function openFeedbackModal(id, token){
+  window.location.href = '/admin/interviews/feedback/' + token;
+}
+</script>
