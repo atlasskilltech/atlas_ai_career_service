@@ -145,7 +145,6 @@
 
 <script>
 function toggleSidebar() {
-  // Toggle on both html and body to cover the early-load class on <html>
   var isOpen = document.documentElement.classList.contains('sidebar-open') || document.body.classList.contains('sidebar-open');
   if (isOpen) {
     document.documentElement.classList.remove('sidebar-open');
@@ -155,4 +154,14 @@ function toggleSidebar() {
     document.body.classList.add('sidebar-open');
   }
 }
+
+// Auto-close sidebar on mobile when a link is clicked
+document.querySelectorAll('#app-sidebar .sidebar-link').forEach(function(link) {
+  link.addEventListener('click', function() {
+    if (window.innerWidth < 1024) {
+      document.documentElement.classList.remove('sidebar-open');
+      document.body.classList.remove('sidebar-open');
+    }
+  });
+});
 </script>
