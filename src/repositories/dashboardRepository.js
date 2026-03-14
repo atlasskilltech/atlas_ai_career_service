@@ -221,7 +221,11 @@ class DashboardRepository {
   // ─── Activity Feed ─────────────────────────────────────────
   async getRecentJobs(limit = 5) {
     const [rows] = await pool.execute(
-      'SELECT company, title AS role, posted_date AS created_at FROM aicp_aggregated_jobs WHERE is_active = 1 ORDER BY posted_date DESC LIMIT ?',
+      `SELECT company, role, created_at FROM (
+         SELECT company, title AS role, posted_date AS created_at FROM aicp_aggregated_jobs WHERE is_active = 1
+         UNION ALL
+         SELECT company_name AS company, role_title AS role, created_at FROM aicp_admin_jobs WHERE status = 'active'
+       ) AS combined ORDER BY created_at DESC LIMIT ?`,
       [limit]
     );
     return rows;
