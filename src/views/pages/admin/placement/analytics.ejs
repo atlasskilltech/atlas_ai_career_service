@@ -1,0 +1,483 @@
+<div class="space-y-5">
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Placement Analytics</h1>
+      <p class="text-sm text-gray-500 mt-1">Comprehensive placement performance dashboard</p>
+    </div>
+    <div class="flex items-center gap-2">
+      <a href="/admin/placement/reports" class="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 text-sm transition">
+        <i class="fas fa-file-export"></i> Reports
+      </a>
+      <a href="/admin/placement/export/excel?<%= Object.entries(query).map(function(e){return e[0]+'='+encodeURIComponent(e[1]);}).join('&') %>" class="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 text-sm transition">
+        <i class="fas fa-download"></i> Excel
+      </a>
+      <a href="/admin/placement/export/pdf?<%= Object.entries(query).map(function(e){return e[0]+'='+encodeURIComponent(e[1]);}).join('&') %>" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white text-sm font-medium transition" style="background:hsl(var(--accent))">
+        <i class="fas fa-file-pdf"></i> PDF Report
+      </a>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+    <form id="filterForm" method="GET" action="/admin/placement" class="flex flex-wrap items-end gap-3">
+      <div>
+        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Academic Year</label>
+        <select name="academic_year" class="filter-select text-sm border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 min-w-[140px]">
+          <option value="">All Years</option>
+          <% filterOptions.academic_years.forEach(function(y) { %>
+            <option value="<%= y %>" <%= query.academic_year === y ? 'selected' : '' %>><%= y %></option>
+          <% }); %>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Program</label>
+        <select name="program" class="filter-select text-sm border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 min-w-[150px]">
+          <option value="">All Programs</option>
+          <% filterOptions.programs.forEach(function(p) { %>
+            <option value="<%= p %>" <%= query.program === p ? 'selected' : '' %>><%= p %></option>
+          <% }); %>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Branch</label>
+        <select name="branch" class="filter-select text-sm border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 min-w-[150px]">
+          <option value="">All Branches</option>
+          <% filterOptions.branches.forEach(function(b) { %>
+            <option value="<%= b %>" <%= query.branch === b ? 'selected' : '' %>><%= b %></option>
+          <% }); %>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Industry</label>
+        <select name="industry" class="filter-select text-sm border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 min-w-[150px]">
+          <option value="">All Industries</option>
+          <% filterOptions.industries.forEach(function(i) { %>
+            <option value="<%= i %>" <%= query.industry === i ? 'selected' : '' %>><%= i %></option>
+          <% }); %>
+        </select>
+      </div>
+      <button type="submit" class="px-4 py-2 text-sm font-medium text-white rounded-lg transition" style="background:hsl(var(--accent))">
+        <i class="fas fa-filter mr-1"></i> Apply
+      </button>
+      <% if (query.academic_year || query.program || query.branch || query.industry) { %>
+        <a href="/admin/placement" class="px-4 py-2 text-sm text-gray-500 hover:text-gray-700 transition">Clear</a>
+      <% } %>
+    </form>
+  </div>
+
+  <!-- Summary Cards -->
+  <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:12px">
+    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-green-50 dark:bg-green-900/20">
+          <i class="fas fa-user-check text-green-600"></i>
+        </div>
+        <div>
+          <div class="text-2xl font-bold text-green-600"><%= summary.total_placed %></div>
+          <p class="text-[10px] text-gray-500">Total Placed</p>
+        </div>
+      </div>
+    </div>
+    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-blue-50 dark:bg-blue-900/20">
+          <i class="fas fa-percentage text-blue-600"></i>
+        </div>
+        <div>
+          <div class="text-2xl font-bold text-blue-600"><%= summary.placement_pct %><span class="text-sm">%</span></div>
+          <p class="text-[10px] text-gray-500">Placement %</p>
+        </div>
+      </div>
+    </div>
+    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-purple-50 dark:bg-purple-900/20">
+          <i class="fas fa-rupee-sign text-purple-600"></i>
+        </div>
+        <div>
+          <div class="text-2xl font-bold text-purple-600"><%= summary.avg_ctc >= 100000 ? (summary.avg_ctc/100000).toFixed(1)+'L' : summary.avg_ctc %></div>
+          <p class="text-[10px] text-gray-500">Avg CTC</p>
+        </div>
+      </div>
+    </div>
+    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-yellow-50 dark:bg-yellow-900/20">
+          <i class="fas fa-trophy text-yellow-600"></i>
+        </div>
+        <div>
+          <div class="text-2xl font-bold text-yellow-600"><%= summary.highest_ctc >= 100000 ? (summary.highest_ctc/100000).toFixed(1)+'L' : summary.highest_ctc %></div>
+          <p class="text-[10px] text-gray-500">Highest CTC</p>
+        </div>
+      </div>
+    </div>
+    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-indigo-50 dark:bg-indigo-900/20">
+          <i class="fas fa-chart-line text-indigo-600"></i>
+        </div>
+        <div>
+          <div class="text-2xl font-bold text-indigo-600"><%= summary.median_ctc >= 100000 ? (summary.median_ctc/100000).toFixed(1)+'L' : summary.median_ctc %></div>
+          <p class="text-[10px] text-gray-500">Median CTC</p>
+        </div>
+      </div>
+    </div>
+    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-red-50 dark:bg-red-900/20">
+          <i class="fas fa-user-times text-red-600"></i>
+        </div>
+        <div>
+          <div class="text-2xl font-bold text-red-600"><%= summary.unplaced_count %></div>
+          <p class="text-[10px] text-gray-500">Unplaced</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chart Row 1: YoY Trend + Program Breakdown -->
+  <div class="grid lg:grid-cols-2 gap-4">
+    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+      <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+        <i class="fas fa-chart-line text-blue-500"></i> Year-over-Year Trend
+      </h3>
+      <% if (trends.length) { %>
+        <div style="height:280px"><canvas id="yoyChart"></canvas></div>
+      <% } else { %>
+        <div class="flex items-center justify-center py-12 text-gray-400 text-sm"><i class="fas fa-chart-line text-2xl mr-2 opacity-30"></i> No trend data available</div>
+      <% } %>
+    </div>
+    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+      <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+        <i class="fas fa-graduation-cap text-green-500"></i> Placement % by Program
+      </h3>
+      <div style="height:280px"><canvas id="programChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Chart Row 2: Branch + Industry -->
+  <div class="grid lg:grid-cols-2 gap-4">
+    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+      <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+        <i class="fas fa-code-branch text-purple-500"></i> Placement by Branch
+      </h3>
+      <div style="height:280px"><canvas id="branchChart"></canvas></div>
+    </div>
+    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+      <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+        <i class="fas fa-industry text-orange-500"></i> Industry Distribution
+      </h3>
+      <div style="height:280px"><canvas id="industryChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Chart Row 3: Salary Distribution + Month-wise -->
+  <div class="grid lg:grid-cols-2 gap-4">
+    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+      <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+        <i class="fas fa-rupee-sign text-green-500"></i> Salary Distribution
+      </h3>
+      <div style="height:280px"><canvas id="salaryChart"></canvas></div>
+    </div>
+    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+      <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+        <i class="fas fa-calendar-alt text-indigo-500"></i> Month-wise Placements
+      </h3>
+      <div style="height:280px"><canvas id="monthChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Top 15 Companies Table -->
+  <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+    <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+      <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider flex items-center gap-2">
+        <i class="fas fa-building text-blue-500"></i> Top 15 Recruiting Companies
+      </h3>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm" id="companiesTable">
+        <thead>
+          <tr class="bg-gray-50 dark:bg-gray-800 text-left">
+            <th class="py-2.5 px-4 font-medium text-gray-500 dark:text-gray-400 cursor-pointer hover:text-gray-700" onclick="sortTable(0)">#</th>
+            <th class="py-2.5 px-4 font-medium text-gray-500 dark:text-gray-400 cursor-pointer hover:text-gray-700" onclick="sortTable(1)">Company <i class="fas fa-sort text-[9px] ml-1"></i></th>
+            <th class="py-2.5 px-4 font-medium text-gray-500 dark:text-gray-400 cursor-pointer hover:text-gray-700 text-center" onclick="sortTable(2)">Hired <i class="fas fa-sort text-[9px] ml-1"></i></th>
+            <th class="py-2.5 px-4 font-medium text-gray-500 dark:text-gray-400 cursor-pointer hover:text-gray-700 text-right" onclick="sortTable(3)">Avg CTC <i class="fas fa-sort text-[9px] ml-1"></i></th>
+            <th class="py-2.5 px-4 font-medium text-gray-500 dark:text-gray-400 cursor-pointer hover:text-gray-700 text-right" onclick="sortTable(4)">Highest CTC <i class="fas fa-sort text-[9px] ml-1"></i></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (topCompanies.length) { %>
+            <% topCompanies.forEach(function(c, idx) { %>
+              <tr class="border-t border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition" data-hired="<%= c.hired %>" data-avg="<%= c.avg_ctc %>" data-high="<%= c.highest_ctc %>">
+                <td class="py-3 px-4 text-gray-400 text-xs"><%= idx + 1 %></td>
+                <td class="py-3 px-4 font-medium text-gray-900 dark:text-white"><%= c.company %></td>
+                <td class="py-3 px-4 text-center">
+                  <span class="inline-flex items-center justify-center min-w-[28px] px-2 py-0.5 rounded-full text-xs font-bold" style="background:hsla(80,89%,40%,0.12);color:hsl(80,89%,30%)"><%= c.hired %></span>
+                </td>
+                <td class="py-3 px-4 text-right font-medium text-gray-700 dark:text-gray-300">
+                  <%= c.avg_ctc >= 100000 ? '₹' + (c.avg_ctc/100000).toFixed(1) + 'L' : c.avg_ctc ? '₹' + Number(c.avg_ctc).toLocaleString() : '-' %>
+                </td>
+                <td class="py-3 px-4 text-right font-bold text-yellow-600">
+                  <%= c.highest_ctc >= 100000 ? '₹' + (c.highest_ctc/100000).toFixed(1) + 'L' : c.highest_ctc ? '₹' + Number(c.highest_ctc).toLocaleString() : '-' %>
+                </td>
+              </tr>
+            <% }); %>
+          <% } else { %>
+            <tr><td colspan="5" class="py-8 text-center text-gray-400">No company data available</td></tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Batch Tracker Cards -->
+  <div>
+    <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+      <i class="fas fa-users text-teal-500"></i> Batch Tracker
+    </h3>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px">
+      <% batchTracker.forEach(function(b) { %>
+        <%
+          var pctColor = b.pct >= 80 ? 'text-green-600' : b.pct >= 50 ? 'text-yellow-600' : 'text-red-600';
+          var barColor = b.pct >= 80 ? '#16a34a' : b.pct >= 50 ? '#ca8a04' : '#dc2626';
+        %>
+        <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-sm font-bold text-gray-900 dark:text-white">Batch <%= b.graduation_year %></span>
+            <span class="text-xs font-bold px-2 py-0.5 rounded-full <%= pctColor %>" style="background:<%= barColor %>14"><%= b.pct %>%</span>
+          </div>
+          <div class="flex items-center justify-between text-xs text-gray-500 mb-2">
+            <span>Eligible: <strong class="text-gray-700 dark:text-gray-300"><%= b.total_eligible %></strong></span>
+            <span>Placed: <strong class="text-gray-700 dark:text-gray-300"><%= b.placed %></strong></span>
+          </div>
+          <div class="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-2">
+            <div class="h-2 rounded-full transition-all" style="width:<%= Math.min(100, b.pct) %>%;background:<%= barColor %>"></div>
+          </div>
+        </div>
+      <% }); %>
+      <% if (!batchTracker.length) { %>
+        <div class="col-span-full py-8 text-center text-gray-400 text-sm">No batch data available</div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── Data ────────────────────────────────────────────────
+var trends = <%- JSON.stringify(trends) %>;
+var programBreakdown = <%- JSON.stringify(programBreakdown) %>;
+var branchBreakdown = <%- JSON.stringify(branchBreakdown) %>;
+var industryDist = <%- JSON.stringify(industryDist) %>;
+var salaryDist = <%- JSON.stringify(salaryDist) %>;
+var monthWise = <%- JSON.stringify(monthWise) %>;
+
+var primaryColor = 'hsl(228,100%,11%)';
+var accentColor = 'hsl(80,89%,40%)';
+var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+// ─── 1. Year-over-Year (dual Y-axis) ─────────────────────
+if (trends.length && document.getElementById('yoyChart')) {
+  new Chart(document.getElementById('yoyChart'), {
+    type: 'line',
+    data: {
+      labels: trends.map(function(t) { return t.academic_year; }),
+      datasets: [
+        {
+          label: 'Total Placed',
+          data: trends.map(function(t) { return t.total_placed; }),
+          borderColor: accentColor,
+          backgroundColor: 'rgba(95,163,2,0.1)',
+          fill: true,
+          tension: 0.4,
+          yAxisID: 'y',
+          pointRadius: 5,
+          pointHoverRadius: 7,
+          borderWidth: 2
+        },
+        {
+          label: 'Avg CTC (₹)',
+          data: trends.map(function(t) { return t.avg_ctc; }),
+          borderColor: '#7c3aed',
+          backgroundColor: 'transparent',
+          tension: 0.4,
+          yAxisID: 'y1',
+          pointRadius: 5,
+          pointHoverRadius: 7,
+          borderWidth: 2,
+          borderDash: [5, 5]
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: { legend: { position: 'top', labels: { boxWidth: 12, padding: 15 } } },
+      scales: {
+        y: { beginAtZero: true, position: 'left', title: { display: true, text: 'Placed', font: { size: 10 } }, ticks: { precision: 0 } },
+        y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'Avg CTC (₹)', font: { size: 10 } } }
+      }
+    }
+  });
+}
+
+// ─── 2. Program Placement Bar ─────────────────────────────
+if (programBreakdown.length) {
+  new Chart(document.getElementById('programChart'), {
+    type: 'bar',
+    data: {
+      labels: programBreakdown.map(function(p) { return p.program; }),
+      datasets: [{
+        label: 'Placement %',
+        data: programBreakdown.map(function(p) { return p.pct; }),
+        backgroundColor: accentColor,
+        borderRadius: 6,
+        maxBarThickness: 32
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { x: { beginAtZero: true, max: 100, title: { display: true, text: '%', font: { size: 10 } } } }
+    }
+  });
+}
+
+// ─── 3. Branch Placement Bar ──────────────────────────────
+if (branchBreakdown.length) {
+  new Chart(document.getElementById('branchChart'), {
+    type: 'bar',
+    data: {
+      labels: branchBreakdown.map(function(b) { return b.branch; }),
+      datasets: [{
+        label: 'Placed',
+        data: branchBreakdown.map(function(b) { return b.placed; }),
+        backgroundColor: primaryColor,
+        borderRadius: 6,
+        maxBarThickness: 28
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { x: { beginAtZero: true, ticks: { precision: 0 } } }
+    }
+  });
+}
+
+// ─── 4. Industry Donut ────────────────────────────────────
+if (industryDist.length) {
+  var donutColors = ['#001B3D','#5FA302','#7c3aed','#f59e0b','#ef4444','#3b82f6','#14b8a6','#ec4899','#6366f1','#84cc16','#06b6d4','#f97316'];
+  new Chart(document.getElementById('industryChart'), {
+    type: 'doughnut',
+    data: {
+      labels: industryDist.map(function(i) { return i.industry; }),
+      datasets: [{
+        data: industryDist.map(function(i) { return i.count; }),
+        backgroundColor: donutColors.slice(0, industryDist.length),
+        borderWidth: 2,
+        borderColor: '#fff'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'right', labels: { boxWidth: 10, padding: 8, font: { size: 10 } } }
+      }
+    }
+  });
+}
+
+// ─── 5. Salary Distribution ──────────────────────────────
+if (salaryDist.length) {
+  var salaryColors = salaryDist.map(function(s) {
+    if (s.bucket === '25L+') return '#16a34a';
+    if (s.bucket === '20-25L') return '#059669';
+    if (s.bucket === '15-20L') return '#0d9488';
+    if (s.bucket === '10-15L') return '#2563eb';
+    if (s.bucket === '5-10L') return '#7c3aed';
+    if (s.bucket === '0-5L') return '#9333ea';
+    return '#6b7280';
+  });
+  new Chart(document.getElementById('salaryChart'), {
+    type: 'bar',
+    data: {
+      labels: salaryDist.map(function(s) { return s.bucket; }),
+      datasets: [{
+        label: 'Students',
+        data: salaryDist.map(function(s) { return s.count; }),
+        backgroundColor: salaryColors,
+        borderRadius: 6,
+        maxBarThickness: 40
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+    }
+  });
+}
+
+// ─── 6. Month-wise ───────────────────────────────────────
+if (monthWise.length) {
+  new Chart(document.getElementById('monthChart'), {
+    type: 'bar',
+    data: {
+      labels: monthWise.map(function(m) {
+        var parts = m.month.split('-');
+        return months[parseInt(parts[1]) - 1] + ' ' + parts[0].slice(2);
+      }),
+      datasets: [{
+        label: 'Placements',
+        data: monthWise.map(function(m) { return m.count; }),
+        backgroundColor: accentColor,
+        borderRadius: 6,
+        maxBarThickness: 32
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+    }
+  });
+}
+
+// ─── Table Sort ──────────────────────────────────────────
+var sortDir = {};
+function sortTable(col) {
+  var table = document.getElementById('companiesTable');
+  var tbody = table.querySelector('tbody');
+  var rows = Array.from(tbody.querySelectorAll('tr'));
+  if (!rows.length || !rows[0].cells[col]) return;
+
+  sortDir[col] = !sortDir[col];
+  rows.sort(function(a, b) {
+    var aVal = a.cells[col].textContent.trim();
+    var bVal = b.cells[col].textContent.trim();
+    var aNum = parseFloat(aVal.replace(/[^\d.-]/g, ''));
+    var bNum = parseFloat(bVal.replace(/[^\d.-]/g, ''));
+    if (!isNaN(aNum) && !isNaN(bNum)) {
+      return sortDir[col] ? aNum - bNum : bNum - aNum;
+    }
+    return sortDir[col] ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+  });
+  rows.forEach(function(r) { tbody.appendChild(r); });
+}
+
+// ─── AJAX filter re-render ────────────────────────────────
+document.querySelectorAll('.filter-select').forEach(function(sel) {
+  sel.addEventListener('change', function() {
+    document.getElementById('filterForm').submit();
+  });
+});
+</script>

@@ -41,7 +41,7 @@
         <a href="/admin/skill-gap" class="admin-nav-link <%= currentPath.startsWith('/admin/skill-gap') ? 'active' : '' %>">
           <i class="fas fa-chart-bar" style="width:20px"></i> Skill Gap
         </a>
-        <a href="/admin/placement" class="admin-nav-link <%= currentPath === '/admin/placement' ? 'active' : '' %>">
+        <a href="/admin/placement" class="admin-nav-link <%= currentPath.startsWith('/admin/placement') ? 'active' : '' %>">
           <i class="fas fa-chart-pie" style="width:20px"></i> Placement
         </a>
         <a href="/admin/interviews" class="admin-nav-link <%= currentPath === '/admin/interviews' ? 'active' : '' %>">
