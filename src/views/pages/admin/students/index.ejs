@@ -33,7 +33,7 @@
   <%- include('filters') %>
 
   <!-- Bulk actions bar (shown when checkboxes selected) -->
-  <div id="bulk-bar" class="hidden bg-accent/10 border border-accent/30 rounded-xl px-4 py-3 flex items-center justify-between">
+  <div id="bulk-bar" style="display:none" class="bg-accent/10 border border-accent/30 rounded-xl px-4 py-3 flex items-center justify-between">
     <span class="text-sm font-medium"><span id="selected-count">0</span> student(s) selected</span>
     <div class="flex items-center gap-2">
       <select id="bulk-action-select" class="text-sm border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800">
@@ -45,7 +45,7 @@
         <option value="export_csv">Export Selected</option>
       </select>
       <!-- Extra input for status change -->
-      <select id="bulk-status-select" class="hidden text-sm border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800">
+      <select id="bulk-status-select" style="display:none" class="text-sm border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800">
         <option value="not_placed">Not Placed</option>
         <option value="in_process">In Process</option>
         <option value="placed">Placed</option>
@@ -66,10 +66,10 @@
             <th class="py-3 px-3 w-10"></th>
             <th class="py-3 px-3 font-medium cursor-pointer hover:text-accent" onclick="sortBy('name')">Name <i class="fas fa-sort text-gray-400 text-xs"></i></th>
             <th class="py-3 px-3 font-medium cursor-pointer hover:text-accent" onclick="sortBy('program')">Program <i class="fas fa-sort text-gray-400 text-xs"></i></th>
-            <th class="py-3 px-3 font-medium hidden lg:table-cell">Branch</th>
-            <th class="py-3 px-3 font-medium cursor-pointer hover:text-accent hidden md:table-cell" onclick="sortBy('year')">Year <i class="fas fa-sort text-gray-400 text-xs"></i></th>
+            <th class="py-3 px-3 font-medium">Branch</th>
+            <th class="py-3 px-3 font-medium cursor-pointer hover:text-accent" onclick="sortBy('year')">Year <i class="fas fa-sort text-gray-400 text-xs"></i></th>
             <th class="py-3 px-3 font-medium cursor-pointer hover:text-accent" onclick="sortBy('ats_score')">ATS <i class="fas fa-sort text-gray-400 text-xs"></i></th>
-            <th class="py-3 px-3 font-medium hidden xl:table-cell">Skills</th>
+            <th class="py-3 px-3 font-medium">Skills</th>
             <th class="py-3 px-3 font-medium">Status</th>
             <th class="py-3 px-3 font-medium w-16">Actions</th>
           </tr>
@@ -93,8 +93,8 @@
                   <p class="text-xs text-gray-500"><%= s.email %></p>
                 </td>
                 <td class="py-3 px-3 text-gray-600 dark:text-gray-400"><%= s.program || s.department || '-' %></td>
-                <td class="py-3 px-3 text-gray-500 hidden lg:table-cell"><%= s.branch || '-' %></td>
-                <td class="py-3 px-3 hidden md:table-cell"><%= s.graduation_year || s.year_of_study || '-' %></td>
+                <td class="py-3 px-3 text-gray-500"><%= s.branch || '-' %></td>
+                <td class="py-3 px-3"><%= s.graduation_year || s.year_of_study || '-' %></td>
                 <td class="py-3 px-3">
                   <%
                     var atsVal = s.ats_score || 0;
@@ -105,7 +105,7 @@
                   %>
                   <span class="inline-flex items-center justify-center w-10 h-10 rounded-full text-xs font-bold <%= atsColor %>"><%= atsVal %></span>
                 </td>
-                <td class="py-3 px-3 hidden xl:table-cell">
+                <td class="py-3 px-3">
                   <div class="flex flex-wrap gap-1 max-w-[200px]">
                     <% var skillsList = s.skills || []; %>
                     <% skillsList.slice(0, 3).forEach(function(sk) { %>
@@ -200,7 +200,12 @@ var currentStudentId = null;
 // ─── Filters toggle ──────────────────────────────────────
 function toggleFilters() {
   var panel = document.getElementById('filters-panel');
-  panel.classList.toggle('hidden');
+  if (panel.style.display === 'none' || !panel.style.display) {
+    panel.style.display = 'block';
+    panel.classList.remove('hidden');
+  } else {
+    panel.style.display = 'none';
+  }
 }
 
 function clearFilters() {
@@ -257,7 +262,7 @@ function updateBulkBar() {
   var checked = document.querySelectorAll('.student-checkbox:checked');
   var bar = document.getElementById('bulk-bar');
   document.getElementById('selected-count').textContent = checked.length;
-  bar.classList.toggle('hidden', checked.length === 0);
+  bar.style.display = checked.length > 0 ? 'flex' : 'none';
 }
 
 // Show/hide status dropdown based on action
@@ -266,7 +271,7 @@ function updateBulkBar() {
   if (!sel) return;
   sel.addEventListener('change', function() {
     var statusSel = document.getElementById('bulk-status-select');
-    statusSel.classList.toggle('hidden', this.value !== 'change_status');
+    statusSel.style.display = this.value === 'change_status' ? 'block' : 'none';
   });
 })();
 
@@ -311,18 +316,24 @@ function openProfile(id, event) {
   var loading = document.getElementById('panel-loading');
   var content = document.getElementById('panel-content');
 
-  panel.classList.remove('translate-x-full');
-  backdrop.classList.remove('hidden');
-  loading.classList.remove('hidden');
-  content.classList.add('hidden');
+  // Show panel and backdrop
+  panel.style.display = 'block';
+  backdrop.style.display = 'block';
+  loading.style.display = 'block';
+  content.style.display = 'none';
+
+  // Slide panel in after a brief delay for transition
+  setTimeout(function() {
+    panel.style.transform = 'translateX(0)';
+  }, 10);
 
   fetch('/admin/students/api/' + id)
     .then(function(r) { return r.json(); })
     .then(function(res) {
       if (!res.success) throw new Error(res.error);
       renderProfile(res.student);
-      loading.classList.add('hidden');
-      content.classList.remove('hidden');
+      loading.style.display = 'none';
+      content.style.display = 'block';
     })
     .catch(function(err) {
       loading.innerHTML = '<p class="text-red-500 text-sm">Failed to load profile</p>';
@@ -330,8 +341,13 @@ function openProfile(id, event) {
 }
 
 function closeProfilePanel() {
-  document.getElementById('profile-panel').classList.add('translate-x-full');
-  document.getElementById('panel-backdrop').classList.add('hidden');
+  var panel = document.getElementById('profile-panel');
+  panel.style.transform = 'translateX(100%)';
+  // Hide after transition completes
+  setTimeout(function() {
+    panel.style.display = 'none';
+    document.getElementById('panel-backdrop').style.display = 'none';
+  }, 300);
   currentStudentId = null;
 }
 
@@ -360,7 +376,8 @@ function renderProfile(s) {
   document.getElementById('panel-completeness').textContent = comp.score + '%';
   var bar = document.getElementById('panel-completeness-bar');
   bar.style.width = comp.score + '%';
-  bar.className = 'h-2.5 rounded-full transition-all duration-500 ' + (comp.score >= 70 ? 'bg-green-500' : comp.score >= 40 ? 'bg-yellow-500' : 'bg-red-500');
+  bar.style.backgroundColor = comp.score >= 70 ? '#22c55e' : comp.score >= 40 ? '#eab308' : '#ef4444';
+  bar.style.borderRadius = '9999px';
 
   var bd = comp.breakdown || {};
   var bdHtml = '';
@@ -436,8 +453,9 @@ function renderSkills(skills) {
 
 // ─── Skill Management ────────────────────────────────────
 function toggleAddSkill() {
-  document.getElementById('add-skill-form').classList.toggle('hidden');
-  document.getElementById('new-skill-name').focus();
+  var form = document.getElementById('add-skill-form');
+  form.style.display = form.style.display === 'none' ? 'flex' : 'none';
+  if (form.style.display === 'flex') document.getElementById('new-skill-name').focus();
 }
 
 function addSkillToStudent() {
@@ -456,7 +474,7 @@ function addSkillToStudent() {
     if (res.success) {
       renderSkills(res.skills);
       document.getElementById('new-skill-name').value = '';
-      document.getElementById('add-skill-form').classList.add('hidden');
+      document.getElementById('add-skill-form').style.display = 'none';
     }
   });
 }

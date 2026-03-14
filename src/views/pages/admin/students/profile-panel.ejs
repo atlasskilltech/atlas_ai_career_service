@@ -1,7 +1,10 @@
+<!-- Backdrop -->
+<div id="panel-backdrop" style="display:none" class="fixed inset-0 bg-black/30 z-40" onclick="closeProfilePanel()"></div>
+
 <!-- Slide-in Profile Panel (right side) -->
-<div id="profile-panel" class="fixed inset-y-0 right-0 w-full sm:w-[480px] bg-white dark:bg-gray-900 shadow-2xl z-50 transform translate-x-full transition-transform duration-300 overflow-y-auto border-l border-gray-200 dark:border-gray-800">
+<div id="profile-panel" style="display:none; position:fixed; top:0; right:0; bottom:0; width:480px; max-width:100vw; z-index:50; transform:translateX(100%); transition:transform 0.3s ease;" class="bg-white dark:bg-gray-900 shadow-2xl overflow-y-auto border-l border-gray-200 dark:border-gray-800">
   <!-- Header -->
-  <div class="sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-5 py-4 flex items-center justify-between z-10">
+  <div class="sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-5 py-4 flex items-center justify-between" style="z-index:10">
     <h3 class="font-semibold text-gray-900 dark:text-white">Student Profile</h3>
     <button onclick="closeProfilePanel()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500">
       <i class="fas fa-times"></i>
@@ -9,12 +12,12 @@
   </div>
 
   <!-- Loading -->
-  <div id="panel-loading" class="flex items-center justify-center py-20">
+  <div id="panel-loading" class="hidden" style="display:none; padding:5rem 0; text-align:center;">
     <i class="fas fa-spinner fa-spin text-2xl text-gray-400"></i>
   </div>
 
   <!-- Content (populated by JS) -->
-  <div id="panel-content" class="hidden p-5 space-y-6">
+  <div id="panel-content" style="display:none" class="p-5 space-y-6">
     <!-- Personal Info -->
     <div class="flex items-start gap-4">
       <div id="panel-avatar" class="w-16 h-16 rounded-full bg-primary flex items-center justify-center text-white text-xl font-bold flex-shrink-0"></div>
@@ -35,8 +38,8 @@
         <span class="text-sm font-medium">Profile Completeness</span>
         <span id="panel-completeness" class="text-sm font-bold"></span>
       </div>
-      <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
-        <div id="panel-completeness-bar" class="h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+      <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full" style="height:10px">
+        <div id="panel-completeness-bar" class="rounded-full" style="height:10px; width:0%; transition:width 0.5s"></div>
       </div>
       <div id="panel-completeness-breakdown" class="grid grid-cols-2 gap-2 mt-3 text-xs"></div>
     </div>
@@ -57,12 +60,12 @@
       <h5 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-3">Career</h5>
       <div class="flex items-center gap-4 mb-3">
         <!-- ATS Score Ring -->
-        <div class="relative w-16 h-16 flex-shrink-0">
-          <svg class="w-16 h-16 transform -rotate-90" viewBox="0 0 36 36">
+        <div style="position:relative; width:64px; height:64px; flex-shrink:0">
+          <svg style="width:64px; height:64px; transform:rotate(-90deg)" viewBox="0 0 36 36">
             <path class="text-gray-200 dark:text-gray-700" stroke="currentColor" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
             <path id="panel-ats-ring" class="text-accent" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
           </svg>
-          <span id="panel-ats-score" class="absolute inset-0 flex items-center justify-center text-xs font-bold"></span>
+          <span id="panel-ats-score" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700"></span>
         </div>
         <div class="text-sm space-y-1">
           <div id="panel-resume-link"></div>
@@ -78,8 +81,7 @@
         <h5 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Skills</h5>
         <button onclick="toggleAddSkill()" class="text-xs text-accent hover:underline font-medium"><i class="fas fa-plus"></i> Add</button>
       </div>
-      <!-- Add skill form (hidden) -->
-      <div id="add-skill-form" class="hidden mb-3 flex gap-2">
+      <div id="add-skill-form" style="display:none" class="mb-3 flex gap-2">
         <input type="text" id="new-skill-name" placeholder="Skill name" class="flex-1 text-sm border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800">
         <select id="new-skill-type" class="text-sm border border-gray-300 dark:border-gray-700 rounded-lg px-2 py-1.5 bg-white dark:bg-gray-800">
           <option value="technical">Technical</option>
@@ -108,4 +110,3 @@
     </div>
   </div>
 </div>
-<div id="panel-backdrop" class="hidden fixed inset-0 bg-black/30 z-40" onclick="closeProfilePanel()"></div>
