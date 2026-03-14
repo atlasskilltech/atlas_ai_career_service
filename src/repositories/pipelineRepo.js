@@ -240,12 +240,12 @@ class PipelineRepo {
 
   async getPipelineStats(jobId) {
     const [rows] = await pool.execute(
-      `SELECT stage, COUNT(*) as count,
+      `SELECT p.stage, COUNT(*) as count,
         AVG(a.ats_match_score) as avg_score
        FROM aicp_application_pipeline p
        JOIN aicp_admin_job_applications a ON a.id = p.application_id
        WHERE p.job_id = ?
-       GROUP BY stage`,
+       GROUP BY p.stage`,
       [jobId]
     );
     const stats = {
