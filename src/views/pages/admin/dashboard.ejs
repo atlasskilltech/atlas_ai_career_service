@@ -1,0 +1,343 @@
+<div class="space-y-6">
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <div>
+      <h1 class="text-2xl font-bold">Admin Overview</h1>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Real-time placement analytics for <%= selectedYear %></p>
+    </div>
+    <button onclick="refreshMetrics()" id="refresh-btn" class="inline-flex items-center gap-2 px-4 py-2 bg-accent text-white rounded-lg hover:opacity-90 transition text-sm font-medium">
+      <i class="fas fa-sync-alt" id="refresh-icon"></i> Refresh Data
+    </button>
+  </div>
+
+  <!-- KPI Cards -->
+  <div id="kpi-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4">
+    <% metrics.forEach(function(m) { %>
+      <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 hover:shadow-lg transition-shadow" data-kpi="<%= m.key %>">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide"><%= m.label %></span>
+          <% if (m.change !== 0) { %>
+            <span class="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full
+              <%= m.change > 0 ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' %>">
+              <i class="fas fa-arrow-<%= m.change > 0 ? 'up' : 'down' %> text-[10px]"></i>
+              <%= Math.abs(m.change) %>%
+            </span>
+          <% } %>
+        </div>
+        <div class="text-2xl font-bold text-gray-900 dark:text-white">
+          <%= m.prefix %><%= m.key === 'avg_salary' ? (m.value >= 100000 ? (m.value / 100000).toFixed(1) + 'L' : m.value.toLocaleString()) : m.value.toLocaleString() %><%= m.suffix %>
+        </div>
+      </div>
+    <% }); %>
+  </div>
+
+  <!-- Charts Row 1: Placement Trend + Funnel -->
+  <div class="grid lg:grid-cols-2 gap-6">
+    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+      <h3 class="font-semibold mb-4 text-gray-900 dark:text-white">Placement Trend</h3>
+      <canvas id="placementTrendChart" height="260"></canvas>
+    </div>
+    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+      <h3 class="font-semibold mb-4 text-gray-900 dark:text-white">Applications Funnel</h3>
+      <canvas id="funnelChart" height="260"></canvas>
+    </div>
+  </div>
+
+  <!-- Charts Row 2: Industry + Top Recruiters -->
+  <div class="grid lg:grid-cols-2 gap-6">
+    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+      <h3 class="font-semibold mb-4 text-gray-900 dark:text-white">Jobs by Industry</h3>
+      <canvas id="industryChart" height="300"></canvas>
+    </div>
+    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+      <h3 class="font-semibold mb-4 text-gray-900 dark:text-white">Top Recruiters</h3>
+      <canvas id="recruiterChart" height="300"></canvas>
+    </div>
+  </div>
+
+  <!-- Charts Row 3: Dept Donut + Salary Histogram -->
+  <div class="grid lg:grid-cols-2 gap-6">
+    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+      <h3 class="font-semibold mb-4 text-gray-900 dark:text-white">Department-wise Placement</h3>
+      <canvas id="deptDonutChart" height="280"></canvas>
+    </div>
+    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+      <h3 class="font-semibold mb-4 text-gray-900 dark:text-white">Salary Distribution</h3>
+      <canvas id="salaryHistChart" height="280"></canvas>
+    </div>
+  </div>
+
+  <!-- Activity Widgets -->
+  <div class="grid lg:grid-cols-3 gap-6">
+    <!-- Recently Posted Jobs -->
+    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+      <h3 class="font-semibold mb-4 text-gray-900 dark:text-white flex items-center gap-2">
+        <i class="fas fa-briefcase text-accent"></i> Recently Posted Jobs
+      </h3>
+      <div class="space-y-3" id="recent-jobs-feed">
+        <% if (activity.recentJobs && activity.recentJobs.length) { %>
+          <% activity.recentJobs.forEach(function(j) { %>
+            <div class="flex items-start gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition">
+              <div class="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-building text-blue-600 dark:text-blue-400 text-xs"></i>
+              </div>
+              <div class="min-w-0">
+                <p class="text-sm font-medium truncate"><%= j.company %></p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 truncate"><%= j.role %></p>
+                <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5"><%= timeAgo(j.created_at) %></p>
+              </div>
+            </div>
+          <% }); %>
+        <% } else { %>
+          <p class="text-sm text-gray-400 text-center py-4">No recent jobs</p>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- Latest Applications -->
+    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+      <h3 class="font-semibold mb-4 text-gray-900 dark:text-white flex items-center gap-2">
+        <i class="fas fa-paper-plane text-accent"></i> Latest Applications
+      </h3>
+      <div class="space-y-3" id="latest-apps-feed">
+        <% if (activity.latestApps && activity.latestApps.length) { %>
+          <% activity.latestApps.forEach(function(a) { %>
+            <div class="flex items-start gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition">
+              <div class="w-8 h-8 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-user text-purple-600 dark:text-purple-400 text-xs"></i>
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="text-sm font-medium truncate"><%= a.student %></p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 truncate"><%= a.company %></p>
+                <div class="flex items-center gap-2 mt-1">
+                  <span class="inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full
+                    <%= a.status === 'offered' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+                       a.status === 'interview' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
+                       a.status === 'rejected' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
+                       'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400' %>">
+                    <%= a.status %>
+                  </span>
+                  <span class="text-xs text-gray-400 dark:text-gray-500"><%= timeAgo(a.created_at) %></span>
+                </div>
+              </div>
+            </div>
+          <% }); %>
+        <% } else { %>
+          <p class="text-sm text-gray-400 text-center py-4">No recent applications</p>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- Upcoming Interviews -->
+    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+      <h3 class="font-semibold mb-4 text-gray-900 dark:text-white flex items-center gap-2">
+        <i class="fas fa-video text-accent"></i> Upcoming Interviews
+      </h3>
+      <div class="space-y-3" id="upcoming-interviews-feed">
+        <% if (activity.upcomingInterviews && activity.upcomingInterviews.length) { %>
+          <% activity.upcomingInterviews.forEach(function(iv) { %>
+            <div class="flex items-start gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition">
+              <div class="w-8 h-8 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-calendar text-orange-600 dark:text-orange-400 text-xs"></i>
+              </div>
+              <div class="min-w-0">
+                <p class="text-sm font-medium truncate"><%= iv.student %></p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 truncate"><%= iv.company || 'Mock Interview' %></p>
+                <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                  <% if (iv.interview_date) { %>
+                    <%= new Date(iv.interview_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) %>,
+                    <%= new Date(iv.interview_date).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) %>
+                  <% } else { %>
+                    TBD
+                  <% } %>
+                </p>
+              </div>
+            </div>
+          <% }); %>
+        <% } else { %>
+          <p class="text-sm text-gray-400 text-center py-4">No upcoming interviews</p>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%
+  function timeAgo(date) {
+    if (!date) return '';
+    var now = new Date();
+    var d = new Date(date);
+    var diff = Math.floor((now - d) / 1000);
+    if (diff < 60) return diff + 's ago';
+    if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+    if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+    if (diff < 604800) return Math.floor(diff / 86400) + 'd ago';
+    return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+  }
+%>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var isDark = document.documentElement.classList.contains('dark');
+  var gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
+  var textColor = isDark ? '#9ca3af' : '#6b7280';
+  var primaryColor = 'hsl(228, 100%, 11%)';
+  var accentColor = 'hsl(80, 89%, 40%)';
+
+  Chart.defaults.color = textColor;
+  Chart.defaults.borderColor = gridColor;
+
+  var charts = <%- JSON.stringify(charts) %>;
+
+  // 1. Placement Trend Line
+  (function() {
+    var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    var currentData = new Array(12).fill(0);
+    var lastData = new Array(12).fill(0);
+    if (charts.trend.currentYear) charts.trend.currentYear.forEach(function(r) { currentData[r.m - 1] = r.cnt; });
+    if (charts.trend.lastYear) charts.trend.lastYear.forEach(function(r) { lastData[r.m - 1] = r.cnt; });
+
+    new Chart(document.getElementById('placementTrendChart'), {
+      type: 'line',
+      data: {
+        labels: months,
+        datasets: [
+          { label: 'This Year', data: currentData, borderColor: accentColor, backgroundColor: accentColor + '20', fill: true, tension: 0.4 },
+          { label: 'Last Year', data: lastData, borderColor: primaryColor, backgroundColor: 'transparent', borderDash: [5, 5], tension: 0.4 },
+        ],
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true } } },
+    });
+  })();
+
+  // 2. Applications Funnel Bar
+  (function() {
+    var funnelLabels = { applied: 'Applied', reviewed: 'Reviewed', shortlisted: 'Shortlisted', interview: 'Interview', offered: 'Offer' };
+    var funnelOrder = ['applied','reviewed','shortlisted','interview','offered'];
+    var funnelMap = {};
+    charts.funnel.forEach(function(r) { funnelMap[r.status] = r.cnt; });
+    var labels = funnelOrder.map(function(s) { return funnelLabels[s] || s; });
+    var data = funnelOrder.map(function(s) { return funnelMap[s] || 0; });
+    var colors = ['#3b82f6','#6366f1','#8b5cf6','#f59e0b','#22c55e'];
+
+    new Chart(document.getElementById('funnelChart'), {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{ label: 'Count', data: data, backgroundColor: colors, borderRadius: 6 }],
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } },
+    });
+  })();
+
+  // 3. Jobs by Industry H-Bar
+  (function() {
+    var labels = charts.industries.map(function(r) { return r.industry; });
+    var data = charts.industries.map(function(r) { return r.cnt; });
+
+    new Chart(document.getElementById('industryChart'), {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{ label: 'Jobs', data: data, backgroundColor: accentColor, borderRadius: 4 }],
+      },
+      options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true } } },
+    });
+  })();
+
+  // 4. Top Recruiters Bar
+  (function() {
+    var labels = charts.recruiters.map(function(r) { return r.name; });
+    var data = charts.recruiters.map(function(r) { return r.hired; });
+
+    new Chart(document.getElementById('recruiterChart'), {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{ label: 'Students Hired', data: data, backgroundColor: primaryColor, borderRadius: 4 }],
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } },
+    });
+  })();
+
+  // 5. Department Donut
+  (function() {
+    var labels = charts.departments.map(function(r) { return r.dept; });
+    var data = charts.departments.map(function(r) { return r.total > 0 ? Math.round((r.placed / r.total) * 100) : 0; });
+    var bgColors = ['#3b82f6','#22c55e','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#ec4899','#64748b'];
+
+    new Chart(document.getElementById('deptDonutChart'), {
+      type: 'doughnut',
+      data: {
+        labels: labels,
+        datasets: [{ data: data, backgroundColor: bgColors.slice(0, labels.length) }],
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'right' },
+          tooltip: { callbacks: { label: function(ctx) { return ctx.label + ': ' + ctx.raw + '%'; } } },
+        },
+      },
+    });
+  })();
+
+  // 6. Salary Distribution Histogram
+  (function() {
+    var labels = charts.salaryDist.map(function(r) { return r.bucket; });
+    var data = charts.salaryDist.map(function(r) { return r.cnt; });
+
+    new Chart(document.getElementById('salaryHistChart'), {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{ label: 'Students', data: data, backgroundColor: ['#3b82f6','#22c55e','#f59e0b','#8b5cf6'], borderRadius: 6 }],
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } },
+    });
+  })();
+
+  // ─── Auto-refresh KPIs every 60s ─────────────────────────
+  var selectedYear = '<%= selectedYear %>';
+
+  setInterval(function() {
+    fetch('/admin/metrics?year=' + encodeURIComponent(selectedYear))
+      .then(function(r) { return r.json(); })
+      .then(function(res) {
+        if (!res.success) return;
+        res.data.forEach(function(m) {
+          var card = document.querySelector('[data-kpi="' + m.key + '"]');
+          if (!card) return;
+          var numEl = card.querySelector('.text-2xl');
+          if (numEl) {
+            var display = m.key === 'avg_salary'
+              ? (m.prefix || '') + (m.value >= 100000 ? (m.value / 100000).toFixed(1) + 'L' : m.value.toLocaleString()) + (m.suffix || '')
+              : (m.prefix || '') + m.value.toLocaleString() + (m.suffix || '');
+            numEl.textContent = display;
+          }
+        });
+      })
+      .catch(function() {});
+  }, 60000);
+});
+
+// Refresh button handler
+function refreshMetrics() {
+  var btn = document.getElementById('refresh-btn');
+  var icon = document.getElementById('refresh-icon');
+  btn.disabled = true;
+  icon.classList.add('animate-spin');
+  var year = '<%= selectedYear %>';
+
+  fetch('/admin/refresh?year=' + encodeURIComponent(year), { method: 'POST' })
+    .then(function(r) { return r.json(); })
+    .then(function(res) {
+      if (res.success) window.location.reload();
+    })
+    .catch(function() {})
+    .finally(function() {
+      btn.disabled = false;
+      icon.classList.remove('animate-spin');
+    });
+}
+</script>
