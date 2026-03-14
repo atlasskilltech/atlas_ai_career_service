@@ -44,28 +44,35 @@ class DashboardRepository {
 
   async getTotalApplications() {
     const [rows] = await pool.execute(
-      'SELECT COUNT(*) AS cnt FROM aicp_job_applications'
+      `SELECT (SELECT COUNT(*) FROM aicp_job_applications) +
+              (SELECT COUNT(*) FROM aicp_admin_job_applications) AS cnt`
     );
     return rows[0].cnt;
   }
 
   async getInterviewsScheduled() {
     const [rows] = await pool.execute(
-      "SELECT COUNT(*) AS cnt FROM aicp_job_applications WHERE status = 'interview'"
+      `SELECT (SELECT COUNT(*) FROM aicp_job_applications WHERE status = 'interview') +
+              (SELECT COUNT(*) FROM aicp_admin_job_applications WHERE stage = 'interview') AS cnt`
     );
     return rows[0].cnt;
   }
 
   async getOffersReceived() {
     const [rows] = await pool.execute(
-      "SELECT COUNT(*) AS cnt FROM aicp_job_applications WHERE status = 'offered'"
+      `SELECT (SELECT COUNT(*) FROM aicp_job_applications WHERE status = 'offered') +
+              (SELECT COUNT(*) FROM aicp_admin_job_applications WHERE stage = 'offered') AS cnt`
     );
     return rows[0].cnt;
   }
 
   async getStudentsPlaced() {
     const [rows] = await pool.execute(
-      "SELECT COUNT(DISTINCT user_id) AS cnt FROM aicp_job_applications WHERE status = 'offered'"
+      `SELECT COUNT(DISTINCT user_id) AS cnt FROM (
+         SELECT user_id FROM aicp_job_applications WHERE status = 'offered'
+         UNION
+         SELECT user_id FROM aicp_admin_job_applications WHERE stage = 'offered'
+       ) AS placed`
     );
     return rows[0].cnt;
   }
@@ -73,7 +80,11 @@ class DashboardRepository {
   async getPlacementRate() {
     const [rows] = await pool.execute(
       `SELECT
-         (SELECT COUNT(DISTINCT user_id) FROM aicp_job_applications WHERE status = 'offered') AS placed,
+         (SELECT COUNT(DISTINCT user_id) FROM (
+           SELECT user_id FROM aicp_job_applications WHERE status = 'offered'
+           UNION
+           SELECT user_id FROM aicp_admin_job_applications WHERE stage = 'offered'
+         ) AS p) AS placed,
          (SELECT COUNT(*) FROM aicp_users WHERE role = 'student') AS total`
     );
     const { placed, total } = rows[0];
@@ -82,10 +93,15 @@ class DashboardRepository {
 
   async getAvgSalary() {
     const [rows] = await pool.execute(
-      `SELECT AVG(j.salary_max) AS avg_sal
-       FROM aicp_job_applications a
-       JOIN aicp_aggregated_jobs j ON a.job_id = j.id
-       WHERE a.status = 'offered' AND j.salary_max IS NOT NULL`
+      `SELECT AVG(salary) AS avg_sal FROM (
+         SELECT j.salary_max AS salary FROM aicp_job_applications a
+         JOIN aicp_aggregated_jobs j ON a.job_id = j.id
+         WHERE a.status = 'offered' AND j.salary_max IS NOT NULL
+         UNION ALL
+         SELECT aj.ctc_max AS salary FROM aicp_admin_job_applications aa
+         JOIN aicp_admin_jobs aj ON aa.job_id = aj.id
+         WHERE aa.stage = 'offered' AND aj.ctc_max IS NOT NULL
+       ) AS salaries`
     );
     return Math.round(rows[0].avg_sal || 0);
   }
@@ -100,7 +116,8 @@ class DashboardRepository {
 
   async getTotalApplicationsPrev() {
     const [rows] = await pool.execute(
-      "SELECT COUNT(*) AS cnt FROM aicp_job_applications WHERE applied_at < DATE_FORMAT(NOW(), '%Y-%m-01')"
+      `SELECT (SELECT COUNT(*) FROM aicp_job_applications WHERE applied_at < DATE_FORMAT(NOW(), '%Y-%m-01')) +
+              (SELECT COUNT(*) FROM aicp_admin_job_applications WHERE applied_at < DATE_FORMAT(NOW(), '%Y-%m-01')) AS cnt`
     );
     return rows[0].cnt;
   }
@@ -108,23 +125,31 @@ class DashboardRepository {
   // ─── Chart Data ────────────────────────────────────────────
   async getPlacementTrend(year) {
     const [currentYear] = await pool.execute(
-      `SELECT MONTH(a.applied_at) AS m, COUNT(DISTINCT a.user_id) AS cnt
-       FROM aicp_job_applications a WHERE a.status = 'offered' AND YEAR(a.applied_at) = ?
-       GROUP BY MONTH(a.applied_at) ORDER BY m`,
-      [year]
+      `SELECT m, COUNT(DISTINCT user_id) AS cnt FROM (
+         SELECT MONTH(a.applied_at) AS m, a.user_id FROM aicp_job_applications a WHERE a.status = 'offered' AND YEAR(a.applied_at) = ?
+         UNION ALL
+         SELECT MONTH(aa.applied_at) AS m, aa.user_id FROM aicp_admin_job_applications aa WHERE aa.stage = 'offered' AND YEAR(aa.applied_at) = ?
+       ) AS combined GROUP BY m ORDER BY m`,
+      [year, year]
     );
     const [lastYear] = await pool.execute(
-      `SELECT MONTH(a.applied_at) AS m, COUNT(DISTINCT a.user_id) AS cnt
-       FROM aicp_job_applications a WHERE a.status = 'offered' AND YEAR(a.applied_at) = ?
-       GROUP BY MONTH(a.applied_at) ORDER BY m`,
-      [year - 1]
+      `SELECT m, COUNT(DISTINCT user_id) AS cnt FROM (
+         SELECT MONTH(a.applied_at) AS m, a.user_id FROM aicp_job_applications a WHERE a.status = 'offered' AND YEAR(a.applied_at) = ?
+         UNION ALL
+         SELECT MONTH(aa.applied_at) AS m, aa.user_id FROM aicp_admin_job_applications aa WHERE aa.stage = 'offered' AND YEAR(aa.applied_at) = ?
+       ) AS combined GROUP BY m ORDER BY m`,
+      [year - 1, year - 1]
     );
     return { currentYear, lastYear };
   }
 
   async getApplicationFunnel() {
     const [rows] = await pool.execute(
-      `SELECT status, COUNT(*) AS cnt FROM aicp_job_applications GROUP BY status ORDER BY FIELD(status, 'applied','reviewed','shortlisted','interview','offered')`
+      `SELECT status, SUM(cnt) AS cnt FROM (
+         SELECT status, COUNT(*) AS cnt FROM aicp_job_applications GROUP BY status
+         UNION ALL
+         SELECT stage AS status, COUNT(*) AS cnt FROM aicp_admin_job_applications GROUP BY stage
+       ) AS combined GROUP BY status ORDER BY FIELD(status, 'applied','reviewed','shortlisted','interview','offered')`
     );
     return rows;
   }
@@ -142,24 +167,28 @@ class DashboardRepository {
 
   async getTopRecruiters() {
     const [rows] = await pool.execute(
-      `SELECT j.company AS name, COUNT(DISTINCT a.user_id) AS hired
-       FROM aicp_job_applications a
-       JOIN aicp_aggregated_jobs j ON a.job_id = j.id
-       WHERE a.status = 'offered'
-       GROUP BY j.company ORDER BY hired DESC LIMIT 10`
+      `SELECT name, COUNT(DISTINCT user_id) AS hired FROM (
+         SELECT j.company AS name, a.user_id FROM aicp_job_applications a
+         JOIN aicp_aggregated_jobs j ON a.job_id = j.id WHERE a.status = 'offered'
+         UNION ALL
+         SELECT aj.company_name AS name, aa.user_id FROM aicp_admin_job_applications aa
+         JOIN aicp_admin_jobs aj ON aa.job_id = aj.id WHERE aa.stage = 'offered'
+       ) AS combined GROUP BY name ORDER BY hired DESC LIMIT 10`
     );
     return rows;
   }
 
   async getDepartmentPlacements() {
     const [rows] = await pool.execute(
-      `SELECT COALESCE(u.department, 'Unknown') AS dept,
-              COUNT(DISTINCT a.user_id) AS placed,
-              (SELECT COUNT(*) FROM aicp_users u2 WHERE u2.role = 'student' AND u2.department = u.department) AS total
-       FROM aicp_job_applications a
-       JOIN aicp_users u ON a.user_id = u.id
-       WHERE a.status = 'offered'
-       GROUP BY u.department`
+      `SELECT COALESCE(dept, 'Unknown') AS dept, COUNT(DISTINCT user_id) AS placed,
+              (SELECT COUNT(*) FROM aicp_users u2 WHERE u2.role = 'student' AND u2.department = dept) AS total
+       FROM (
+         SELECT u.department AS dept, a.user_id FROM aicp_job_applications a
+         JOIN aicp_users u ON a.user_id = u.id WHERE a.status = 'offered'
+         UNION ALL
+         SELECT u.department AS dept, aa.user_id FROM aicp_admin_job_applications aa
+         JOIN aicp_users u ON aa.user_id = u.id WHERE aa.stage = 'offered'
+       ) AS combined GROUP BY dept`
     );
     return rows;
   }
@@ -168,15 +197,21 @@ class DashboardRepository {
     const [rows] = await pool.execute(
       `SELECT
          CASE
-           WHEN j.salary_max < 500000 THEN '0-5L'
-           WHEN j.salary_max < 1000000 THEN '5-10L'
-           WHEN j.salary_max < 1500000 THEN '10-15L'
+           WHEN salary < 500000 THEN '0-5L'
+           WHEN salary < 1000000 THEN '5-10L'
+           WHEN salary < 1500000 THEN '10-15L'
            ELSE '15L+'
          END AS bucket,
          COUNT(*) AS cnt
-       FROM aicp_job_applications a
-       JOIN aicp_aggregated_jobs j ON a.job_id = j.id
-       WHERE a.status = 'offered' AND j.salary_max IS NOT NULL
+       FROM (
+         SELECT j.salary_max AS salary FROM aicp_job_applications a
+         JOIN aicp_aggregated_jobs j ON a.job_id = j.id
+         WHERE a.status = 'offered' AND j.salary_max IS NOT NULL
+         UNION ALL
+         SELECT aj.ctc_max AS salary FROM aicp_admin_job_applications aa
+         JOIN aicp_admin_jobs aj ON aa.job_id = aj.id
+         WHERE aa.stage = 'offered' AND aj.ctc_max IS NOT NULL
+       ) AS salaries
        GROUP BY bucket
        ORDER BY FIELD(bucket, '0-5L','5-10L','10-15L','15L+')`
     );
@@ -194,11 +229,17 @@ class DashboardRepository {
 
   async getLatestApplications(limit = 5) {
     const [rows] = await pool.execute(
-      `SELECT u.name AS student, j.company, a.status, a.applied_at AS created_at
-       FROM aicp_job_applications a
-       JOIN aicp_users u ON a.user_id = u.id
-       JOIN aicp_aggregated_jobs j ON a.job_id = j.id
-       ORDER BY a.applied_at DESC LIMIT ?`,
+      `SELECT student, company, status, created_at FROM (
+         SELECT u.name AS student, j.company, a.status, a.applied_at AS created_at
+         FROM aicp_job_applications a
+         JOIN aicp_users u ON a.user_id = u.id
+         JOIN aicp_aggregated_jobs j ON a.job_id = j.id
+         UNION ALL
+         SELECT u.name AS student, aj.company_name AS company, aa.stage AS status, aa.applied_at AS created_at
+         FROM aicp_admin_job_applications aa
+         JOIN aicp_users u ON aa.user_id = u.id
+         JOIN aicp_admin_jobs aj ON aa.job_id = aj.id
+       ) AS combined ORDER BY created_at DESC LIMIT ?`,
       [limit]
     );
     return rows;
