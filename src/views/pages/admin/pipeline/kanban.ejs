@@ -284,14 +284,14 @@ function moveCard(appId, toStage, reason) {
       var card = document.querySelector('[data-app-id="' + appId + '"]');
       if (card) card.setAttribute('data-stage', toStage);
       updateColumnCounts();
-      showToast('Card moved to ' + STAGE_LABELS[toStage]);
+      showToast('Card moved to ' + STAGE_LABELS[toStage], 'success');
     } else {
-      showToast(data.error || 'Failed to move card', true);
+      showToast(data.error || 'Failed to move card', 'error');
       location.reload();
     }
   })
   .catch(function() {
-    showToast('Network error', true);
+    showToast('Network error', 'error');
     location.reload();
   });
 }
@@ -413,7 +413,7 @@ function setPriority(appId, priority) {
   .then(function(r) { return r.json(); })
   .then(function(data) {
     if (data.success) {
-      showToast('Priority updated');
+      showToast('Priority updated', 'success');
       var pColors = {low:'#10b981',medium:'#3b82f6',high:'#f59e0b',urgent:'#ef4444'};
       var card = document.querySelector('[data-app-id="' + appId + '"]');
       if (card) {
@@ -433,7 +433,7 @@ function saveNotes(appId) {
   })
   .then(function(r) { return r.json(); })
   .then(function(data) {
-    if (data.success) showToast('Notes saved');
+    if (data.success) showToast('Notes saved', 'success');
   });
 }
 
@@ -502,11 +502,4 @@ document.getElementById('kanbanSearch').addEventListener('keydown', function(e) 
   if (e.key === 'Enter') applyFilters();
 });
 
-function showToast(msg, isError) {
-  var toast = document.createElement('div');
-  toast.textContent = msg;
-  toast.style.cssText = 'position:fixed;bottom:24px;right:24px;padding:12px 20px;border-radius:10px;font-size:14px;font-weight:500;z-index:99999;color:#fff;box-shadow:0 4px 12px rgba(0,0,0,0.15);background:' + (isError ? '#ef4444' : '#10b981') + ';';
-  document.body.appendChild(toast);
-  setTimeout(function() { toast.remove(); }, 3000);
-}
 </script>
