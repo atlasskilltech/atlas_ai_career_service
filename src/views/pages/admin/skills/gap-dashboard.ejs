@@ -1,0 +1,372 @@
+<div class="space-y-5">
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Skill Gap Analysis</h1>
+      <p class="text-sm text-gray-500 mt-1">Demand vs supply across all tracked skills</p>
+    </div>
+    <div class="flex items-center gap-2">
+      <a href="/admin/skill-gap/export?<%= Object.entries(query).map(function(e){return e[0]+'='+encodeURIComponent(e[1]);}).join('&') %>" class="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 text-sm transition">
+        <i class="fas fa-download"></i> Export
+      </a>
+      <a href="/admin/skill-gap/heatmap" class="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 text-sm transition">
+        <i class="fas fa-th"></i> Heatmap
+      </a>
+      <a href="/admin/skill-gap/insights" class="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 text-sm transition">
+        <i class="fas fa-robot"></i> AI Insights
+      </a>
+      <button onclick="recompute()" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white text-sm font-medium transition" style="background:hsl(var(--accent))">
+        <i class="fas fa-sync-alt"></i> Recompute
+      </button>
+    </div>
+  </div>
+
+  <!-- Summary Cards -->
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:hsla(228,100%,11%,0.08)">
+          <i class="fas fa-layer-group" style="color:hsl(var(--primary))"></i>
+        </div>
+        <div>
+          <div class="text-2xl font-bold text-gray-900 dark:text-white"><%= summary.total_skills || 0 %></div>
+          <p class="text-xs text-gray-500">Skills Tracked</p>
+        </div>
+      </div>
+    </div>
+    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-red-50 dark:bg-red-900/20">
+          <i class="fas fa-exclamation-triangle text-red-600"></i>
+        </div>
+        <div>
+          <div class="text-2xl font-bold text-red-600"><%= summary.critical_gaps || 0 %></div>
+          <p class="text-xs text-gray-500">Critical Gaps</p>
+        </div>
+      </div>
+    </div>
+    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-yellow-50 dark:bg-yellow-900/20">
+          <i class="fas fa-percentage text-yellow-600"></i>
+        </div>
+        <div>
+          <div class="text-2xl font-bold text-yellow-600"><%= summary.avg_gap || 0 %><span class="text-sm">%</span></div>
+          <p class="text-xs text-gray-500">Avg Gap Score</p>
+        </div>
+      </div>
+    </div>
+    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-green-50 dark:bg-green-900/20">
+          <i class="fas fa-sparkles text-green-600"></i>
+        </div>
+        <div>
+          <div class="text-2xl font-bold text-green-600"><%= summary.new_this_month || 0 %></div>
+          <p class="text-xs text-gray-500">New This Month</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+    <form method="GET" action="/admin/skill-gap" class="flex flex-wrap items-end gap-3">
+      <div>
+        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Department</label>
+        <select name="department" class="text-sm border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 min-w-[150px]">
+          <option value="">All Departments</option>
+          <% filterOptions.departments.forEach(function(d) { %>
+            <option value="<%= d %>" <%= query.department === d ? 'selected' : '' %>><%= d %></option>
+          <% }); %>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Program</label>
+        <select name="program" class="text-sm border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 min-w-[150px]">
+          <option value="">All Programs</option>
+          <% filterOptions.programs.forEach(function(p) { %>
+            <option value="<%= p %>" <%= query.program === p ? 'selected' : '' %>><%= p %></option>
+          <% }); %>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Graduation Year</label>
+        <select name="graduation_year" class="text-sm border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 min-w-[120px]">
+          <option value="">All Years</option>
+          <% filterOptions.years.forEach(function(y) { %>
+            <option value="<%= y %>" <%= query.graduation_year == y ? 'selected' : '' %>><%= y %></option>
+          <% }); %>
+        </select>
+      </div>
+      <button type="submit" class="px-4 py-2 text-sm font-medium text-white rounded-lg transition" style="background:hsl(var(--accent))">
+        <i class="fas fa-filter mr-1"></i> Apply
+      </button>
+      <% if (query.department || query.program || query.graduation_year) { %>
+        <a href="/admin/skill-gap" class="px-4 py-2 text-sm text-gray-500 hover:text-gray-700 transition">Clear</a>
+      <% } %>
+    </form>
+  </div>
+
+  <!-- Charts Row 1: Top Demanded + Top Gaps -->
+  <div class="grid lg:grid-cols-2 gap-4">
+    <!-- Top 10 Demanded Skills -->
+    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+      <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+        <i class="fas fa-fire text-orange-500"></i> Top 10 Demanded Skills
+      </h3>
+      <div style="height:300px"><canvas id="demandChart"></canvas></div>
+    </div>
+
+    <!-- Top 10 Skill Gaps -->
+    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+      <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+        <i class="fas fa-exclamation-circle text-red-500"></i> Top 10 Skill Gaps
+      </h3>
+      <div style="height:300px"><canvas id="gapChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Chart Row 2: Demand vs Supply -->
+  <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+    <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+      <i class="fas fa-balance-scale text-blue-500"></i> Demand vs Supply Overlap
+    </h3>
+    <div style="height:320px"><canvas id="demandSupplyChart"></canvas></div>
+  </div>
+
+  <!-- Chart Row 3: Trend -->
+  <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+    <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+      <i class="fas fa-chart-line text-purple-500"></i> Gap Trend — Top Critical Skills (6 months)
+    </h3>
+    <% if (trends.skills && trends.skills.length) { %>
+      <div style="height:280px"><canvas id="trendChart"></canvas></div>
+    <% } else { %>
+      <div class="flex items-center justify-center py-12 text-gray-400">
+        <div class="text-center">
+          <i class="fas fa-chart-line text-3xl mb-2 opacity-30"></i>
+          <p class="text-sm">No trend data available. Run "Recompute" first.</p>
+        </div>
+      </div>
+    <% } %>
+  </div>
+
+  <!-- Emerging Skills Table -->
+  <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+    <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+      <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider flex items-center gap-2">
+        <i class="fas fa-bolt text-yellow-500"></i> Emerging Skills <span class="text-gray-400 font-normal normal-case">(first appeared in jobs &lt; 30 days ago)</span>
+      </h3>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="bg-gray-50 dark:bg-gray-800 text-left">
+            <th class="py-2.5 px-4 font-medium text-gray-500 dark:text-gray-400">Skill</th>
+            <th class="py-2.5 px-4 font-medium text-gray-500 dark:text-gray-400 text-center">Demand</th>
+            <th class="py-2.5 px-4 font-medium text-gray-500 dark:text-gray-400 text-center">Supply</th>
+            <th class="py-2.5 px-4 font-medium text-gray-500 dark:text-gray-400 text-center">Gap %</th>
+            <th class="py-2.5 px-4 font-medium text-gray-500 dark:text-gray-400">Priority</th>
+            <th class="py-2.5 px-4 font-medium text-gray-500 dark:text-gray-400">First Seen</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (emerging.length) { %>
+            <% emerging.forEach(function(e) { %>
+              <%
+                var prStyle = {
+                  critical: 'background:#fee2e2;color:#dc2626',
+                  high: 'background:#fef9c3;color:#ca8a04',
+                  medium: 'background:#eff6ff;color:#2563eb',
+                  low: 'background:#dcfce7;color:#16a34a'
+                };
+              %>
+              <tr class="border-t border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition">
+                <td class="py-3 px-4 font-medium text-gray-900 dark:text-white capitalize"><%= e.skill_name %></td>
+                <td class="py-3 px-4 text-center font-semibold text-gray-700 dark:text-gray-300"><%= e.demand_count %></td>
+                <td class="py-3 px-4 text-center text-gray-500"><%= e.supply_count %></td>
+                <td class="py-3 px-4 text-center">
+                  <span class="font-bold <%= e.gap_score > 70 ? 'text-red-600' : e.gap_score > 50 ? 'text-yellow-600' : e.gap_score > 30 ? 'text-blue-600' : 'text-green-600' %>"><%= e.gap_score %>%</span>
+                </td>
+                <td class="py-3 px-4">
+                  <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full" style="<%= prStyle[e.priority] || prStyle.low %>"><%= e.priority %></span>
+                </td>
+                <td class="py-3 px-4 text-xs text-gray-400"><%= new Date(e.first_seen_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) %></td>
+              </tr>
+            <% }); %>
+          <% } else { %>
+            <tr><td colspan="6" class="py-8 text-center text-gray-400">
+              <i class="fas fa-bolt text-2xl mb-2 block opacity-30"></i>
+              No emerging skills in the last 30 days
+            </td></tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── Chart Data ──────────────────────────────────────────
+var topDemanded = <%- JSON.stringify(topDemanded) %>;
+var topGaps = <%- JSON.stringify(topGaps) %>;
+var demandVsSupply = <%- JSON.stringify(demandVsSupply) %>;
+var trends = <%- JSON.stringify(trends) %>;
+
+var primaryColor = 'hsl(228,100%,11%)';
+var accentColor = 'hsl(80,89%,40%)';
+
+// Priority colors for gap chart
+function gapColor(score) {
+  if (score > 70) return '#dc2626';
+  if (score > 50) return '#ca8a04';
+  if (score > 30) return '#2563eb';
+  return '#16a34a';
+}
+
+// ─── Top Demanded Skills (horizontal bar) ────────────────
+if (topDemanded.length) {
+  new Chart(document.getElementById('demandChart'), {
+    type: 'bar',
+    data: {
+      labels: topDemanded.map(function(d) { return d.skill_name; }),
+      datasets: [{
+        label: 'Demand Count',
+        data: topDemanded.map(function(d) { return d.demand_count; }),
+        backgroundColor: accentColor,
+        borderRadius: 6,
+        maxBarThickness: 24
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { x: { beginAtZero: true, ticks: { precision: 0 } } }
+    }
+  });
+}
+
+// ─── Top Skill Gaps (horizontal bar, colored by priority) ─
+if (topGaps.length) {
+  new Chart(document.getElementById('gapChart'), {
+    type: 'bar',
+    data: {
+      labels: topGaps.map(function(d) { return d.skill_name; }),
+      datasets: [{
+        label: 'Gap Score %',
+        data: topGaps.map(function(d) { return d.gap_score; }),
+        backgroundColor: topGaps.map(function(d) { return gapColor(d.gap_score); }),
+        borderRadius: 6,
+        maxBarThickness: 24
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { x: { beginAtZero: true, max: 100 } }
+    }
+  });
+}
+
+// ─── Demand vs Supply (grouped bar) ──────────────────────
+if (demandVsSupply.length) {
+  new Chart(document.getElementById('demandSupplyChart'), {
+    type: 'bar',
+    data: {
+      labels: demandVsSupply.map(function(d) { return d.skill_name; }),
+      datasets: [
+        {
+          label: 'Demand',
+          data: demandVsSupply.map(function(d) { return d.demand_count; }),
+          backgroundColor: primaryColor,
+          borderRadius: 4,
+          maxBarThickness: 20
+        },
+        {
+          label: 'Supply',
+          data: demandVsSupply.map(function(d) { return d.supply_count; }),
+          backgroundColor: accentColor,
+          borderRadius: 4,
+          maxBarThickness: 20
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'top', labels: { boxWidth: 12, padding: 20 } }
+      },
+      scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+    }
+  });
+}
+
+// ─── Trend Chart (line) ──────────────────────────────────
+if (trends.skills && trends.skills.length) {
+  var lineColors = ['#dc2626', '#ca8a04', '#2563eb', '#7c3aed', '#059669'];
+  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  new Chart(document.getElementById('trendChart'), {
+    type: 'line',
+    data: {
+      labels: trends.months.map(function(m) {
+        var parts = m.split('-');
+        return months[parseInt(parts[1]) - 1] + ' ' + parts[0].slice(2);
+      }),
+      datasets: trends.skills.map(function(skill, i) {
+        return {
+          label: skill,
+          data: trends.series[skill],
+          borderColor: lineColors[i % lineColors.length],
+          backgroundColor: 'transparent',
+          tension: 0.4,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          borderWidth: 2
+        };
+      })
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'top', labels: { boxWidth: 12, padding: 15, font: { size: 11 } } }
+      },
+      scales: {
+        y: { beginAtZero: true, max: 100, title: { display: true, text: 'Gap %', font: { size: 11 } } }
+      }
+    }
+  });
+}
+
+// ─── Recompute ───────────────────────────────────────────
+function recompute() {
+  if (!confirm('Recompute all skill gap data? This may take a moment.')) return;
+  var btn = event.target.closest('button');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Computing...';
+
+  fetch('/admin/skill-gap/api/recompute', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data.success) {
+      showToast('Skill gap data recomputed', 'success');
+      setTimeout(function() { location.reload(); }, 1000);
+    } else {
+      showToast(data.error || 'Recompute failed', 'error');
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-sync-alt mr-1"></i> Recompute';
+    }
+  })
+  .catch(function() {
+    showToast('Network error', 'error');
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-sync-alt mr-1"></i> Recompute';
+  });
+}
+</script>

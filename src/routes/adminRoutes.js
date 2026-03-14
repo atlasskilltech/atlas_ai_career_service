@@ -28,9 +28,12 @@ router.use('/pipeline', require('./adminPipelineRoutes'));
 
 // Recruiter CRM (full sub-router)
 router.use('/recruiters', require('./adminRecruiterRoutes'));
+
+// Skill Gap Analysis (full sub-router)
+router.use('/skill-gap', require('./adminSkillRoutes'));
+
 router.get('/applications', adminController.applications);
 router.get('/interviews', adminController.interviews);
-router.get('/skill-gap', adminController.skillGap);
 router.get('/placement', adminController.placement);
 router.get('/communication', adminController.communication);
 router.get('/settings', adminController.settings);
