@@ -1,0 +1,93 @@
+<div class="space-y-5">
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Skills Heatmap</h1>
+      <p class="text-sm text-gray-500 mt-1">Department × Skill gap intensity matrix</p>
+    </div>
+    <div class="flex items-center gap-2">
+      <a href="/admin/skill-gap" class="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 text-sm transition">
+        <i class="fas fa-arrow-left"></i> Dashboard
+      </a>
+      <a href="/admin/skill-gap/insights" class="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 text-sm transition">
+        <i class="fas fa-robot"></i> AI Insights
+      </a>
+    </div>
+  </div>
+
+  <!-- Legend -->
+  <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+    <div class="flex items-center gap-4 flex-wrap">
+      <span class="text-xs font-medium text-gray-500">Gap Intensity:</span>
+      <div class="flex items-center gap-1">
+        <div class="w-6 h-4 rounded" style="background:#dcfce7"></div>
+        <span class="text-[10px] text-gray-500">0-30% (Low)</span>
+      </div>
+      <div class="flex items-center gap-1">
+        <div class="w-6 h-4 rounded" style="background:#bfdbfe"></div>
+        <span class="text-[10px] text-gray-500">31-50% (Medium)</span>
+      </div>
+      <div class="flex items-center gap-1">
+        <div class="w-6 h-4 rounded" style="background:#fef08a"></div>
+        <span class="text-[10px] text-gray-500">51-70% (High)</span>
+      </div>
+      <div class="flex items-center gap-1">
+        <div class="w-6 h-4 rounded" style="background:#fca5a5"></div>
+        <span class="text-[10px] text-gray-500">71-100% (Critical)</span>
+      </div>
+      <div class="flex items-center gap-1">
+        <div class="w-6 h-4 rounded bg-gray-100 dark:bg-gray-800"></div>
+        <span class="text-[10px] text-gray-500">No data</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Heatmap Grid -->
+  <% if (heatmap.departments.length && heatmap.skills.length) { %>
+    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="text-xs" style="border-collapse:separate;border-spacing:0">
+          <thead>
+            <tr>
+              <th class="sticky left-0 z-10 bg-gray-50 dark:bg-gray-800 py-3 px-3 text-left font-semibold text-gray-600 dark:text-gray-400 min-w-[140px] border-b border-r border-gray-200 dark:border-gray-700">Department</th>
+              <% heatmap.skills.forEach(function(sk) { %>
+                <th class="py-3 px-2 text-center font-medium text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700 min-w-[80px] max-w-[100px]" style="writing-mode:vertical-rl;transform:rotate(180deg);height:100px">
+                  <span class="capitalize"><%= sk %></span>
+                </th>
+              <% }); %>
+            </tr>
+          </thead>
+          <tbody>
+            <% heatmap.departments.forEach(function(dept, di) { %>
+              <tr>
+                <td class="sticky left-0 z-10 bg-white dark:bg-gray-900 py-2 px-3 font-medium text-gray-700 dark:text-gray-300 border-r border-b border-gray-100 dark:border-gray-800 whitespace-nowrap"><%= dept %></td>
+                <% heatmap.skills.forEach(function(sk, si) { %>
+                  <%
+                    var val = heatmap.matrix[di][si];
+                    var bgColor = val === 0 ? '#f9fafb' : val <= 30 ? '#dcfce7' : val <= 50 ? '#bfdbfe' : val <= 70 ? '#fef08a' : '#fca5a5';
+                    var textColor = val === 0 ? '#d1d5db' : val <= 30 ? '#16a34a' : val <= 50 ? '#2563eb' : val <= 70 ? '#ca8a04' : '#dc2626';
+                  %>
+                  <td class="py-2 px-1 text-center border-b border-gray-50 dark:border-gray-800 transition hover:opacity-80 cursor-default"
+                      style="background:<%= bgColor %>" title="<%= dept %> × <%= sk %>: <%= val %>% gap">
+                    <span class="font-bold" style="color:<%= textColor %>"><%= val > 0 ? val + '%' : '—' %></span>
+                  </td>
+                <% }); %>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  <% } else { %>
+    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 py-16 text-center">
+      <div class="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center" style="background:hsl(var(--primary))">
+        <i class="fas fa-th text-xl" style="color:hsl(var(--accent))"></i>
+      </div>
+      <p class="text-gray-500 dark:text-gray-400 font-medium mb-1">No heatmap data available</p>
+      <p class="text-sm text-gray-400 dark:text-gray-500 mb-4">Run "Recompute" on the dashboard to generate data</p>
+      <a href="/admin/skill-gap" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-white text-sm font-medium" style="background:hsl(var(--accent))">
+        <i class="fas fa-arrow-left"></i> Back to Dashboard
+      </a>
+    </div>
+  <% } %>
+</div>

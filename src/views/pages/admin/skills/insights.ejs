@@ -1,0 +1,179 @@
+<div class="space-y-5">
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-white">AI Skill Insights</h1>
+      <p class="text-sm text-gray-500 mt-1">GPT-4o powered analysis and recommendations</p>
+    </div>
+    <div class="flex items-center gap-2">
+      <a href="/admin/skill-gap" class="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 text-sm transition">
+        <i class="fas fa-arrow-left"></i> Dashboard
+      </a>
+      <a href="/admin/skill-gap/heatmap" class="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 text-sm transition">
+        <i class="fas fa-th"></i> Heatmap
+      </a>
+      <button onclick="refreshInsights()" id="refresh-btn" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white text-sm font-medium transition" style="background:hsl(var(--accent))">
+        <i class="fas fa-sync-alt"></i> Refresh Insights
+      </button>
+    </div>
+  </div>
+
+  <!-- AI Status Indicator -->
+  <div class="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/10 dark:to-blue-900/10 rounded-xl border border-purple-200 dark:border-purple-800/30 p-4 flex items-center gap-3">
+    <div class="w-10 h-10 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0">
+      <i class="fas fa-robot text-purple-600"></i>
+    </div>
+    <div>
+      <p class="text-sm font-medium text-purple-900 dark:text-purple-200">AI-Generated Insights</p>
+      <p class="text-xs text-purple-600 dark:text-purple-400">Results are cached for 24 hours. Click "Refresh Insights" to regenerate.</p>
+    </div>
+    <% if (insights.error) { %>
+      <span class="ml-auto text-[10px] font-medium px-2 py-1 rounded-full bg-red-100 text-red-600"><i class="fas fa-exclamation-triangle mr-1"></i>Partial</span>
+    <% } else { %>
+      <span class="ml-auto text-[10px] font-medium px-2 py-1 rounded-full bg-green-100 text-green-600"><i class="fas fa-check-circle mr-1"></i>Ready</span>
+    <% } %>
+  </div>
+
+  <!-- Landscape Summary -->
+  <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
+    <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+      <i class="fas fa-binoculars text-blue-500"></i> Gap Landscape Summary
+    </h3>
+    <div id="landscape-content" class="prose prose-sm dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 leading-relaxed">
+      <% var paragraphs = (insights.landscape_summary || '').split('\n\n').filter(Boolean); %>
+      <% if (paragraphs.length) { %>
+        <% paragraphs.forEach(function(p) { %>
+          <p class="mb-3"><%= p %></p>
+        <% }); %>
+      <% } else { %>
+        <p class="text-gray-400 italic">No landscape summary available. Click "Refresh Insights" to generate.</p>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- Training Recommendations -->
+  <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
+    <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+      <i class="fas fa-graduation-cap text-green-500"></i> Top 5 Training Recommendations
+    </h3>
+    <% if (insights.training_recommendations && insights.training_recommendations.length) { %>
+      <div class="space-y-3">
+        <% insights.training_recommendations.forEach(function(rec, idx) { %>
+          <%
+            var urgencyStyle = {
+              critical: 'background:#fee2e2;color:#dc2626',
+              high: 'background:#fef9c3;color:#ca8a04',
+              medium: 'background:#eff6ff;color:#2563eb'
+            };
+          %>
+          <div class="flex gap-4 p-4 rounded-xl border border-gray-100 dark:border-gray-800 hover:border-gray-200 dark:hover:border-gray-700 transition">
+            <div class="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold flex-shrink-0" style="background:hsl(var(--primary));color:hsl(var(--accent))">
+              <%= idx + 1 %>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 mb-1 flex-wrap">
+                <p class="font-semibold text-gray-900 dark:text-white text-sm"><%= rec.title %></p>
+                <% if (rec.urgency) { %>
+                  <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full" style="<%= urgencyStyle[rec.urgency] || urgencyStyle.medium %>"><%= rec.urgency %></span>
+                <% } %>
+              </div>
+              <% if (rec.skill) { %>
+                <p class="text-xs text-gray-500 mb-1"><i class="fas fa-bullseye mr-1 text-gray-400"></i> Target: <strong><%= rec.skill %></strong></p>
+              <% } %>
+              <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed"><%= rec.justification %></p>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+    <% } else { %>
+      <div class="text-center py-8 text-gray-400">
+        <i class="fas fa-graduation-cap text-3xl mb-2 opacity-30"></i>
+        <p class="text-sm">No training recommendations yet</p>
+      </div>
+    <% } %>
+  </div>
+
+  <!-- Course Mapping -->
+  <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800">
+      <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider flex items-center gap-2">
+        <i class="fas fa-book-open text-orange-500"></i> Course Mapping: Skill → Platform → Course
+      </h3>
+    </div>
+    <% if (insights.course_mapping && insights.course_mapping.length) { %>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="bg-gray-50 dark:bg-gray-800 text-left">
+              <th class="py-2.5 px-4 font-medium text-gray-500 dark:text-gray-400">Skill</th>
+              <th class="py-2.5 px-4 font-medium text-gray-500 dark:text-gray-400">Platform</th>
+              <th class="py-2.5 px-4 font-medium text-gray-500 dark:text-gray-400">Course Name</th>
+              <th class="py-2.5 px-4 font-medium text-gray-500 dark:text-gray-400 w-20">Link</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% insights.course_mapping.forEach(function(c) { %>
+              <tr class="border-t border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition">
+                <td class="py-3 px-4 font-medium text-gray-900 dark:text-white capitalize"><%= c.skill %></td>
+                <td class="py-3 px-4">
+                  <%
+                    var platColors = {
+                      'coursera': 'background:#eff6ff;color:#2563eb',
+                      'udemy': 'background:#f3e8ff;color:#7c3aed',
+                      'edx': 'background:#fef9c3;color:#ca8a04',
+                      'linkedin learning': 'background:#bfdbfe;color:#1d4ed8',
+                      'pluralsight': 'background:#fee2e2;color:#dc2626'
+                    };
+                    var pColor = platColors[(c.platform || '').toLowerCase()] || 'background:#f3f4f6;color:#6b7280';
+                  %>
+                  <span class="text-[10px] font-bold px-2 py-0.5 rounded-full" style="<%= pColor %>"><%= c.platform %></span>
+                </td>
+                <td class="py-3 px-4 text-gray-600 dark:text-gray-400"><%= c.course_name %></td>
+                <td class="py-3 px-4">
+                  <% if (c.url) { %>
+                    <a href="<%= c.url %>" target="_blank" class="inline-flex items-center gap-1 text-xs font-medium transition" style="color:hsl(var(--accent))">
+                      Visit <i class="fas fa-external-link-alt text-[9px]"></i>
+                    </a>
+                  <% } else { %>
+                    <span class="text-gray-300">—</span>
+                  <% } %>
+                </td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    <% } else { %>
+      <div class="py-12 text-center text-gray-400">
+        <i class="fas fa-book-open text-3xl mb-2 opacity-30"></i>
+        <p class="text-sm">No course mappings available</p>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<script>
+function refreshInsights() {
+  var btn = document.getElementById('refresh-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Generating...';
+
+  fetch('/admin/skill-gap/api/ai-insights?refresh=true')
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data.success) {
+      showToast('Insights refreshed', 'success');
+      setTimeout(function() { location.reload(); }, 1000);
+    } else {
+      showToast(data.error || 'Failed to refresh', 'error');
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-sync-alt mr-1"></i> Refresh Insights';
+    }
+  })
+  .catch(function() {
+    showToast('Network error', 'error');
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-sync-alt mr-1"></i> Refresh Insights';
+  });
+}
+</script>
