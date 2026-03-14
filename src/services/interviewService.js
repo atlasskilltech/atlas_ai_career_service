@@ -121,13 +121,6 @@ Return ONLY a JSON array of question strings like: ["Question 1?", "Question 2?"
     const answerCount = await interviewRepository.getAnswerCount(interviewId);
     await interviewRepository.updateInterview(interviewId, { total_answered: answerCount });
 
-    // Generate follow-up if answer is shallow and we haven't hit max questions
-    const totalQuestions = await interviewRepository.getQuestionCount(interviewId);
-    let followUp = null;
-    if (totalQuestions < MAX_QUESTIONS && wordCount < 30 && !question.is_follow_up) {
-      followUp = await this._generateFollowUp(interview, question.question, answerText, totalQuestions + 1);
-    }
-
     // Get next question
     return this.getNextQuestion(interviewId);
   }
