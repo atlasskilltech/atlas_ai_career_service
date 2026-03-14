@@ -1,6 +1,51 @@
 const pool = require('../config/database');
 
 class PipelineRepo {
+  // ─── Sync job board applications to admin applications ─
+
+  async syncJobBoardApplications(adminJobId) {
+    // Find the aggregated_jobs entry for this admin job
+    const externalId = 'admin-job-' + adminJobId;
+    const [aggRows] = await pool.execute(
+      "SELECT id FROM aicp_aggregated_jobs WHERE source = 'manual' AND external_id = ?",
+      [externalId]
+    );
+    if (!aggRows.length) return 0;
+
+    const aggJobId = aggRows[0].id;
+
+    // Find job board applications not yet in admin applications
+    const [boardApps] = await pool.execute(
+      `SELECT ja.user_id, ja.status, ja.applied_at
+       FROM aicp_job_applications ja
+       WHERE ja.job_id = ?
+       AND ja.user_id NOT IN (
+         SELECT user_id FROM aicp_admin_job_applications WHERE job_id = ?
+       )`,
+      [aggJobId, adminJobId]
+    );
+
+    // Map job board status to admin stage
+    const statusMap = {
+      applied: 'applied',
+      reviewed: 'applied',
+      shortlisted: 'shortlisted',
+      interview: 'interview',
+      offered: 'offered',
+      rejected: 'rejected',
+    };
+
+    for (const app of boardApps) {
+      const stage = statusMap[app.status] || 'applied';
+      await pool.execute(
+        `INSERT INTO aicp_admin_job_applications (job_id, user_id, stage, applied_at)
+         VALUES (?, ?, ?, ?)`,
+        [adminJobId, app.user_id, stage, app.applied_at || new Date()]
+      );
+    }
+    return boardApps.length;
+  }
+
   // ─── Pipeline CRUD ────────────────────────────────────
 
   async ensurePipelineEntry(applicationId, jobId, userId, stage) {
@@ -19,7 +64,10 @@ class PipelineRepo {
   }
 
   async syncFromApplications(jobId) {
-    // Ensure all applications have pipeline entries
+    // First sync from job board
+    await this.syncJobBoardApplications(jobId);
+
+    // Then ensure all admin applications have pipeline entries
     const [apps] = await pool.execute(
       `SELECT a.id, a.job_id, a.user_id, a.stage
        FROM aicp_admin_job_applications a
@@ -73,7 +121,6 @@ class PipelineRepo {
   }
 
   async moveCard(applicationId, toStage, changedBy, reason) {
-    // Get current state
     const [current] = await pool.execute(
       'SELECT p.*, a.job_id, a.user_id FROM aicp_application_pipeline p JOIN aicp_admin_job_applications a ON a.id = p.application_id WHERE p.application_id = ?',
       [applicationId]
@@ -83,25 +130,21 @@ class PipelineRepo {
     const entry = current[0];
     const fromStage = entry.stage;
 
-    // Get max sort order in target stage
     const [maxSort] = await pool.execute(
       'SELECT COALESCE(MAX(sort_order), 0) + 1 as next_sort FROM aicp_application_pipeline WHERE job_id = ? AND stage = ?',
       [entry.job_id, toStage]
     );
 
-    // Update pipeline
     await pool.execute(
       'UPDATE aicp_application_pipeline SET stage = ?, sort_order = ?, updated_at = NOW() WHERE application_id = ?',
       [toStage, maxSort[0].next_sort, applicationId]
     );
 
-    // Sync to applications table
     await pool.execute(
       'UPDATE aicp_admin_job_applications SET stage = ? WHERE id = ?',
       [toStage, applicationId]
     );
 
-    // Audit log
     await pool.execute(
       `INSERT INTO aicp_pipeline_audit (application_id, job_id, user_id, from_stage, to_stage, changed_by, change_reason)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
@@ -180,7 +223,6 @@ class PipelineRepo {
       [jobId]
     );
 
-    // Get audit history for each applicant
     for (const row of rows) {
       const [history] = await pool.execute(
         `SELECT from_stage, to_stage, created_at, change_reason
@@ -266,19 +308,73 @@ class PipelineRepo {
     };
   }
 
-  // ─── Jobs list for pipeline selection ─────────────────
+  // ─── Jobs list for pipeline — show ALL jobs ───────────
 
-  async getJobsWithApplicants() {
+  async getAllJobsForPipeline() {
     const [rows] = await pool.execute(
       `SELECT j.id, j.company_name, j.company_logo, j.role_title, j.job_type, j.status,
-        COUNT(a.id) as total_applicants
+        (SELECT COUNT(*) FROM aicp_admin_job_applications WHERE job_id = j.id) as admin_applicants,
+        COALESCE(
+          (SELECT COUNT(*) FROM aicp_job_applications ja
+           JOIN aicp_aggregated_jobs ag ON ag.id = ja.job_id
+           WHERE ag.source = 'manual' AND ag.external_id = CONCAT('admin-job-', j.id)),
+          0
+        ) as board_applicants
        FROM aicp_admin_jobs j
-       LEFT JOIN aicp_admin_job_applications a ON a.job_id = j.id
-       GROUP BY j.id
-       HAVING total_applicants > 0
        ORDER BY j.created_at DESC`
     );
+    // Combine counts (board_applicants may already be synced into admin_applicants)
+    rows.forEach(r => {
+      r.total_applicants = Math.max(r.admin_applicants, r.board_applicants);
+    });
     return rows;
+  }
+
+  // ─── Manual Add Applicant ─────────────────────────────
+
+  async searchStudents(query) {
+    const [rows] = await pool.execute(
+      `SELECT u.id, u.name, u.email, u.avatar,
+        sp.program, sp.branch, sp.cgpa, sp.graduation_year, sp.student_id
+       FROM aicp_users u
+       LEFT JOIN aicp_student_profiles sp ON sp.user_id = u.id
+       WHERE (u.name LIKE ? OR u.email LIKE ? OR sp.student_id LIKE ?)
+       AND u.role = 'student'
+       ORDER BY u.name ASC
+       LIMIT 20`,
+      [`%${query}%`, `%${query}%`, `%${query}%`]
+    );
+    return rows;
+  }
+
+  async addApplicantManually(jobId, userId, addedBy) {
+    // Check if already exists
+    const [existing] = await pool.execute(
+      'SELECT id FROM aicp_admin_job_applications WHERE job_id = ? AND user_id = ?',
+      [jobId, userId]
+    );
+    if (existing.length) throw new Error('Student already applied to this job');
+
+    // Insert into admin applications
+    const [result] = await pool.execute(
+      `INSERT INTO aicp_admin_job_applications (job_id, user_id, stage, applied_at)
+       VALUES (?, ?, 'applied', NOW())`,
+      [jobId, userId]
+    );
+
+    const appId = result.insertId;
+
+    // Create pipeline entry
+    await this.ensurePipelineEntry(appId, jobId, userId, 'applied');
+
+    // Audit log
+    await pool.execute(
+      `INSERT INTO aicp_pipeline_audit (application_id, job_id, user_id, from_stage, to_stage, changed_by, change_reason)
+       VALUES (?, ?, ?, NULL, 'applied', ?, 'Manually added by admin')`,
+      [appId, jobId, userId, addedBy]
+    );
+
+    return appId;
   }
 }
 

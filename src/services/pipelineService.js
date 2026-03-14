@@ -2,8 +2,8 @@ const repo = require('../repositories/pipelineRepo');
 const notificationService = require('./notificationService');
 
 class PipelineService {
-  async getJobsWithApplicants() {
-    return repo.getJobsWithApplicants();
+  async getAllJobs() {
+    return repo.getAllJobsForPipeline();
   }
 
   async getPipelineData(jobId, filters = {}) {
@@ -80,6 +80,13 @@ class PipelineService {
 
     if (!job) throw new Error('Job not found');
     return { job, applicants, stats };
+  }
+  async searchStudents(query) {
+    return repo.searchStudents(query);
+  }
+
+  async addApplicant(jobId, userId, addedBy) {
+    return repo.addApplicantManually(jobId, userId, addedBy);
   }
 }
 

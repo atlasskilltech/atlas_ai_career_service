@@ -5,7 +5,7 @@ class PipelineController {
 
   async selectJob(req, res) {
     try {
-      const jobs = await service.getJobsWithApplicants();
+      const jobs = await service.getAllJobs();
       res.render('pages/admin/pipeline/select', {
         title: 'Application Pipeline',
         layout: 'layouts/admin',
@@ -120,6 +120,27 @@ class PipelineController {
       res.json({ success: true, log });
     } catch (err) {
       res.status(500).json({ success: false, error: err.message });
+    }
+  }
+  async apiSearchStudents(req, res) {
+    try {
+      const students = await service.searchStudents(req.query.q || '');
+      res.json({ success: true, students });
+    } catch (err) {
+      res.status(500).json({ success: false, error: err.message });
+    }
+  }
+
+  async apiAddApplicant(req, res) {
+    try {
+      const appId = await service.addApplicant(
+        req.params.jobId,
+        req.body.user_id,
+        req.session.user.id
+      );
+      res.json({ success: true, applicationId: appId, message: 'Applicant added successfully' });
+    } catch (err) {
+      res.status(err.message.includes('already') ? 409 : 500).json({ success: false, error: err.message });
     }
   }
 }

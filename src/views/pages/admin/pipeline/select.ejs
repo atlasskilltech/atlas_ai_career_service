@@ -5,8 +5,6 @@
     border-radius: 12px;
     padding: 20px;
     transition: all 0.2s ease;
-    cursor: pointer;
-    text-decoration: none;
     color: inherit;
     display: block;
   }
@@ -25,13 +23,26 @@
     display: flex; align-items: center; justify-content: center;
     color: #a3e635; font-weight: 700; font-size: 18px;
   }
+  .add-modal-overlay {
+    position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9999;
+    display:none; align-items:center; justify-content:center; padding:20px;
+  }
+  .add-modal {
+    background:#fff; border-radius:14px; width:100%; max-width:520px;
+    max-height:80vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.2);
+  }
+  .student-result {
+    display:flex; align-items:center; gap:12px; padding:10px 14px;
+    border-radius:8px; cursor:pointer; transition: background 0.15s;
+  }
+  .student-result:hover { background:#f3f4f6; }
 </style>
 
 <div style="margin-bottom:24px;">
   <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
     <div>
       <h1 style="font-size:24px;font-weight:700;color:#1e293b;margin:0;">Application Pipeline</h1>
-      <p style="color:#64748b;font-size:14px;margin:4px 0 0;">Select a job to view its application pipeline</p>
+      <p style="color:#64748b;font-size:14px;margin:4px 0 0;">Select a job to manage its pipeline, or add applicants manually</p>
     </div>
   </div>
 </div>
@@ -39,14 +50,14 @@
 <% if (!jobs || jobs.length === 0) { %>
   <div style="text-align:center;padding:60px 20px;background:#fff;border-radius:12px;border:1px solid #e5e7eb;">
     <div style="font-size:48px;margin-bottom:16px;">📋</div>
-    <h3 style="color:#1e293b;font-size:18px;margin:0 0 8px;">No Jobs with Applicants</h3>
-    <p style="color:#64748b;font-size:14px;margin:0 0 20px;">Jobs with applicants will appear here for pipeline management.</p>
-    <a href="/admin/jobs" style="display:inline-block;background:hsl(var(--accent));color:#fff;padding:10px 24px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;">Manage Jobs</a>
+    <h3 style="color:#1e293b;font-size:18px;margin:0 0 8px;">No Jobs Found</h3>
+    <p style="color:#64748b;font-size:14px;margin:0 0 20px;">Create jobs first, then manage their pipeline here.</p>
+    <a href="/admin/jobs/create" style="display:inline-block;background:hsl(var(--accent));color:#fff;padding:10px 24px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;">+ Create Job</a>
   </div>
 <% } else { %>
   <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;">
     <% jobs.forEach(function(job) { %>
-      <a href="/admin/pipeline/<%= job.id %>/kanban" class="pipeline-job-card">
+      <div class="pipeline-job-card">
         <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;">
           <% if (job.company_logo) { %>
             <img src="<%= job.company_logo %>" class="pipeline-job-logo" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
@@ -59,7 +70,7 @@
             <p style="font-size:13px;color:#64748b;margin:2px 0 0;"><%= job.company_name %></p>
           </div>
         </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
           <div style="display:flex;align-items:center;gap:8px;">
             <span style="background:#dbeafe;color:#1d4ed8;padding:3px 10px;border-radius:6px;font-size:12px;font-weight:500;">
               <%= job.job_type === 'full_time' ? 'Full Time' : job.job_type === 'internship' ? 'Internship' : job.job_type %>
@@ -73,7 +84,141 @@
             <span style="font-weight:600;"><%= job.total_applicants %></span> applicants
           </div>
         </div>
-      </a>
+        <div style="display:flex;gap:8px;">
+          <a href="/admin/pipeline/<%= job.id %>/kanban" style="flex:1;text-align:center;background:hsl(var(--primary));color:#fff;padding:8px 14px;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600;">
+            <i class="fas fa-columns"></i> View Pipeline
+          </a>
+          <button onclick="openAddModal(<%= job.id %>, '<%= job.role_title.replace(/'/g, "\\'") %>')" style="flex:1;text-align:center;background:hsl(var(--accent));color:#fff;padding:8px 14px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-weight:600;">
+            <i class="fas fa-user-plus"></i> Add Applicant
+          </button>
+        </div>
+      </div>
     <% }); %>
   </div>
 <% } %>
+
+<!-- Add Applicant Modal -->
+<div class="add-modal-overlay" id="addModal">
+  <div class="add-modal">
+    <div style="padding:18px 20px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;">
+      <h3 style="margin:0;font-size:16px;font-weight:600;color:#1e293b;">Add Applicant to <span id="addModalJobTitle"></span></h3>
+      <button onclick="closeAddModal()" style="background:none;border:none;cursor:pointer;font-size:18px;color:#94a3b8;">&times;</button>
+    </div>
+    <div style="padding:20px;">
+      <div style="position:relative;margin-bottom:12px;">
+        <i class="fas fa-search" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:13px;"></i>
+        <input type="text" id="studentSearch" placeholder="Search students by name, email or ID..."
+          style="width:100%;padding:10px 14px 10px 36px;border:1px solid #e5e7eb;border-radius:8px;font-size:14px;outline:none;"
+          oninput="searchStudents()">
+      </div>
+      <div id="studentResults" style="max-height:300px;overflow-y:auto;">
+        <p style="text-align:center;color:#94a3b8;padding:20px;font-size:14px;">Type to search students...</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var currentJobId = null;
+var searchTimeout = null;
+
+function openAddModal(jobId, jobTitle) {
+  currentJobId = jobId;
+  document.getElementById('addModalJobTitle').textContent = jobTitle;
+  document.getElementById('addModal').style.display = 'flex';
+  document.getElementById('studentSearch').value = '';
+  document.getElementById('studentResults').innerHTML = '<p style="text-align:center;color:#94a3b8;padding:20px;font-size:14px;">Type to search students...</p>';
+  setTimeout(function() { document.getElementById('studentSearch').focus(); }, 100);
+}
+
+function closeAddModal() {
+  document.getElementById('addModal').style.display = 'none';
+  currentJobId = null;
+}
+
+document.getElementById('addModal').addEventListener('click', function(e) {
+  if (e.target === this) closeAddModal();
+});
+
+function searchStudents() {
+  clearTimeout(searchTimeout);
+  var q = document.getElementById('studentSearch').value.trim();
+  if (q.length < 2) {
+    document.getElementById('studentResults').innerHTML = '<p style="text-align:center;color:#94a3b8;padding:20px;font-size:14px;">Type at least 2 characters...</p>';
+    return;
+  }
+  searchTimeout = setTimeout(function() {
+    fetch('/admin/pipeline/api/students/search?q=' + encodeURIComponent(q))
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (!data.students || data.students.length === 0) {
+          document.getElementById('studentResults').innerHTML = '<p style="text-align:center;color:#94a3b8;padding:20px;font-size:14px;">No students found</p>';
+          return;
+        }
+        var html = '';
+        data.students.forEach(function(s) {
+          html += '<div class="student-result" onclick="addStudent(' + s.id + ', this)">' +
+            '<div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#01103d,#1a2b5f);display:flex;align-items:center;justify-content:center;color:#a3e635;font-weight:600;font-size:14px;flex-shrink:0;">' +
+              (s.name ? s.name.charAt(0).toUpperCase() : '?') +
+            '</div>' +
+            '<div style="flex:1;min-width:0;">' +
+              '<div style="font-size:14px;font-weight:600;color:#1e293b;">' + (s.name || 'Unknown') + '</div>' +
+              '<div style="font-size:12px;color:#94a3b8;">' + (s.email || '') +
+                (s.student_id ? ' • ' + s.student_id : '') +
+                (s.program ? ' • ' + s.program : '') +
+                (s.branch ? ' / ' + s.branch : '') +
+              '</div>' +
+            '</div>' +
+            '<button style="background:hsl(var(--accent));color:#fff;border:none;padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;">+ Add</button>' +
+          '</div>';
+        });
+        document.getElementById('studentResults').innerHTML = html;
+      });
+  }, 300);
+}
+
+function addStudent(userId, el) {
+  if (!currentJobId) return;
+  var btn = el.querySelector('button');
+  btn.textContent = 'Adding...';
+  btn.disabled = true;
+
+  fetch('/admin/pipeline/api/' + currentJobId + '/add-applicant', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ user_id: userId })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data.success) {
+      btn.textContent = 'Added!';
+      btn.style.background = '#10b981';
+      el.style.opacity = '0.6';
+      el.onclick = null;
+      // Update applicant count on card
+      showToast('Applicant added successfully');
+      setTimeout(function() { location.reload(); }, 1000);
+    } else {
+      btn.textContent = data.error || 'Failed';
+      btn.style.background = '#ef4444';
+      setTimeout(function() {
+        btn.textContent = '+ Add';
+        btn.style.background = 'hsl(var(--accent))';
+        btn.disabled = false;
+      }, 2000);
+    }
+  })
+  .catch(function() {
+    btn.textContent = 'Error';
+    btn.style.background = '#ef4444';
+  });
+}
+
+function showToast(msg, isError) {
+  var toast = document.createElement('div');
+  toast.textContent = msg;
+  toast.style.cssText = 'position:fixed;bottom:24px;right:24px;padding:12px 20px;border-radius:10px;font-size:14px;font-weight:500;z-index:99999;color:#fff;box-shadow:0 4px 12px rgba(0,0,0,0.15);background:' + (isError ? '#ef4444' : '#10b981') + ';';
+  document.body.appendChild(toast);
+  setTimeout(function() { toast.remove(); }, 3000);
+}
+</script>
