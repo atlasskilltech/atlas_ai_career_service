@@ -1,0 +1,79 @@
+<style>
+  .pipeline-job-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 20px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+  }
+  .pipeline-job-card:hover {
+    border-color: hsl(var(--accent));
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    transform: translateY(-2px);
+  }
+  .pipeline-job-logo {
+    width: 48px; height: 48px; border-radius: 10px;
+    object-fit: contain; background: #f3f4f6; padding: 4px;
+  }
+  .pipeline-job-logo-placeholder {
+    width: 48px; height: 48px; border-radius: 10px;
+    background: linear-gradient(135deg, #01103d, #1a2b5f);
+    display: flex; align-items: center; justify-content: center;
+    color: #a3e635; font-weight: 700; font-size: 18px;
+  }
+</style>
+
+<div style="margin-bottom:24px;">
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+    <div>
+      <h1 style="font-size:24px;font-weight:700;color:#1e293b;margin:0;">Application Pipeline</h1>
+      <p style="color:#64748b;font-size:14px;margin:4px 0 0;">Select a job to view its application pipeline</p>
+    </div>
+  </div>
+</div>
+
+<% if (!jobs || jobs.length === 0) { %>
+  <div style="text-align:center;padding:60px 20px;background:#fff;border-radius:12px;border:1px solid #e5e7eb;">
+    <div style="font-size:48px;margin-bottom:16px;">📋</div>
+    <h3 style="color:#1e293b;font-size:18px;margin:0 0 8px;">No Jobs with Applicants</h3>
+    <p style="color:#64748b;font-size:14px;margin:0 0 20px;">Jobs with applicants will appear here for pipeline management.</p>
+    <a href="/admin/jobs" style="display:inline-block;background:hsl(var(--accent));color:#fff;padding:10px 24px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;">Manage Jobs</a>
+  </div>
+<% } else { %>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;">
+    <% jobs.forEach(function(job) { %>
+      <a href="/admin/pipeline/<%= job.id %>/kanban" class="pipeline-job-card">
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;">
+          <% if (job.company_logo) { %>
+            <img src="<%= job.company_logo %>" class="pipeline-job-logo" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+            <div class="pipeline-job-logo-placeholder" style="display:none;"><%= job.company_name ? job.company_name.charAt(0).toUpperCase() : 'C' %></div>
+          <% } else { %>
+            <div class="pipeline-job-logo-placeholder"><%= job.company_name ? job.company_name.charAt(0).toUpperCase() : 'C' %></div>
+          <% } %>
+          <div style="flex:1;min-width:0;">
+            <h3 style="font-size:16px;font-weight:600;color:#1e293b;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><%= job.role_title %></h3>
+            <p style="font-size:13px;color:#64748b;margin:2px 0 0;"><%= job.company_name %></p>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="background:#dbeafe;color:#1d4ed8;padding:3px 10px;border-radius:6px;font-size:12px;font-weight:500;">
+              <%= job.job_type === 'full_time' ? 'Full Time' : job.job_type === 'internship' ? 'Internship' : job.job_type %>
+            </span>
+            <span style="background:<%= job.status === 'active' ? '#dcfce7' : job.status === 'closed' ? '#fee2e2' : '#f3f4f6' %>;color:<%= job.status === 'active' ? '#166534' : job.status === 'closed' ? '#991b1b' : '#374151' %>;padding:3px 10px;border-radius:6px;font-size:12px;font-weight:500;text-transform:capitalize;">
+              <%= job.status %>
+            </span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;color:#64748b;font-size:13px;">
+            <i class="fas fa-users" style="font-size:12px;"></i>
+            <span style="font-weight:600;"><%= job.total_applicants %></span> applicants
+          </div>
+        </div>
+      </a>
+    <% }); %>
+  </div>
+<% } %>

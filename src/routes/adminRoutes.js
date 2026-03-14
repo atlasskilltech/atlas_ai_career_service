@@ -22,6 +22,9 @@ router.use('/students', require('./adminStudentRoutes'));
 
 // Job Management (full sub-router)
 router.use('/jobs', require('./adminJobRoutes'));
+
+// Application Pipeline (full sub-router)
+router.use('/pipeline', require('./adminPipelineRoutes'));
 router.get('/recruiters', adminController.recruiters);
 router.get('/applications', adminController.applications);
 router.get('/interviews', adminController.interviews);

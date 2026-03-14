@@ -1,0 +1,172 @@
+<style>
+  .timeline-card {
+    background:#fff; border:1px solid #e5e7eb; border-radius:12px;
+    padding:18px 20px; margin-bottom:12px; transition:all 0.2s ease;
+  }
+  .timeline-card:hover { box-shadow:0 2px 12px rgba(0,0,0,0.06); }
+  .timeline-stage-badge {
+    display:inline-block; padding:3px 12px; border-radius:20px;
+    font-size:12px; font-weight:600; color:#fff;
+  }
+  .timeline-progress-bar { display:flex; gap:3px; margin-top:10px; }
+  .timeline-progress-step {
+    flex:1; height:6px; border-radius:3px; background:#e5e7eb; position:relative;
+  }
+  .timeline-progress-step.active { background:var(--step-color); }
+  .timeline-progress-step.completed { background:var(--step-color); opacity:0.6; }
+  .timeline-history-item {
+    display:flex; align-items:center; gap:8px; padding:6px 0;
+    font-size:12px; color:#64748b;
+  }
+  .timeline-history-dot {
+    width:8px; height:8px; border-radius:50%; flex-shrink:0;
+  }
+</style>
+
+<% var stageColors = {applied:'#3b82f6',shortlisted:'#8b5cf6',interview:'#f59e0b',offered:'#10b981',rejected:'#ef4444',withdrawn:'#6b7280'}; %>
+<% var stageLabels = {applied:'Applied',shortlisted:'Shortlisted',interview:'Interview',offered:'Offered',rejected:'Rejected',withdrawn:'Withdrawn'}; %>
+<% var stageOrder = ['applied','shortlisted','interview','offered','rejected','withdrawn']; %>
+
+<!-- Header -->
+<div style="margin-bottom:16px;">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+    <a href="/admin/pipeline" style="color:#64748b;text-decoration:none;font-size:13px;"><i class="fas fa-arrow-left"></i> All Jobs</a>
+    <span style="color:#cbd5e1;">|</span>
+    <a href="/admin/jobs/<%= job.id %>" style="color:#64748b;text-decoration:none;font-size:13px;">Job Detail</a>
+  </div>
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+    <div style="display:flex;align-items:center;gap:14px;">
+      <% if (job.company_logo) { %>
+        <img src="<%= job.company_logo %>" style="width:42px;height:42px;border-radius:10px;object-fit:contain;background:#f3f4f6;padding:3px;" onerror="this.style.display='none'">
+      <% } %>
+      <div>
+        <h1 style="font-size:20px;font-weight:700;color:#1e293b;margin:0;"><%= job.role_title %></h1>
+        <p style="color:#64748b;font-size:13px;margin:2px 0 0;"><%= job.company_name %></p>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <a href="/admin/pipeline/<%= job.id %>/kanban" style="background:#f3f4f6;color:#374151;padding:7px 16px;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600;">
+        <i class="fas fa-columns"></i> Kanban
+      </a>
+      <a href="/admin/pipeline/<%= job.id %>/timeline" style="background:hsl(var(--primary));color:#fff;padding:7px 16px;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600;">
+        <i class="fas fa-stream"></i> Timeline
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Stats bar -->
+<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:20px;">
+  <% stageOrder.forEach(function(s) { %>
+    <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:12px;text-align:center;border-top:3px solid <%= stageColors[s] %>;">
+      <div style="font-size:20px;font-weight:700;color:<%= stageColors[s] %>;"><%= stats[s] ? stats[s].count : 0 %></div>
+      <div style="font-size:11px;color:#64748b;font-weight:500;"><%= stageLabels[s] %></div>
+    </div>
+  <% }); %>
+</div>
+
+<!-- Applicant Timeline Cards -->
+<% if (!applicants || applicants.length === 0) { %>
+  <div style="text-align:center;padding:60px 20px;background:#fff;border-radius:12px;border:1px solid #e5e7eb;">
+    <div style="font-size:48px;margin-bottom:16px;">📋</div>
+    <h3 style="color:#1e293b;font-size:18px;margin:0 0 8px;">No Applicants Yet</h3>
+    <p style="color:#64748b;font-size:14px;">Applicants will appear here once they apply for this job.</p>
+  </div>
+<% } else { %>
+  <div>
+    <% applicants.forEach(function(applicant) { %>
+      <div class="timeline-card">
+        <div style="display:flex;align-items:flex-start;gap:14px;">
+          <!-- Avatar -->
+          <div>
+            <% if (applicant.avatar) { %>
+              <img src="<%= applicant.avatar %>" style="width:44px;height:44px;border-radius:50%;object-fit:cover;" alt="">
+            <% } else { %>
+              <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#01103d,#1a2b5f);display:flex;align-items:center;justify-content:center;color:#a3e635;font-weight:600;font-size:16px;">
+                <%= applicant.name ? applicant.name.charAt(0).toUpperCase() : '?' %>
+              </div>
+            <% } %>
+          </div>
+
+          <!-- Info -->
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+              <div>
+                <h3 style="font-size:15px;font-weight:600;color:#1e293b;margin:0;"><%= applicant.name %></h3>
+                <p style="font-size:12px;color:#94a3b8;margin:2px 0 0;"><%= applicant.email %></p>
+              </div>
+              <span class="timeline-stage-badge" style="background:<%= stageColors[applicant.current_stage] || '#6b7280' %>;">
+                <%= stageLabels[applicant.current_stage] || applicant.current_stage %>
+              </span>
+            </div>
+
+            <!-- Details row -->
+            <div style="display:flex;align-items:center;gap:10px;margin-top:8px;flex-wrap:wrap;">
+              <% if (applicant.student_id) { %>
+                <span style="font-size:11px;background:#f3f4f6;color:#64748b;padding:3px 8px;border-radius:4px;"><i class="fas fa-id-card" style="margin-right:3px;"></i><%= applicant.student_id %></span>
+              <% } %>
+              <% if (applicant.program) { %>
+                <span style="font-size:11px;background:#f3f4f6;color:#64748b;padding:3px 8px;border-radius:4px;"><%= applicant.program %></span>
+              <% } %>
+              <% if (applicant.branch) { %>
+                <span style="font-size:11px;background:#f3f4f6;color:#64748b;padding:3px 8px;border-radius:4px;"><%= applicant.branch %></span>
+              <% } %>
+              <% if (applicant.cgpa) { %>
+                <span style="font-size:11px;background:#dbeafe;color:#1d4ed8;padding:3px 8px;border-radius:4px;">CGPA: <%= applicant.cgpa %></span>
+              <% } %>
+              <% if (applicant.ats_match_score) { %>
+                <span style="font-size:11px;padding:3px 8px;border-radius:4px;background:<%= applicant.ats_match_score >= 80 ? '#dcfce7' : applicant.ats_match_score >= 50 ? '#fef9c3' : '#fee2e2' %>;color:<%= applicant.ats_match_score >= 80 ? '#166534' : applicant.ats_match_score >= 50 ? '#854d0e' : '#991b1b' %>;">
+                  ATS: <%= applicant.ats_match_score %>%
+                </span>
+              <% } %>
+              <% if (applicant.applied_at) { %>
+                <span style="font-size:11px;color:#94a3b8;"><i class="fas fa-calendar" style="margin-right:3px;"></i>Applied: <%= new Date(applicant.applied_at).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) %></span>
+              <% } %>
+              <% if (applicant.resume_path) { %>
+                <a href="<%= applicant.resume_path %>" target="_blank" style="font-size:11px;color:#3b82f6;text-decoration:none;"><i class="fas fa-file-alt" style="margin-right:3px;"></i>Resume</a>
+              <% } %>
+            </div>
+
+            <!-- Stage Progress Bar -->
+            <div class="timeline-progress-bar">
+              <% var currentIdx = stageOrder.indexOf(applicant.current_stage);
+                 var positiveStages = ['applied','shortlisted','interview','offered'];
+                 positiveStages.forEach(function(s, i) {
+                   var isActive = s === applicant.current_stage;
+                   var isCompleted = (applicant.current_stage !== 'rejected' && applicant.current_stage !== 'withdrawn') && i < currentIdx;
+                   var color = stageColors[s];
+              %>
+                <div class="timeline-progress-step <%= isActive ? 'active' : (isCompleted ? 'completed' : '') %>"
+                  style="--step-color:<%= color %>;" title="<%= stageLabels[s] %>"></div>
+              <% }); %>
+            </div>
+
+            <!-- History -->
+            <% if (applicant.history && applicant.history.length > 0) { %>
+              <div style="margin-top:10px;padding-top:10px;border-top:1px solid #f3f4f6;">
+                <div style="font-size:11px;font-weight:600;color:#94a3b8;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;">Stage History</div>
+                <% applicant.history.forEach(function(h) { %>
+                  <div class="timeline-history-item">
+                    <span class="timeline-history-dot" style="background:<%= stageColors[h.to_stage] || '#6b7280' %>;"></span>
+                    <span>
+                      <% if (h.from_stage) { %>
+                        <span style="color:<%= stageColors[h.from_stage] || '#6b7280' %>;"><%= stageLabels[h.from_stage] || h.from_stage %></span> →
+                      <% } %>
+                      <span style="color:<%= stageColors[h.to_stage] || '#6b7280' %>;font-weight:500;"><%= stageLabels[h.to_stage] || h.to_stage %></span>
+                    </span>
+                    <span style="color:#cbd5e1;">•</span>
+                    <span><%= new Date(h.created_at).toLocaleDateString('en-IN',{day:'2-digit',month:'short'}) %> <%= new Date(h.created_at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}) %></span>
+                    <% if (h.change_reason) { %>
+                      <span style="color:#cbd5e1;">•</span>
+                      <span style="font-style:italic;"><%= h.change_reason %></span>
+                    <% } %>
+                  </div>
+                <% }); %>
+              </div>
+            <% } %>
+          </div>
+        </div>
+      </div>
+    <% }); %>
+  </div>
+<% } %>
