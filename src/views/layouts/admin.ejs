@@ -21,13 +21,19 @@
     }
     body { font-family: 'Inter', sans-serif; }
 
-    /* Sidebar open/closed */
-    .sidebar-open .admin-sidebar  { transform: translateX(0); }
-    .sidebar-open .admin-content  { margin-left: var(--sidebar-w); }
-    .sidebar-open .admin-overlay  { display: block; }
+    /* Desktop: sidebar visible by default */
+    @media (min-width: 1024px) {
+      .admin-sidebar  { transform: translateX(0) !important; }
+      .admin-content  { margin-left: var(--sidebar-w) !important; }
+      /* Allow closing on desktop */
+      .sidebar-closed .admin-sidebar  { transform: translateX(-100%) !important; }
+      .sidebar-closed .admin-content  { margin-left: 0 !important; }
+    }
 
+    /* Mobile: sidebar hidden by default, shown with sidebar-open */
     @media (max-width: 1023px) {
-      .sidebar-open .admin-content { margin-left: 0; }
+      .sidebar-open .admin-sidebar  { transform: translateX(0); }
+      .sidebar-open .admin-overlay  { display: block; }
     }
 
     /* Scrollbar styling */
