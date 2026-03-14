@@ -269,6 +269,79 @@ class JobMgmtRepo {
     return pipeline;
   }
 
+  // ─── Publish to Job Board ────────────────────────────────
+
+  async publishToJobBoard(job, skills) {
+    const externalId = 'admin-job-' + job.id;
+    // Check if already published
+    const [existing] = await pool.execute(
+      "SELECT id FROM aicp_aggregated_jobs WHERE source = 'manual' AND external_id = ?",
+      [externalId]
+    );
+
+    const skillNames = (skills || []).map(s => s.skill_name || s);
+    const skillsJson = skillNames.length ? JSON.stringify(skillNames) : null;
+
+    if (existing.length) {
+      // Update existing
+      await pool.execute(
+        `UPDATE aicp_aggregated_jobs SET
+          title = ?, company = ?, location = ?, salary_min = ?, salary_max = ?,
+          salary_currency = ?, description = ?, skills = ?, job_type = ?,
+          work_mode = ?, company_logo = ?, is_active = ?,
+          expires_at = ?, updated_at = NOW()
+         WHERE id = ?`,
+        [
+          job.role_title, job.company_name, job.location,
+          job.ctc_min ? Math.round(job.ctc_min * 100000) : null,
+          job.ctc_max ? Math.round(job.ctc_max * 100000) : null,
+          job.ctc_currency || 'INR', job.description, skillsJson,
+          job.job_type, job.work_mode, job.company_logo,
+          job.status === 'active' ? 1 : 0,
+          job.application_deadline || null,
+          existing[0].id,
+        ]
+      );
+      return { aggregated_job_id: existing[0].id, action: 'updated' };
+    } else {
+      // Insert new
+      const [result] = await pool.execute(
+        `INSERT INTO aicp_aggregated_jobs
+          (external_id, title, company, location, salary_min, salary_max,
+           salary_currency, description, skills, job_type, work_mode, source,
+           company_logo, is_active, is_verified, posted_date, expires_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'manual', ?, ?, 1, NOW(), ?)`,
+        [
+          externalId, job.role_title, job.company_name, job.location,
+          job.ctc_min ? Math.round(job.ctc_min * 100000) : null,
+          job.ctc_max ? Math.round(job.ctc_max * 100000) : null,
+          job.ctc_currency || 'INR', job.description, skillsJson,
+          job.job_type, job.work_mode, job.company_logo,
+          job.status === 'active' ? 1 : 0,
+          job.application_deadline || null,
+        ]
+      );
+      return { aggregated_job_id: result.insertId, action: 'published' };
+    }
+  }
+
+  async unpublishFromJobBoard(jobId) {
+    const externalId = 'admin-job-' + jobId;
+    await pool.execute(
+      "DELETE FROM aicp_aggregated_jobs WHERE source = 'manual' AND external_id = ?",
+      [externalId]
+    );
+  }
+
+  async isPublished(jobId) {
+    const externalId = 'admin-job-' + jobId;
+    const [rows] = await pool.execute(
+      "SELECT id FROM aicp_aggregated_jobs WHERE source = 'manual' AND external_id = ?",
+      [externalId]
+    );
+    return rows.length > 0;
+  }
+
   // ─── Filter Options ─────────────────────────────────────
 
   async getDistinctCompanies() {

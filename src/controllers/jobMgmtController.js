@@ -60,11 +60,13 @@ class JobMgmtController {
     try {
       const job = await service.getJobById(req.params.id);
       const applicants = await service.getApplicants(req.params.id, req.query);
+      const isPublished = await service.isPublished(req.params.id);
       res.render('pages/admin/jobs/detail', {
         title: `${job.role_title} - ${job.company_name}`,
         layout: 'layouts/admin',
         job,
         applicants,
+        isPublished,
         query: req.query,
       });
     } catch (err) {
@@ -136,6 +138,24 @@ class JobMgmtController {
       res.json({ success: true, job });
     } catch (err) {
       res.status(404).json({ success: false, error: err.message });
+    }
+  }
+
+  async apiPublish(req, res) {
+    try {
+      const result = await service.publishToJobBoard(req.params.id);
+      res.json({ success: true, message: `Job ${result.action} on Job Board`, ...result });
+    } catch (err) {
+      res.status(500).json({ success: false, error: err.message });
+    }
+  }
+
+  async apiUnpublish(req, res) {
+    try {
+      await service.unpublishFromJobBoard(req.params.id);
+      res.json({ success: true, message: 'Job removed from Job Board' });
+    } catch (err) {
+      res.status(500).json({ success: false, error: err.message });
     }
   }
 

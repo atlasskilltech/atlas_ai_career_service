@@ -71,6 +71,23 @@ class JobMgmtService {
     return repo.findJobs(filters);
   }
 
+  // ─── Publish to Job Board ────────────────────────────────
+
+  async publishToJobBoard(jobId) {
+    const job = await repo.findById(jobId);
+    if (!job) throw new Error('Job not found');
+    const skills = await repo.getJobSkills(jobId);
+    return repo.publishToJobBoard(job, skills);
+  }
+
+  async unpublishFromJobBoard(jobId) {
+    return repo.unpublishFromJobBoard(jobId);
+  }
+
+  async isPublished(jobId) {
+    return repo.isPublished(jobId);
+  }
+
   // ─── Applicants ─────────────────────────────────────────
 
   async getApplicants(jobId, filters = {}) {
